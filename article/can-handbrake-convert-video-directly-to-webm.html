@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Can HandBrake Convert Video Directly to WebM? - webm</title>
+    <meta name="description" content="HandBrake can convert videos directly to the WebM format using modern, open-source video codecs like VP8, VP9, and AV1. This capability allows users to compress files efficiently for web playback without needing third-party conversion software. While Han">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/can-handbrake-convert-video-directly-to-webm">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Can HandBrake Convert Video Directly to WebM? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/can-handbrake-convert-video-directly-to-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="HandBrake can convert videos directly to the WebM format using modern, open-source video codecs like VP8, VP9, and AV1. This capability allows users to compress files efficiently for web playback without needing third-party conversion software. While Han" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="can-handbrake-convert-video-directly-to-webm">Can HandBrake
+Convert Video Directly to WebM?</h1>
+<p>HandBrake can convert videos directly to the WebM format using
+modern, open-source video codecs like VP8, VP9, and AV1. This capability
+allows users to compress files efficiently for web playback without
+needing third-party conversion software. While HandBrake historically
+focused primarily on MP4 and MKV containers, full support for the WebM
+container is built into all recent versions of the software.</p>
+<h2 id="understanding-handbrakes-webm-capabilities">Understanding
+HandBrake’s WebM Capabilities</h2>
+<p>For years, HandBrake users relied on the MKV container to hold
+Google’s VP8 and VP9 video codecs. However, HandBrake officially
+supports <strong>WebM (.webm)</strong> as a standalone output container.
+This means you can select WebM directly from the format dropdown menu on
+the main interface.</p>
+<h3 id="supported-codecs-for-webm-output">Supported Codecs for WebM
+Output</h3>
+<p>When you select the WebM container, HandBrake adjusts its video and
+audio encoder options to comply with WebM standards. You can choose from
+the following configurations:</p>
+<ul>
+<li><strong>Video Encoders:</strong> VP8, VP9, and AV1 (via
+SVT-AV1).</li>
+<li><strong>Audio Encoders:</strong> Opus and Vorbis.</li>
+</ul>
+<p>Using these combinations ensures that your output file is fully
+compliant with modern web browsers and HTML5 video players without
+requiring any plugins.</p>
+<h2 id="how-to-export-to-webm-in-handbrake">How to Export to WebM in
+HandBrake</h2>
+<p>Converting your video files to WebM requires only a few specific
+adjustments within the HandBrake interface:</p>
+<ol type="1">
+<li><strong>Load your source video:</strong> Drag and drop your file
+into HandBrake or click the “Open Source” button.</li>
+<li><strong>Select the WebM Container:</strong> Under the
+<strong>Summary</strong> tab, find the <strong>Format</strong> dropdown
+menu and select <strong>WebM</strong>.</li>
+<li><strong>Choose a WebM Preset (Optional):</strong> To save time,
+navigate to the Preset menu, look under the <strong>Web</strong>
+category, and select one of the dedicated Creator presets (e.g., “VP9
+MKV 1080p30” can be adjusted, or choose a direct Discord/Web preset that
+uses WebM).</li>
+<li><strong>Configure Video Settings:</strong> Go to the
+<strong>Video</strong> tab. Ensure the Video Encoder is set to
+<strong>VP9</strong> or <strong>AV1</strong> for the best balance of
+quality and compression.</li>
+<li><strong>Configure Audio Settings:</strong> Go to the
+<strong>Audio</strong> tab and ensure the codec is set to
+<strong>Opus</strong> or <strong>Vorbis</strong>.</li>
+<li><strong>Start Encode:</strong> Choose your destination file path at
+the bottom, ensuring the extension is <code>.webm</code>, and click
+<strong>Start Encode</strong> at the top of the window.</li>
+</ol>
+<h2 id="why-choose-webm-over-mp4-or-mkv">Why Choose WebM Over MP4 or
+MKV?</h2>
+<p>While MP4 (H.264/H.265) remains the universal standard for offline
+playback and hardware compatibility, WebM offers distinct advantages for
+internet-focused projects:</p>
+<ul>
+<li><strong>Royalty-Free:</strong> Unlike AAC and H.264, WebM components
+(VP9, AV1, Opus) are open-source and royalty-free, making them ideal for
+web developers.</li>
+<li><strong>Superior Web Compression:</strong> VP9 and AV1 often achieve
+smaller file sizes than H.264 at identical visual qualities, saving
+bandwidth on streaming sites.</li>
+<li><strong>Native Browser Playback:</strong> WebM files stream
+flawlessly across Firefox, Chrome, Edge, and Opera without heavy CPU
+overhead.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

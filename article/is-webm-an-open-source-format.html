@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Is WebM an Open-Source Format? - webm</title>
+    <meta name="description" content="This article provides a quick overview of the WebM media file format, exploring its open-source nature, its development history, and how it compares to proprietary alternatives. You will learn about the core technologies behind WebM, including its video">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/is-webm-an-open-source-format">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Is WebM an Open-Source Format? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/is-webm-an-open-source-format" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a quick overview of the WebM media file format, exploring its open-source nature, its development history, and how it compares to proprietary alternatives. You will learn about the core technologies behind WebM, including its video" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="is-webm-an-open-source-format">Is WebM an Open-Source
+Format?</h1>
+<p>This article provides a quick overview of the WebM media file format,
+exploring its open-source nature, its development history, and how it
+compares to proprietary alternatives. You will learn about the core
+technologies behind WebM, including its video and audio codecs, and its
+widespread adoption across modern web browsers. By the end of this
+guide, you will understand how WebM’s royalty-free licensing shapes the
+digital media landscape.</p>
+<hr />
+<h2 id="understanding-the-webm-format">Understanding the WebM
+Format</h2>
+<p>WebM is a highly efficient, royalty-free audiovisual media file
+format designed specifically for the web. Sponsored by Google and
+released in 2010, the format was built to provide a high-quality open
+alternative to commercial video formats. It is widely used for HTML5
+video streaming, online animations, and short video clips.</p>
+<p>The structure of a WebM file is based on the Matroska (MKV) container
+profile. Because it was tailored for web use, the format focuses on high
+compression rates, allowing videos to stream smoothly even on slower
+internet connections while requiring minimal processing power to
+playback.</p>
+<h3 id="the-open-source-status-of-webm">The Open-Source Status of
+WebM</h3>
+<p>To answer the core question: <strong>Yes, WebM is a 100% open-source
+and royalty-free format.</strong> Unlike proprietary formats that
+require developers and software companies to pay hefty licensing fees,
+anyone can use, develop, and distribute WebM files or software without
+financial obligations. The project’s source code is distributed under a
+BSD-style license, meaning it is highly permissive and encourages
+community contribution and integration.</p>
+<h3 id="core-components-of-webm">Core Components of WebM</h3>
+<p>A WebM file container wraps video and audio streams together using
+specific codecs that are also open-source. Over the years, the format
+has evolved to support different generations of these technologies:</p>
+<ul>
+<li><strong>Video Codecs:</strong> WebM originally launched using the
+<strong>VP8</strong> video codec. It later evolved to support
+<strong>VP9</strong>, which offers significantly better compression and
+quality. More recently, WebM supports <strong>AV1</strong> (AOMedia
+Video 1), a cutting-edge, open-source video coding format designed for
+the next generation of internet streaming.</li>
+<li><strong>Audio Codecs:</strong> For audio, WebM files generally
+utilize the <strong>Vorbis</strong> or <strong>Opus</strong> audio
+codecs. Opus, in particular, is highly praised for its ability to adapt
+to varying bandwidths while maintaining exceptional sound quality.</li>
+</ul>
+<h3 id="webm-vs.-proprietary-alternatives">WebM vs. Proprietary
+Alternatives</h3>
+<p>The primary competitor to WebM in the web ecosystem has historically
+been MP4 (using the H.264 or H.265/HEVC codecs). While MP4 is incredibly
+popular and universally compatible, it is a proprietary format governed
+by the Moving Picture Experts Group (MPEG) and patent pools like MPEG
+LA.</p>
+<p>Companies that build hardware or commercial software that decodes or
+encodes MP4 files often have to pay licensing royalties. WebM was
+specifically created to bypass these legal and financial hurdles,
+offering an independent path forward for web developers, browsers, and
+content creators alike.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

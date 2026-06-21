@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Did Browsers Hesitate to Support WebM? - webm</title>
+    <meta name="description" content="When Google introduced the WebM video format in 2010 as a free, open-source alternative for web video, it aimed to revolutionize online streaming. However, the format faced immediate pushback and slow adoption from several major browser manufacturers. Th">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/why-did-browsers-hesitate-to-support-webm">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why Did Browsers Hesitate to Support WebM? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/why-did-browsers-hesitate-to-support-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When Google introduced the WebM video format in 2010 as a free, open-source alternative for web video, it aimed to revolutionize online streaming. However, the format faced immediate pushback and slow adoption from several major browser manufacturers. Th" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-did-browsers-hesitate-to-support-webm">Why Did Browsers
+Hesitate to Support WebM?</h1>
+<p>When Google introduced the WebM video format in 2010 as a free,
+open-source alternative for web video, it aimed to revolutionize online
+streaming. However, the format faced immediate pushback and slow
+adoption from several major browser manufacturers. This article explores
+the core reasons behind this initial hesitation, focusing on the fierce
+battles over patent liabilities, disagreements regarding hardware
+acceleration, and the competing industry standards that divided the
+web.</p>
+<h2 id="the-patent-indemnity-dilemma">The Patent Indemnity Dilemma</h2>
+<p>The primary roadblock to WebM’s adoption was the fear of patent
+infringement lawsuits. While Google released WebM (utilizing the VP8
+video codec) under a BSD-style open-source license, competitors—most
+notably Apple and Microsoft—argued that VP8 likely infringed on existing
+H.264 patents.</p>
+<ul>
+<li><strong>The MPEG LA Threat:</strong> The MPEG LA, a licensing body
+that manages patent pools for the rival H.264 format, actively sought to
+establish a patent pool against VP8.</li>
+<li><strong>Lack of Legal Indemnity:</strong> Google initially did not
+offer legal indemnification to companies using WebM. For risk-averse
+corporations, incorporating a format that could potentially lead to
+multi-million dollar lawsuits was an unacceptable gamble.</li>
+</ul>
+<h2 id="hardware-acceleration-and-efficiency">Hardware Acceleration and
+Efficiency</h2>
+<p>In the early 2010s, mobile browsing was exploding, making battery
+life and processing efficiency critical for hardware manufacturers.</p>
+<ul>
+<li><strong>H.264’s Head Start:</strong> The competing H.264 codec
+already enjoyed widespread, dedicated hardware acceleration chips built
+into almost all mobile processors, laptops, and graphics cards. This
+allowed devices to decode HD video with minimal battery drain.</li>
+<li><strong>CPU-Heavy Decoding:</strong> Because WebM was brand new,
+chips did not have built-in hardware decoding for it. Browsers
+attempting to play WebM files had to rely on software decoding, which
+heavily taxed the device’s CPU, causing laptops to run hot and mobile
+batteries to drain rapidly. Browser makers like Apple were unwilling to
+compromise device performance for an unproven format.</li>
+</ul>
+<h2 id="corporate-alliances-and-vested-interests">Corporate Alliances
+and Vested Interests</h2>
+<p>The hesitation was also deeply rooted in the commercial alignments of
+tech giants who had already invested heavily in the H.264 ecosystem.</p>
+<ul>
+<li><strong>The Apple and Microsoft Stance:</strong> Both Apple and
+Microsoft were part of the MPEG LA consortium and held lucrative patents
+tied to H.264. Supporting WebM meant backing a rival format created by
+Google, which would actively devalue their own intellectual
+property.</li>
+<li><strong>The Mozilla and Opera Contrast:</strong> Conversely,
+open-source advocates like Mozilla (Firefox) and Opera enthusiastically
+supported WebM from day one. Because they could not afford the hefty
+licensing fees required to ship H.264 natively in their browsers, they
+desperately needed a high-quality, royalty-free alternative.</li>
+</ul>
+<h2 id="resolution-and-current-status">Resolution and Current
+Status</h2>
+<p>The deadlock eventually began to break in 2013 when Google reached a
+settlement with the MPEG LA, securing a license for any patents that VP8
+might have infringed upon. Furthermore, as Google iterated on the format
+with VP9 and eventually joined forces with Apple, Microsoft, and others
+to create the AV1 codec under the Alliance for Open Media, the industry
+moved past the early browser wars. Today, WebM is widely supported
+across all major browsers, but its early history remains a classic case
+study in how legal and commercial interests can stall open web
+standards.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

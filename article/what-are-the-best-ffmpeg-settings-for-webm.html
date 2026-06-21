@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What are the best FFmpeg settings for WebM? - webm</title>
+    <meta name="description" content="Optimizing WebM video generation requires a careful balance between file size, visual quality, and encoding speed. This guide details the ideal command-line configurations for FFmpeg using the modern VP9 video codec and Opus audio codec. By utilizing two">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/what-are-the-best-ffmpeg-settings-for-webm">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="What are the best FFmpeg settings for WebM? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/what-are-the-best-ffmpeg-settings-for-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Optimizing WebM video generation requires a careful balance between file size, visual quality, and encoding speed. This guide details the ideal command-line configurations for FFmpeg using the modern VP9 video codec and Opus audio codec. By utilizing two" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="what-are-the-best-ffmpeg-settings-for-webm">What are the best
+FFmpeg settings for WebM?</h1>
+<p>Optimizing WebM video generation requires a careful balance between
+file size, visual quality, and encoding speed. This guide details the
+ideal command-line configurations for FFmpeg using the modern VP9 video
+codec and Opus audio codec. By utilizing two-pass constrained quality
+encoding, creators can achieve highly efficient files optimized
+specifically for web delivery and browser compatibility without
+suffering massive quality drops.</p>
+<h3 id="the-optimal-two-pass-commmand-line">The Optimal Two-Pass
+Commmand Line</h3>
+<p>The recommended approach for encoding web-ready WebM videos is to use
+a two-pass Constrained Quality (CQ) configuration. This method
+guarantees excellent visual preservation during high-motion scenes while
+keeping the file size compact for simpler scenes.</p>
+<p>Run the following two commands sequentially in your terminal:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 2M <span class="at">-crf</span> 28 <span class="at">-quality</span> good <span class="at">-speed</span> 4 <span class="at">-tile-columns</span> 2 <span class="at">-row-mt</span> 1 <span class="at">-an</span> <span class="at">-f</span> null /dev/null <span class="kw">&amp;&amp;</span> <span class="dt">\</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 2M <span class="at">-crf</span> 28 <span class="at">-quality</span> good <span class="at">-speed</span> 1 <span class="at">-tile-columns</span> 2 <span class="at">-row-mt</span> 1 <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k output.webm</span></code></pre></div>
+<h3 id="breakdown-of-core-settings">Breakdown of Core Settings</h3>
+<p>Understanding the individual arguments helps in customizing the
+output to suit specific file requirements:</p>
+<ul>
+<li><strong><code>-c:v libvpx-vp9</code></strong>: Specifies the VP9
+video codec, which is the standard choice for modern WebM files,
+offering significantly superior compression over the legacy VP8
+encoder.</li>
+<li><strong><code>-crf 28</code></strong>: Sets the Constant Rate
+Factor. For VP9, the scale ranges from 0 (lossless) to 63 (worst
+quality). A value between 25 and 35 provides an ideal balance for web
+deployment.</li>
+<li><strong><code>-b:v 2M</code></strong>: Defines the maximum allowed
+target bitrate (e.g., 2 Megabits per second). In Constrained Quality
+mode, this acts as a hard ceiling so complex scenes do not bloat the
+file size.</li>
+<li><strong><code>-quality good</code></strong>: Balances overall
+processing efficiency against encoding precision. The alternative
+parameter <code>-quality best</code> maximizes compression but results
+in exponentially slower processing times.</li>
+</ul>
+<h3 id="maximizing-multi-core-cpu-performance">Maximizing Multi-Core CPU
+Performance</h3>
+<p>The native <code>libvpx-vp9</code> encoder does not automatically
+utilize all available processor cores efficiently. The inclusion of
+multi-threading flags avoids bottlenecking the system CPU:</p>
+<ul>
+<li><strong><code>-row-mt 1</code></strong>: Enables row-based
+multi-threading, which dramatically speeds up encoding on multi-core
+processors.</li>
+<li><strong><code>-tile-columns 2</code></strong>: Splits the video
+frames into vertical columns to allow parallel processing. Use a value
+of <code>1</code> for 720p content, <code>2</code> for 1080p content,
+and <code>3</code> for 4K video.</li>
+<li><strong><code>-speed 4</code> (Pass 1) &amp; <code>-speed 1</code>
+(Pass 2)</strong>: Speeds up the initial analytical pass without
+affecting final fidelity. The second pass drops the speed value down to
+<code>1</code> to focus heavily on precision rendering.</li>
+</ul>
+<h3 id="audio-optimization">Audio Optimization</h3>
+<ul>
+<li><strong><code>-c:a libopus</code></strong>: Selects the Opus audio
+codec, which is the preferred native pairing for WebM containers due to
+its stellar audio quality at low bitrates.</li>
+<li><strong><code>-b:a 128k</code></strong>: Allocates 128 kbps for
+standard stereo streams, which is more than sufficient for high-fidelity
+web playback. For pure speech content, this can safely be lowered to
+<code>64k</code>.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

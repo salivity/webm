@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Does Discord Support WebM Playback and Uploads? - webm</title>
+    <meta name="description" content="This article provides a clear overview of Discord's native support for the WebM file format on both desktop and mobile platforms. It covers the current status of WebM video uploads, embedded playback capabilities, potential file size limitations, and com">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/does-discord-support-webm-playback-and-uploads">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Does Discord Support WebM Playback and Uploads? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/does-discord-support-webm-playback-and-uploads" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a clear overview of Discord's native support for the WebM file format on both desktop and mobile platforms. It covers the current status of WebM video uploads, embedded playback capabilities, potential file size limitations, and com" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="does-discord-support-webm-playback-and-uploads">Does Discord
+Support WebM Playback and Uploads?</h1>
+<p>This article provides a clear overview of Discord’s native support
+for the WebM file format on both desktop and mobile platforms. It covers
+the current status of WebM video uploads, embedded playback
+capabilities, potential file size limitations, and common
+troubleshooting steps for users experiencing issues with WebM files on
+the platform.</p>
+<h3 id="native-upload-and-embedding-status">Native Upload and Embedding
+Status</h3>
+<p>Discord fully supports the uploading and native embedding of WebM
+files. When you drop a <code>.webm</code> file into a chat server or
+direct message, Discord does not just treat it as a raw, downloadable
+attachment; it automatically embeds the file into an interactive media
+player. This allows you and other server members to watch the video
+directly within the chat interface without needing to download the file
+to a local device.</p>
+<h3 id="platform-differences-desktop-vs.-mobile">Platform Differences:
+Desktop vs. Mobile</h3>
+<p>While the core functionality exists across platforms, the performance
+and rendering of WebM files can vary depending on the device you are
+using:</p>
+<ul>
+<li><strong>Desktop App and Web Browser:</strong> The desktop client and
+browser versions of Discord offer the most robust support for WebM
+files. Because these versions run on an Electron framework (which relies
+on Chromium), they inherently possess the video codecs required to
+decode and play WebM files seamlessly, including support for transparent
+backgrounds.</li>
+<li><strong>Mobile Apps (iOS and Android):</strong> The mobile
+experience can occasionally be inconsistent. Android generally handles
+WebM files well due to native OS-level support. However, iOS devices
+(iPhoness and iPads) historically lack native system-level support for
+certain WebM video codecs. While Discord has implemented software fixes
+to allow WebM playback on iOS, users may occasionally encounter files
+that appear as static attachments or fail to play audio.</li>
+</ul>
+<h3 id="constraints-and-troubleshooting">Constraints and
+Troubleshooting</h3>
+<p>If you are struggling to get a WebM file to play or upload correctly
+on Discord, the issue usually stems from one of the following
+factors:</p>
+<ul>
+<li><strong>File Size Restrictions:</strong> Standard Discord accounts
+are limited to a specific file upload size limit (typically 10 MB or 25
+MB depending on recent platform updates). If your WebM file exceeds this
+limit, Discord will block the upload entirely unless you have a Discord
+Nitro subscription, which expands the upload limit up to 500 MB.</li>
+<li><strong>Unsupported Codecs:</strong> WebM is a container format,
+meaning it can hold video compressed with different codecs (such as VP8,
+VP9, or AV1). If a WebM file is encoded with a highly experimental or
+newer codec like AV1, older mobile devices or outdated Discord clients
+may fail to render the video properly.</li>
+<li><strong>Hardware Acceleration:</strong> On desktop, if your video
+playback is choppy or showing a black screen, turning “Hardware
+Acceleration” on or off in your Discord Advanced Settings can often
+resolve the rendering conflict.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is the Official MIME Type for a WebM File? - webm</title>
+    <meta name="description" content="When serving or handling WebM media files on the web, using the correct Media Type (formerly known as a MIME type) ensures that browsers and media players correctly identify and stream the content. This article covers the official MIME types designated f">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/what-is-the-official-mime-type-for-a-webm-file">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="What Is the Official MIME Type for a WebM File? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/what-is-the-official-mime-type-for-a-webm-file" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When serving or handling WebM media files on the web, using the correct Media Type (formerly known as a MIME type) ensures that browsers and media players correctly identify and stream the content. This article covers the official MIME types designated f" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="what-is-the-official-mime-type-for-a-webm-file">What Is the
+Official MIME Type for a WebM File?</h1>
+<p>When serving or handling WebM media files on the web, using the
+correct Media Type (formerly known as a MIME type) ensures that browsers
+and media players correctly identify and stream the content. This
+article covers the official MIME types designated for WebM audio and
+video files, how they function within standard web development
+configurations, and why utilizing the precise identifier is crucial for
+seamless media playback.</p>
+<h2 id="the-official-webm-mime-types">The Official WebM MIME Types</h2>
+<p>The Internet Assigned Numbers Authority (IANA) recognizes specific
+MIME types for the WebM format depending on whether the container holds
+video content or strictly audio content.</p>
+<ul>
+<li><strong>For WebM Video files (with or without audio):</strong>
+<code>video/webm</code></li>
+<li><strong>For WebM Audio-only files:</strong>
+<code>audio/webm</code></li>
+</ul>
+<p>Using <code>video/webm</code> for a standard video file tells the web
+browser to expect a container that typically utilizes the VP8, VP9, or
+AV1 video codecs alongside Vorbis or Opus audio codecs.</p>
+<h2 id="why-the-correct-mime-type-matters">Why the Correct MIME Type
+Matters</h2>
+<p>Web browsers rely heavily on the <code>Content-Type</code> header
+sent by a web server rather than just looking at the file extension
+(such as <code>.webm</code>). If a server misconfigured and sends a
+generic type like <code>application/octet-stream</code> or
+<code>text/plain</code>, the browser may fail to stream the video
+inline, refuse to hardware accelerate the playback, or simply download
+the file instead of playing it.</p>
+<h3 id="server-configuration-examples">Server Configuration
+Examples</h3>
+<p>To ensure web servers deliver WebM files with the proper MIME type,
+specific configuration rules must be active.</p>
+<p>For an <strong>Apache</strong> server, the following lines are
+typically added to the <code>.htaccess</code> or <code>httpd.conf</code>
+file:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode apache"><code class="sourceCode apache"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>AddType<span class="st"> video/webm .webm</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>AddType<span class="st"> audio/webm .weba</span></span></code></pre></div>
+<p>For an <strong>Nginx</strong> server, the mappings are defined within
+the <code>mime.types</code> configuration file:</p>
+<pre class="nginx"><code>types {
+    video/webm webm;
+    audio/webm weba;
+}
+</code></pre>
+<h2 id="html5-implementation">HTML5 Implementation</h2>
+<p>When embedding WebM media into a webpage using HTML5, explicitly
+declaring the type attribute within the <code>&lt;source&gt;</code> tag
+helps the browser quickly determine if it supports the format before
+attempting to download the file.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">video</span><span class="ot"> controls</span><span class="dt">&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">source</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;video.webm&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&quot;video/webm&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  Your browser does not support the video tag.</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">video</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>Providing the correct <code>video/webm</code> or
+<code>audio/webm</code> type ensures maximum compatibility, faster
+loading behaviors, and a smoother user experience across all modern web
+browsers.</p></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

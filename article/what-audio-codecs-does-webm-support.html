@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Audio Codecs Does WebM Support? - webm</title>
+    <meta name="description" content="The WebM container format is widely used for streaming high-quality video and audio on the web without high processing overhead. Developed by Google and optimized for HTML5 video, WebM is designed to be open and royalty-free. This article provides a quic">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/what-audio-codecs-does-webm-support">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="What Audio Codecs Does WebM Support? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/what-audio-codecs-does-webm-support" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format is widely used for streaming high-quality video and audio on the web without high processing overhead. Developed by Google and optimized for HTML5 video, WebM is designed to be open and royalty-free. This article provides a quic" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="what-audio-codecs-does-webm-support">What Audio Codecs Does WebM
+Support?</h1>
+<p>The WebM container format is widely used for streaming high-quality
+video and audio on the web without high processing overhead. Developed
+by Google and optimized for HTML5 video, WebM is designed to be open and
+royalty-free. This article provides a quick overview of the specific
+audio codecs supported by the WebM container, focusing on its primary
+standards—Vorbis and Opus—alongside technical considerations for web
+compatibility.</p>
+<h2 id="primary-audio-codecs-supported-by-webm">Primary Audio Codecs
+Supported by WebM</h2>
+<p>To maintain its open-source and royalty-free nature, the WebM project
+strictly limits the audio codecs allowed within its container. The
+official specification explicitly supports two primary audio compression
+formats.</p>
+<h3 id="opus">1. Opus</h3>
+<p>Opus is the current preferred audio codec for the WebM container. It
+is a highly versatile, lossy audio coding format developed by the
+Xiph.Org Foundation and standardized by the IETF.</p>
+<ul>
+<li><strong>Versatility:</strong> It scales seamlessly from low-bitrate
+narrowband speech to very high-quality stereo music.</li>
+<li><strong>Performance:</strong> Opus dynamically adapts to changing
+network bandwidths, making it ideal for real-time applications like
+Voice over IP (VoIP), video conferencing, and live streaming.</li>
+<li><strong>Efficiency:</strong> It generally offers superior audio
+quality compared to older codecs at equivalent bitrates.</li>
+</ul>
+<h3 id="vorbis">2. Vorbis</h3>
+<p>Vorbis was the original audio codec mandated by the initial WebM
+specification. Also developed by the Xiph.Org Foundation, it is a free
+and open-source, lossy audio compression format.</p>
+<ul>
+<li><strong>Legacy Standard:</strong> While still fully supported by the
+WebM specification, it has largely been superseded by Opus for new
+deployments.</li>
+<li><strong>Compatibility:</strong> It remains widely supported across
+legacy browsers and media players that implemented early versions of
+WebM.</li>
+</ul>
+<hr />
+<h2 id="non-standard-and-experimental-support">Non-Standard and
+Experimental Support</h2>
+<p>While the official WebM specification is restrictive to avoid
+licensing issues, certain implementation variants and browser engines
+handle alternative codecs.</p>
+<h3 id="flac-free-lossless-audio-codec">FLAC (Free Lossless Audio
+Codec)</h3>
+<p>Some modern browsers and media frameworks allow FLAC audio to be
+multiplexed into a WebM container. This is typically used for
+applications requiring lossless audio quality alongside WebM video,
+though it falls outside the original strict web-streaming scope of the
+project.</p>
+<h3 id="codecs-not-supported">Codecs Not Supported</h3>
+<p>To maintain a royalty-free ecosystem, WebM explicitly does
+<strong>not</strong> support proprietary audio codecs commonly found in
+other containers (like MP4).</p>
+<ul>
+<li><strong>Advanced Audio Coding (AAC):</strong> Not supported.</li>
+<li><strong>MP3:</strong> Not supported.</li>
+<li><strong>Dolby Digital (AC-3):</strong> Not supported.</li>
+</ul>
+<hr />
+<h2 id="technical-matching-and-compatibility">Technical Matching and
+Compatibility</h2>
+<p>When creating WebM files, audio codecs are strictly paired with
+specific video codecs to ensure optimal decoding performance in web
+browsers.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Audio Codec</th>
+<th>Typically Paired Video Codecs</th>
+<th>Common Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Opus</strong></td>
+<td>VP9, AV1</td>
+<td>Modern web streaming, YouTube, real-time communications
+(WebRTC)</td>
+</tr>
+<tr>
+<td><strong>Vorbis</strong></td>
+<td>VP8</td>
+<td>Legacy HTML5 video playback</td>
+</tr>
+</tbody>
+</table></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

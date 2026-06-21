@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why is My Transparent WebM Background Black? - webm</title>
+    <meta name="description" content="Exporting a WebM video with transparency only to find it rendering with a solid black background is a common and frustrating issue for motion designers and video editors. This problem usually occurs because the alpha channel was either omitted during exp">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/why-is-my-transparent-webm-background-black">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js" defer></script>
+    <script id="MathJax-script" src="/webm/js/mathjax.min.js" async></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why is My Transparent WebM Background Black? - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/why-is-my-transparent-webm-background-black" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Exporting a WebM video with transparency only to find it rendering with a solid black background is a common and frustrating issue for motion designers and video editors. This problem usually occurs because the alpha channel was either omitted during exp" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="https://github.com/salivity" title="Github" aria-label="Go To Github Profile Page"><svg class="svg-icon" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path></svg></a></li>
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-is-my-transparent-webm-background-black">Why is My
+Transparent WebM Background Black?</h1>
+<p>Exporting a WebM video with transparency only to find it rendering
+with a solid black background is a common and frustrating issue for
+motion designers and video editors. This problem usually occurs because
+the alpha channel was either omitted during export, stripped away during
+file compression, or isn’t being recognized by your media player or web
+browser. This article covers the technical reasons behind this rendering
+glitch and provides step-by-step solutions to fix it in popular editing
+software like Adobe After Effects and Premiere Pro.</p>
+<h3 id="missing-alpha-channel-settings">1. Missing Alpha Channel
+Settings</h3>
+<p>The most frequent culprit is neglecting to explicitly enable the
+alpha channel during the export process. By default, many video encoders
+treat transparency as empty space and fill it with black. To preserve
+transparency, your video codec must be configured to output <strong>RGB
++ Alpha</strong>.</p>
+<h3 id="media-player-limitations">2. Media Player Limitations</h3>
+<p>Before tweaking your export settings, ensure the issue isn’t just
+your media player. Standard players like Windows Media Player or
+QuickTime often do not support alpha channel playback for WebM files,
+displaying a black background by default. To accurately test your video,
+drag and drop the WebM file directly into a modern web browser like
+Google Chrome or Mozilla Firefox.</p>
+<h3 id="incorrect-codec-selection">3. Incorrect Codec Selection</h3>
+<p>Not all video codecs support transparency. If you are converting a
+video to WebM using a third-party encoder, you must ensure you are using
+a codec that supports an alpha channel.</p>
+<ul>
+<li><strong>VP8 and VP9:</strong> Both support alpha channels, but the
+setting must be manually enabled in your encoder’s advanced
+properties.</li>
+<li>Avoid generic MP4/H.264 codecs if you require transparency, as they
+do not support alpha channels natively.</li>
+</ul>
+<h3 id="how-to-fix-webm-transparency-in-major-software">How to Fix WebM
+Transparency in Major Software</h3>
+<h4 id="adobe-after-effects-premiere-pro">Adobe After Effects &amp;
+Premiere Pro</h4>
+<p>Because Adobe removed native WebM support in recent versions, most
+editors use the open-source <strong>Fnordware WebM plug-in</strong> to
+export these files.</p>
+<ul>
+<li>Open your Render Queue (After Effects) or Export Settings (Premiere
+Pro).</li>
+<li>Set the Format to <strong>WebM</strong>.</li>
+<li>In the Video tab, locate the <strong>Codec Settings</strong>.</li>
+<li>Change the default setting to <strong>VP8</strong> or
+<strong>VP9</strong>.</li>
+<li>Crucially, check the box that says <strong>Include Alpha
+Channel</strong> or set the channels to <strong>RGB +
+Alpha</strong>.</li>
+<li>Render the file and test it in a web browser.</li>
+</ul>
+<h4 id="transparency-verification-checklist">Transparency Verification
+Checklist</h4>
+<p>If your exported WebM is still showing a black background, verify the
+following elements in your timeline:</p>
+<ul>
+<li><strong>Toggle Transparency Grid:</strong> In After Effects, click
+the checkerboard icon at the bottom of the composition window to ensure
+your background is actually transparent and not a solid black
+layer.</li>
+<li><strong>Remove Solid Layers:</strong> Ensure there are no hidden
+solid color layers or background graphics at the bottom of your layer
+stack.</li>
+<li><strong>Check CSS Properties:</strong> If you are embedding the WebM
+on a website using the <code>&lt;video&gt;</code> tag, ensure that your
+CSS is not forcing a black background color on the video element
+itself.</li>
+</ul></article>
+        <div id=comments-container></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'light' ? 'github-light' : 'github-dark'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>
