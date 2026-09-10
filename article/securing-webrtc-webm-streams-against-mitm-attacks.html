@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securing WebRTC WebM Streams Against MitM Attacks - webm</title>
+    <meta name="description" content="WebRTC provides mandatory, end-to-end security for all transmitted media, including WebM audio and video streams encoded with Opus, VP8, VP9, or AV1. This article explains the technical safeguards built into the WebRTC architecture—primarily DTLS-SRTP,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/securing-webrtc-webm-streams-against-mitm-attacks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Securing WebRTC WebM Streams Against MitM Attacks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/securing-webrtc-webm-streams-against-mitm-attacks" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebRTC provides mandatory, end-to-end security for all transmitted media, including WebM audio and video streams encoded with Opus, VP8, VP9, or AV1. This article explains the technical safeguards built into the WebRTC architecture—primarily DTLS-SRTP," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="securing-webrtc-webm-streams-against-mitm-attacks">Securing
+WebRTC WebM Streams Against MitM Attacks</h1>
+<p>WebRTC provides mandatory, end-to-end security for all transmitted
+media, including WebM audio and video streams encoded with Opus, VP8,
+VP9, or AV1. This article explains the technical safeguards built into
+the WebRTC architecture—primarily DTLS-SRTP, cryptographic fingerprint
+verification, and Perfect Forward Secrecy—that prevent unauthorized
+eavesdropping, data tampering, and man-in-the-middle (MitM) attacks
+during real-time communication.</p>
+<h3 id="mandatory-encryption-with-dtls-srtp">Mandatory Encryption with
+DTLS-SRTP</h3>
+<p>WebRTC does not allow unencrypted communication. Media payload
+encryption is enforced directly at the protocol level:</p>
+<ul>
+<li><strong>Datagram Transport Layer Security (DTLS):</strong> Before
+any media flows, peers establish a secure connection using DTLS (the UDP
+equivalent of TLS). DTLS handles the handshake, mutual authentication,
+and negotiation of encryption keys between the endpoints.</li>
+<li><strong>Secure Real-Time Transport Protocol (SRTP):</strong> Once
+the DTLS handshake is complete, the negotiated keys are used to encrypt
+the actual WebM stream packets via SRTP (typically using AES-128 or
+AES-256). SRTP provides both payload encryption to block eavesdropping
+and message authentication to prevent packet injection or
+tampering.</li>
+</ul>
+<h3 id="cryptographic-fingerprinting-to-stop-mitm-attacks">Cryptographic
+Fingerprinting to Stop MitM Attacks</h3>
+<p>A common vector for MitM attacks is intercepting the connection
+setup. WebRTC mitigates this during the signaling phase through
+certificate fingerprint verification:</p>
+<ol type="1">
+<li><strong>Ephemeral Certificate Generation:</strong> Each peer
+generates a self-signed cryptographic certificate for the DTLS
+session.</li>
+<li><strong>SDP Fingerprint Exchange:</strong> During signaling, peers
+exchange Session Description Protocol (SDP) messages containing a
+cryptographic hash (fingerprint) of their DTLS certificates over an
+encrypted signaling channel (HTTPS or Secure WebSockets).</li>
+<li><strong>Cross-Verification:</strong> When the direct DTLS handshake
+occurs over the peer-to-peer connection, each client verifies that the
+certificate presented matches the fingerprint received earlier in the
+SDP. If an attacker intercepts the connection and presents their own
+certificate, the fingerprint check fails and the connection terminates
+immediately.</li>
+</ol>
+<h3 id="perfect-forward-secrecy-pfs">Perfect Forward Secrecy (PFS)</h3>
+<p>WebRTC implementations mandate cipher suites that utilize ephemeral
+Diffie-Hellman key exchanges (such as ECDHE). Because unique, temporary
+session keys are generated for each session and discarded afterward, a
+compromise of long-term credentials or a single session's key cannot be
+used to decrypt previously recorded WebM streams.</p>
+<h3 id="end-to-end-media-integrity-and-source-authentication">End-to-End
+Media Integrity and Source Authentication</h3>
+<p>SRTP includes an authentication tag in each packet header. This
+enables receiving endpoints to verify that the media originated from the
+authenticated sender and that no frames or audio packets were modified
+in transit. Replay protection mechanisms are also active, ensuring that
+intercepted packets cannot be re-sent maliciously by a third party.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

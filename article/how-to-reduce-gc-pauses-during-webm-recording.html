@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Reduce GC Pauses During WebM Recording - webm</title>
+    <meta name="description" content="In-browser WebM recording often generates massive amounts of temporary binary data, causing frequent Garbage Collection (GC) pauses that result in dropped video frames and audio stutter. This article outlines critical memory footprint optimizations—inc">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-reduce-gc-pauses-during-webm-recording">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Reduce GC Pauses During WebM Recording - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-reduce-gc-pauses-during-webm-recording" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In-browser WebM recording often generates massive amounts of temporary binary data, causing frequent Garbage Collection (GC) pauses that result in dropped video frames and audio stutter. This article outlines critical memory footprint optimizations—inc" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-reduce-gc-pauses-during-webm-recording">How to Reduce GC
+Pauses During WebM Recording</h1>
+<p>In-browser WebM recording often generates massive amounts of
+temporary binary data, causing frequent Garbage Collection (GC) pauses
+that result in dropped video frames and audio stutter. This article
+outlines critical memory footprint optimizations—including object
+pooling, transitioning to zero-copy WebCodecs APIs, offloading tasks via
+Web Workers, and streaming data immediately to disk or network
+targets—to eliminate memory churn and maintain consistent, smooth frame
+rates during WebM capture.</p>
+<h2 id="implement-arraybuffer-and-typedarray-pooling">Implement
+ArrayBuffer and TypedArray Pooling</h2>
+<p>The primary cause of GC pauses during media encoding is the
+continuous allocation and disposal of short-lived buffers for each
+frame. Instead of allocating a new <code>Uint8Array</code> or
+<code>ArrayBuffer</code> for every raw video and audio frame:</p>
+<ul>
+<li><strong>Pre-allocate a fixed pool:</strong> Create a pool of
+reusable TypedArrays sized to your maximum expected frame payload.</li>
+<li><strong>Implement a lease-and-release pattern:</strong> Check out a
+buffer from the pool when a frame arrives, pass it to the encoder, and
+return it to the pool once the encoder completes processing.</li>
+<li><strong>Use ring buffers:</strong> For continuous audio or raw pixel
+staging, use a static circular buffer to eliminate allocations entirely
+during runtime.</li>
+</ul>
+<h2 id="transition-from-mediarecorder-to-the-webcodecs-api">Transition
+from MediaRecorder to the WebCodecs API</h2>
+<p>The standard <code>MediaRecorder</code> API encapsulates encoding
+internally, but often hides heavy memory allocations and makes it
+difficult to control memory lifecycles. Migrating to the
+<strong>WebCodecs API</strong> (<code>VideoEncoder</code> and
+<code>AudioEncoder</code>) provides fine-grained memory management:</p>
+<ul>
+<li><strong>Explicit Resource Deallocation:</strong> Call
+<code>.close()</code> on <code>VideoFrame</code> and
+<code>AudioData</code> instances as soon as they are submitted to the
+encoder. Unlike standard JavaScript objects that wait for garbage
+collection, calling <code>.close()</code> immediately releases the
+underlying hardware or native memory reference.</li>
+<li><strong>Direct Frame Passing:</strong> Pass frame data directly from
+<code>HTMLCanvasElement</code> or <code>MediaStreamTrackProcessor</code>
+into <code>VideoFrame</code> without converting pixel data into
+intermediate <code>ImageData</code> or Base64 strings.</li>
+</ul>
+<h2 id="offload-processing-to-web-workers-with-transferables">Offload
+Processing to Web Workers with Transferables</h2>
+<p>Running encoding and multiplexing logic on the main thread causes GC
+cycles to block rendering and user interaction. Moving this pipeline to
+a dedicated Web Worker isolates GC pauses:</p>
+<ul>
+<li><strong>Use Transferable Objects:</strong> When sending
+<code>ArrayBuffer</code> or <code>ImageBitmap</code> instances between
+threads, transfer ownership using the second argument of
+<code>postMessage([buffer], [buffer])</code>. This transfers the memory
+reference instantly with zero-copy overhead and leaves the sender with a
+zero-length buffer, preventing duplicate memory usage.</li>
+<li><strong>SharedArrayBuffer:</strong> Where supported, utilize
+<code>SharedArrayBuffer</code> along with <code>Atomics</code> to allow
+the worker and main thread to read and write to the same memory segment
+without copying or message-passing overhead.</li>
+</ul>
+<h2 id="stream-chunks-instead-of-accumulating-in-memory-blobs">Stream
+Chunks Instead of Accumulating In-Memory Blobs</h2>
+<p>A common anti-pattern is pushing incoming data packets into an array
+(<code>chunks.push(event.data)</code>) until recording ends, then
+creating a giant <code>new Blob(chunks)</code>. This requires contiguous
+memory allocations that spike the heap:</p>
+<ul>
+<li><strong>Stream to Disk:</strong> Use the <strong>File System Access
+API</strong> (<code>createWritable()</code>) to pipe encoded WebM
+clusters directly to the local disk as they arrive.</li>
+<li><strong>Stream over Network:</strong> If uploading, pipe data chunks
+directly into a <code>ReadableStream</code> backing a
+<code>fetch()</code> <code>POST</code> request with HTTP chunked
+transfer encoding.</li>
+<li><strong>Bypass Blob Creation:</strong> Release references to
+individual WebM clusters immediately after writing them to the
+stream.</li>
+</ul>
+<h2 id="optimize-ebml-and-webm-muxing">Optimize EBML and WebM
+Muxing</h2>
+<p>WebM relies on the Extensible Binary Meta Language (EBML).
+Lightweight JavaScript muxers often assemble EBML elements by
+dynamically concatenating binary arrays:</p>
+<ul>
+<li><strong>Pre-calculate Cluster Sizes:</strong> Avoid dynamic resizing
+of byte buffers by sizing EBML cluster headers and payloads before
+writing.</li>
+<li><strong>Write Directly to Target Buffers:</strong> Configure your
+muxer to write output bytes into a shared, pre-allocated output buffer
+rather than creating nested arrays of byte segments.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

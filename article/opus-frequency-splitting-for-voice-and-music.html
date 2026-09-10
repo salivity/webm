@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opus Frequency Splitting for Voice and Music - webm</title>
+    <meta name="description" content="The Opus audio codec, standard in WebM media containers, achieves high-fidelity reproduction of both speech and music through a hybrid architecture that splits audio into distinct frequency bands. By dynamically dividing the spectrum, Opus routes lower f">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/opus-frequency-splitting-for-voice-and-music">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Opus Frequency Splitting for Voice and Music - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/opus-frequency-splitting-for-voice-and-music" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The Opus audio codec, standard in WebM media containers, achieves high-fidelity reproduction of both speech and music through a hybrid architecture that splits audio into distinct frequency bands. By dynamically dividing the spectrum, Opus routes lower f" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="opus-frequency-splitting-for-voice-and-music">Opus Frequency
+Splitting for Voice and Music</h1>
+<p>The Opus audio codec, standard in WebM media containers, achieves
+high-fidelity reproduction of both speech and music through a hybrid
+architecture that splits audio into distinct frequency bands. By
+dynamically dividing the spectrum, Opus routes lower frequencies to a
+voice-optimized Linear Predictive Coding (LPC) engine and upper
+frequencies to a transform-based music engine. This article details the
+specific frequency-splitting mechanisms, filter bank architectures, and
+band-blending techniques Opus utilizes to merge voice and music
+seamlessly into a single track.</p>
+<h3 id="the-hybrid-architecture-silk-and-celt">The Hybrid Architecture:
+SILK and CELT</h3>
+<p>Opus combines two independent audio coding algorithms: SILK and CELT.
+SILK, originally created for Skype, is optimized for human voice through
+LPC, excelling at low bitrates and lower frequencies. CELT (Constrained
+Energy Lapped Transform) relies on the Modified Discrete Cosine
+Transform (MDCT), making it ideal for music, ambient noise, and complex
+high-frequency harmonics.</p>
+<p>To blend these two types of signals, Opus operates in three
+operational states:</p>
+<ul>
+<li><strong>SILK-only mode:</strong> Used for pure speech at lower
+bitrates and narrow bandwidths.</li>
+<li><strong>CELT-only mode:</strong> Used for dedicated music,
+low-latency applications, or fullband transients.</li>
+<li><strong>Hybrid mode:</strong> Employs frequency splitting to run
+both encoders simultaneously on different portions of the spectrum.</li>
+</ul>
+<h3 id="the-8-khz-crossover-point">The 8 kHz Crossover Point</h3>
+<p>In Hybrid mode, Opus processes Superwideband (12 kHz audio bandwidth
+/ 24 kHz sampling rate) or Fullband (20 kHz audio bandwidth / 48 kHz
+sampling rate) audio by splitting the input spectrum at an 8 kHz
+boundary:</p>
+<ol type="1">
+<li><strong>The Low Band (0 Hz to 8 kHz):</strong> Encoded with SILK.
+This range covers the fundamental frequencies and the most critical
+formants of human speech.</li>
+<li><strong>The High Band (8 kHz to 20 kHz):</strong> Encoded with CELT.
+This range handles the breathiness of voice, harmonic air, percussion
+transients, and instrumental overtones.</li>
+</ol>
+<p>Because human ear sensitivity to pitch precision drops in higher
+registers, CELT encodes the high band using energy preservation rather
+than precise waveform matching, saving significant bitrate while
+preserving perceptual brightness.</p>
+<h3 id="complementary-filter-banks-and-qmf-implementation">Complementary
+Filter Banks and QMF Implementation</h3>
+<p>To split the frequency bands without introducing phase distortion,
+Opus employs a two-band critically sampled filter bank structure based
+on Quadrature Mirror Filters (QMF):</p>
+<ul>
+<li><strong>Low-Pass / High-Pass Complementary Filtering:</strong> The
+input audio stream passes through a pair of linear-phase finite impulse
+response (FIR) filters. The low-pass branch downsamples and isolates the
+speech baseband, while the high-pass branch isolates the top band.</li>
+<li><strong>Phase Alignment and Delay Matching:</strong> Linear
+predictive synthesis inherently introduces algorithmic delays different
+from overlap-add transform windows. Opus introduces fixed-delay
+compensation buffers in the CELT path to match the algorithmic lookahead
+and processing delay of the SILK path. This alignment guarantees that
+the transient edges of the high and low bands arrive simultaneously at
+the decoder.</li>
+<li><strong>Critically Sampled Decimation:</strong> The 0–8 kHz band is
+decimated to a 16 kHz sample rate suitable for SILK's internal pipeline,
+while CELT natively computes MDCT frames matching the remaining sampling
+spectrum. This eliminates computational redundancy by processing only
+the necessary samples per domain.</li>
+</ul>
+<h3 id="spectral-recombination-and-artifact-suppression">Spectral
+Recombination and Artifact Suppression</h3>
+<p>At the decoding phase inside the WebM container pipeline, the two
+bands are decoded separately and synthesized back into a unified
+signal:</p>
+<ul>
+<li><strong>Overlap-Add Smoothing:</strong> The reconstructed CELT high
+band and SILK low band are upsampled back to the master output rate
+(typically 48 kHz).</li>
+<li><strong>Complementary Synthesis Filters:</strong> The bands pass
+through synthesis QMF stages that mirror the analysis filters. The
+complementary frequency responses cancel out adjacent aliasing effects
+that occur near the 8 kHz crossover zone.</li>
+<li><strong>Dynamic Spectral Tilt Matching:</strong> Because speech
+codecs and transform codecs model audio energy profiles differently,
+Opus applies dynamic gain adjustments near the boundary. This
+normalization prevents an audible "shelf" or spectral gap between the
+upper limit of the voice channel and the lower limit of the music
+channel.</li>
+</ul>
+<p>By coupling a critically sampled QMF network with dedicated delay
+compensation, Opus enables WebM audio tracks to maintain intelligible
+voice formants and crisp musical acoustics within a single unified
+stream.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

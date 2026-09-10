@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Dev Tools WebM Frame Decode Metrics - webm</title>
+    <meta name="description" content="Modern web browser developer tools evaluate WebM frame decode times by capturing low-level media engine metrics, internal trace events, and platform decoder timestamps. When playing WebM containers—typically carrying VP8, VP9, or AV1 video streams—br">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/browser-dev-tools-webm-frame-decode-metrics">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Browser Dev Tools WebM Frame Decode Metrics - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/browser-dev-tools-webm-frame-decode-metrics" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern web browser developer tools evaluate WebM frame decode times by capturing low-level media engine metrics, internal trace events, and platform decoder timestamps. When playing WebM containers—typically carrying VP8, VP9, or AV1 video streams—br" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="browser-dev-tools-webm-frame-decode-metrics">Browser Dev Tools
+WebM Frame Decode Metrics</h1>
+<p>Modern web browser developer tools evaluate WebM frame decode times
+by capturing low-level media engine metrics, internal trace events, and
+platform decoder timestamps. When playing WebM containers—typically
+carrying VP8, VP9, or AV1 video streams—browsers track the temporal
+progression of frames from the initial demuxing stage through decoding
+and eventual presentation. Developer tools leverage these data points to
+help engineers diagnose dropped frames, pipeline stalls, and hardware
+acceleration bottlenecks.</p>
+<h3 id="decoder-processing-duration">Decoder Processing Duration</h3>
+<p>The primary internal metric for evaluating decode performance is
+decoder processing duration (often exposed internally as
+<code>video_decode_time_ns</code> or decode latency). This measures the
+wall-clock time between when an encoded WebM packet (a block extracted
+from the Matroska/EBML container) is handed to the decoder and when the
+uncompressed frame (such as YUV420P or NV12) is released.</p>
+<p>In Chromium-based browsers, the media pipeline tracks this using
+monotonic timestamps (<code>base::TimeTicks</code>). Depending on the
+architecture:</p>
+<ul>
+<li><strong>Software Decoders (e.g., libvpx, libaom):</strong> The
+browser measures the exact CPU execution time consumed by codec decode
+calls (such as <code>vpx_codec_decode</code>).</li>
+<li><strong>Hardware Decoders (e.g., VA-API, D3D11VideoDecoder,
+VideoToolbox):</strong> The metric tracks the asynchronous dispatch, GPU
+compute time, and the return of the hardware texture or surface
+handle.</li>
+</ul>
+<h3 id="tracing-events-and-medialog-entries">Tracing Events and MediaLog
+Entries</h3>
+<p>Browser profiling tools, such as the Chrome DevTools Performance
+panel and <code>chrome://media-internals</code> (or
+<code>chrome://media-engagement</code>), access metrics generated by
+internal tracing infrastructure under categories like <code>media</code>
+and <code>gpu</code>. Key internal identifiers include:</p>
+<ul>
+<li><strong><code>VideoFrameStream::EnqueueDecode</code> and
+<code>OnFrameReady</code>:</strong> Measures queue delays and completion
+callbacks for pending decode tasks.</li>
+<li><strong><code>MojoVideoDecoder::Decode</code>:</strong> Traces
+cross-process communication time when decoding occurs in a dedicated GPU
+or utility process rather than the renderer.</li>
+<li><strong><code>kTotalVideoFramesDecoded</code> and
+<code>kDroppedFrameCount</code>:</strong> Cumulative counters that
+capture whether the decoder is falling behind real-time playback
+rates.</li>
+<li><strong><code>pipeline_state</code> and
+<code>pipeline_buffering_state</code>:</strong> Logs transitions that
+occur when decode times exceed presentation deadlines, leading to
+underflow states.</li>
+</ul>
+<h3 id="frame-timing-and-presentation-metadata">Frame Timing and
+Presentation Metadata</h3>
+<p>DevTools cross-references decode times with container-level and
+display-level timestamps to detect performance degradation:</p>
+<ul>
+<li><strong>Presentation Timestamps (PTS):</strong> Embedded within the
+WebM SimpleBlock or Block structures, PTS values define when a frame
+must be shown. DevTools track whether the decoded frame's completion
+timestamp precedes its calculated presentation target.</li>
+<li><strong><code>processingDuration</code> via
+<code>requestVideoFrameCallback</code>:</strong> DevTools and
+performance APIs expose this internal platform measurement directly to
+JavaScript. It captures the elapsed time between submission of the
+encoded frame to the platform video decoder and the availability of the
+decoded frame for compositing.</li>
+</ul>
+<h3 id="render-and-compositor-handoff-timestamps">Render and Compositor
+Handoff Timestamps</h3>
+<p>Decoding does not end when the bitstream is parsed; the frame must be
+uploaded or mapped for the compositor. DevTools track:</p>
+<ul>
+<li><strong>Texture Transfer Latency:</strong> The time required to map
+software-decoded buffers into GPU memory (relevant when hardware
+decoding is unavailable).</li>
+<li><strong>Surface Acquisition Delays:</strong> The time required to
+lock and bind hardware surfaces to the browser's graphics pipeline for
+rendering via WebGL, WebGPU, or standard compositing layers.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Testing WebM Demuxer Modules - webm</title>
+    <meta name="description" content="This article provides an overview of the key methodologies used to unit test WebM demuxer modules in software applications. A WebM demuxer is responsible for parsing Extensible Binary Meta Language (EBML) containers to extract compressed video (VP8, VP9,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/unit-testing-webm-demuxer-modules">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Unit Testing WebM Demuxer Modules - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/unit-testing-webm-demuxer-modules" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of the key methodologies used to unit test WebM demuxer modules in software applications. A WebM demuxer is responsible for parsing Extensible Binary Meta Language (EBML) containers to extract compressed video (VP8, VP9," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="unit-testing-webm-demuxer-modules">Unit Testing WebM Demuxer
+Modules</h1>
+<p>This article provides an overview of the key methodologies used to
+unit test WebM demuxer modules in software applications. A WebM demuxer
+is responsible for parsing Extensible Binary Meta Language (EBML)
+containers to extract compressed video (VP8, VP9, AV1) and audio
+(Vorbis, Opus) streams alongside synchronization metadata. Testing these
+modules requires a combination of synthetic data generation, golden file
+regression, I/O boundary mocking, and robustness validation against
+malformed inputs.</p>
+<h3 id="1-synthetic-in-memory-ebml-stream-testing">1. Synthetic
+In-Memory EBML Stream Testing</h3>
+<p>Rather than loading large files from disk, unit tests should
+construct minimal, valid EBML byte sequences directly in memory. Because
+WebM is a subset of the Matroska container format, individual EBML
+elements (such as the Header, Segment, Info, Tracks, and Cluster
+elements) can be isolated and fed into the demuxer.</p>
+<ul>
+<li><strong>Header Parsing Verification:</strong> Pass isolated EBML
+header bytes to ensure the parser correctly identifies the
+<code>DocType</code> as "webm", validates <code>DocTypeVersion</code>,
+and extracts metadata like <code>TimecodeScale</code>.</li>
+<li><strong>Track Initialization Tests:</strong> Provide a synthesized
+<code>Tracks</code> element containing audio and video definitions to
+verify that codec IDs (e.g., <code>V_VP9</code>, <code>A_OPUS</code>),
+track numbers, and sampling rates are properly mapped to internal track
+structures.</li>
+</ul>
+<h3 id="2-golden-fixture-and-regression-testing">2. Golden Fixture and
+Regression Testing</h3>
+<p>Golden testing relies on small, deterministic WebM test fixtures with
+pre-computed, known-good outputs.</p>
+<ul>
+<li><strong>Packet-by-Packet Assertion:</strong> The demuxer processes a
+fixture, and the test asserts that extracted packet payloads, PTS
+(Presentation Timestamp), DTS (Decode Timestamp), duration, and keyframe
+flags match the reference data exactly.</li>
+<li><strong>Seek and Cue Processing:</strong> Fixtures containing
+<code>Cues</code> elements are used to test seeking operations. The test
+commands the demuxer to seek to a specific timestamp and verifies that
+the read pointer repositions to the correct keyframe cluster without
+parsing the entire file linearly.</li>
+</ul>
+<h3 id="3-mocking-stream-and-io-interfaces">3. Mocking Stream and I/O
+Interfaces</h3>
+<p>WebM demuxers should be decoupled from file systems or network
+protocols by abstracting input behind an I/O interface (such as a
+generic stream or reader abstraction).</p>
+<ul>
+<li><strong>Partial and Chunked Reads:</strong> Unit tests simulate
+network streaming by delivering bytes in arbitrary chunk sizes or
+deliberately pausing input to ensure the demuxer returns an appropriate
+"needs more data" state without hanging or crashing.</li>
+<li><strong>Non-Seekable vs. Seekable Sources:</strong> Tests evaluate
+the demuxer's fallback logic when seeking is disabled on the mock
+reader, confirming it switches from index-based seeking to sequential
+cluster skipping.</li>
+</ul>
+<h3 id="4-boundary-and-edge-case-testing">4. Boundary and Edge-Case
+Testing</h3>
+<p>Container parsing frequently exposes boundary vulnerabilities such as
+integer overflows, truncated data, and variable-length integer (VINT)
+decoding errors.</p>
+<ul>
+<li><strong>Truncated Streams:</strong> Feed truncated files at various
+lifecycle points (e.g., in the middle of an EBML ID, within a cluster
+header, or mid-frame) to ensure graceful termination via error codes
+rather than unhandled panics or memory leaks.</li>
+<li><strong>Zero-Length Elements:</strong> Test how the parser handles
+empty clusters, missing tracks, or zero-duration segments.</li>
+<li><strong>Out-of-Order Elements:</strong> Validate that clusters with
+non-monotonic timestamps are either properly flagged, re-ordered, or
+ignored according to the demuxer's specification.</li>
+</ul>
+<h3 id="5-mutation-and-fuzz-testing">5. Mutation and Fuzz Testing</h3>
+<p>While traditional unit tests verify expected behavior, fuzz-based
+unit testing discovers edge-case vulnerabilities in parsing logic.</p>
+<ul>
+<li><strong>VINT Mutation:</strong> Mutate the length bits of EBML VINTs
+to verify the parser handles oversized or invalid element declarations
+safely.</li>
+<li><strong>Memory Bounds Checking:</strong> Feed corrupted cluster
+payloads to verify the demuxer never reads out-of-bounds memory when
+calculating frame sizes from block headers. Modern implementations
+integrate tools like AddressSanitizer (ASan) during these tests to
+detect undefined behavior immediately.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

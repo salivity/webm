@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forced Subtitle Attributes in WebM Explained - webm</title>
+    <meta name="description" content="WebM relies on a strict subset of the Matroska (EBML) specification to define multimedia streams, utilizing specific track-level header flags to dictate how subtitles behave during playback. To handle forced subtitles—tracks designed to display essenti">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/forced-subtitle-attributes-in-webm-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Forced Subtitle Attributes in WebM Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/forced-subtitle-attributes-in-webm-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM relies on a strict subset of the Matroska (EBML) specification to define multimedia streams, utilizing specific track-level header flags to dictate how subtitles behave during playback. To handle forced subtitles—tracks designed to display essenti" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="forced-subtitle-attributes-in-webm-explained">Forced Subtitle
+Attributes in WebM Explained</h1>
+<p>WebM relies on a strict subset of the Matroska (EBML) specification
+to define multimedia streams, utilizing specific track-level header
+flags to dictate how subtitles behave during playback. To handle forced
+subtitles—tracks designed to display essential narrative translations
+even when regular captions are disabled—WebM utilizes the
+<code>FlagForced</code> element in conjunction with
+<code>FlagDefault</code> within the track configuration.</p>
+<h3 id="the-primary-attribute-flagforced">The Primary Attribute:
+FlagForced</h3>
+<p>The core container attribute responsible for marking a subtitle track
+as forced is <strong><code>FlagForced</code></strong>.</p>
+<ul>
+<li><strong>EBML Element Name:</strong> <code>FlagForced</code></li>
+<li><strong>EBML ID:</strong> <code>[55][AA]</code></li>
+<li><strong>Type:</strong> Unsigned Integer (Boolean: <code>0</code> or
+<code>1</code>)</li>
+<li><strong>Default Value:</strong> <code>0</code> (False)</li>
+</ul>
+<p>When set to <code>1</code>, this element marks the subtitle track as
+containing information essential to the narrative that must be
+displayed, regardless of whether the user has globally disabled
+subtitles. Typical use cases include translating short segments of
+foreign dialogue, translating alien languages, or displaying translated
+signage while the main audio remains in the viewer’s native
+language.</p>
+<h3 id="supporting-attribute-flagdefault">Supporting Attribute:
+FlagDefault</h3>
+<p>While <code>FlagForced</code> identifies the <em>nature</em> of the
+content, media players frequently rely on
+<strong><code>FlagDefault</code></strong> to handle automatic stream
+selection.</p>
+<ul>
+<li><strong>EBML Element Name:</strong> <code>FlagDefault</code></li>
+<li><strong>EBML ID:</strong> <code>[88]</code></li>
+<li><strong>Type:</strong> Unsigned Integer (Boolean: <code>0</code> or
+<code>1</code>)</li>
+<li><strong>Default Value:</strong> <code>1</code> (True, if omitted in
+standard Matroska specifications)</li>
+</ul>
+<p>For forced subtitles to activate predictably across various software
+environments, <code>FlagDefault</code> should be set to <code>1</code>
+on the forced subtitle track. This informs the playback engine that the
+track is eligible for immediate activation if no explicit user
+preference overrides it.</p>
+<h3 id="required-parent-and-contextual-elements">Required Parent and
+Contextual Elements</h3>
+<p>For a WebM player to properly parse and render a forced subtitle
+stream, the flags must reside inside the proper track definition
+structure:</p>
+<ol type="1">
+<li><strong><code>Tracks</code>
+(<code>[16][54][AE][6B]</code>):</strong> The top-level master element
+containing all stream definitions.</li>
+<li><strong><code>TrackEntry</code> (<code>[AE]</code>):</strong> The
+master element representing the specific subtitle track.
+<ul>
+<li><strong><code>TrackType</code> (<code>[83]</code>):</strong> Must be
+set to <code>17</code> (hexadecimal <code>0x11</code>), which identifies
+the track as a <code>subtitles</code> stream.</li>
+<li><strong><code>CodecID</code> (<code>[86]</code>):</strong> WebM
+exclusively supports WebVTT for subtitles, represented as
+<code>D_WEBVTT/SUBTITLES</code> or <code>D_WEBVTT/METADATA</code>.</li>
+<li><strong><code>Language</code> (<code>[22][B5][9C]</code>):</strong>
+Defines the language tag (ISO 639-2 or BCP 47) so players can match the
+forced track to the active audio language.</li>
+<li><strong><code>FlagForced</code> (<code>[55][AA]</code>):</strong>
+Set to <code>1</code>.</li>
+<li><strong><code>FlagDefault</code> (<code>[88]</code>):</strong> Set
+to <code>1</code>.</li>
+</ul></li>
+</ol>
+<h3 id="player-behavior-and-compatibility">Player Behavior and
+Compatibility</h3>
+<p>Unlike standard desktop media players (such as MPV or VLC) which read
+the Matroska <code>FlagForced</code> binary attribute natively, HTML5
+browsers parsing WebM via native <code>&lt;video&gt;</code> elements
+often rely on HTML-level attributes rather than container-level EBML
+flags.</p>
+<p>When embedding WebM in web browsers, developers typically map the
+container's <code>FlagForced</code> state to the HTML
+<code>&lt;track&gt;</code> element using <code>kind="subtitles"</code>
+and the <code>default</code> boolean attribute to ensure consistent
+forced behavior across client platforms.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

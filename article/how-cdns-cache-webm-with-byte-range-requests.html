@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How CDNs Cache WebM with Byte-Range Requests - webm</title>
+    <meta name="description" content="Content Delivery Networks (CDNs) leverage HTTP byte-range requests to optimize the delivery and caching of WebM video files without requiring physical file fragmentation. By requesting and storing specific byte offsets rather than entire video files, CDN">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-cdns-cache-webm-with-byte-range-requests">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How CDNs Cache WebM with Byte-Range Requests - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-cdns-cache-webm-with-byte-range-requests" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Content Delivery Networks (CDNs) leverage HTTP byte-range requests to optimize the delivery and caching of WebM video files without requiring physical file fragmentation. By requesting and storing specific byte offsets rather than entire video files, CDN" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-cdns-cache-webm-with-byte-range-requests">How CDNs Cache
+WebM with Byte-Range Requests</h1>
+<p>Content Delivery Networks (CDNs) leverage HTTP byte-range requests to
+optimize the delivery and caching of WebM video files without requiring
+physical file fragmentation. By requesting and storing specific byte
+offsets rather than entire video files, CDNs can serve media segments
+dynamically, reduce origin load, improve time-to-first-frame, and
+seamlessly handle playback scrubbing. This article explains how
+byte-range requests interact with the WebM container format and the
+mechanisms CDNs use to cache and deliver these media segments
+efficiently.</p>
+<h3 id="understanding-webm-structure-and-byte-ranges">Understanding WebM
+Structure and Byte Ranges</h3>
+<p>The WebM container format is based on Matroska (EBML) and organizes
+media data into discrete headers, cues (indexes), and clusters of video
+and audio blocks. When a modern browser plays a WebM stream—frequently
+via Media Source Extensions (MSE)—it does not need to download the full
+media asset at once.</p>
+<p>Instead, the browser:</p>
+<ol type="1">
+<li>Requests the initial header and index bytes to parse metadata.</li>
+<li>Identifies the byte offsets for specific timecodes using the WebM
+cue points.</li>
+<li>Issues HTTP <code>Range</code> requests (e.g.,
+<code>Range: bytes=1048576-2097151</code>) to fetch only the clusters
+required for immediate playback or seeking.</li>
+</ol>
+<h3 id="how-cdns-intercept-and-slice-range-requests">How CDNs Intercept
+and Slice Range Requests</h3>
+<p>When a user requests a byte range, modern CDN edge nodes process the
+request using a technique known as range slicing or partial-content
+caching:</p>
+<ul>
+<li><strong>Sub-Range Alignment:</strong> Rather than passing arbitrary
+client byte offsets directly to the origin, the CDN edge divides the
+target file into standardized, contiguous blocks (typically 1 MB to 8 MB
+per slice).</li>
+<li><strong>Targeted Origin Fetching:</strong> If a client requests
+bytes <code>1,500,000</code> to <code>2,500,000</code>, the CDN maps
+this range to the corresponding internal slice(s). It queries the origin
+only for missing slices using standard <code>Range</code> headers,
+leaving existing cached slices untouched.</li>
+<li><strong>HTTP 206 Partial Content Assembly:</strong> Once the CDN
+possesses the required slices, it extracts the exact byte range
+requested by the client, formats the response with an
+<code>HTTP/1.1 206 Partial Content</code> status code and a
+<code>Content-Range</code> header, and delivers it to the user.</li>
+</ul>
+<h3 id="key-efficiency-benefits">Key Efficiency Benefits</h3>
+<h4 id="1-single-asset-management-on-the-origin">1. Single Asset
+Management on the Origin</h4>
+<p>Unlike segmented protocols like traditional HLS or MPEG-DASH—which
+often store thousands of individual <code>.m4s</code> or
+<code>.ts</code> chunk files on the origin—WebM with byte-range requests
+requires only a single contiguous <code>.webm</code> file. The CDN
+creates the segmentation layer virtually on the edge, reducing origin
+file-system overhead and simplifying asset storage.</p>
+<h4 id="2-efficient-seeking-and-reduced-bandwidth-waste">2. Efficient
+Seeking and Reduced Bandwidth Waste</h4>
+<p>When users seek forward in a video or abandon playback early,
+requesting full media files leads to wasted bandwidth. Byte-range
+caching ensures that only the clusters surrounding the user's active
+playback position are fetched from the origin and cached at the edge,
+drastically reducing origin egress costs.</p>
+<h4 id="3-high-cache-hit-ratios-for-popular-segments">3. High Cache Hit
+Ratios for Popular Segments</h4>
+<p>Standardizing byte-slice sizes across the CDN ensures that different
+users watching the same video contribute to the same cache footprint,
+even if their players request slightly different offsets. The video
+initialization segment (containing the EBML header and cues) and the
+opening clusters achieve near-permanent edge residency due to high reuse
+across all viewing sessions.</p>
+<h4 id="4-collapsed-forwarding">4. Collapsed Forwarding</h4>
+<p>If multiple clients simultaneously request different or overlapping
+ranges of a WebM file that is not yet fully cached, CDNs use request
+collapsing. The edge node combines simultaneous requests for the same
+slice into a single upstream request to the origin, preventing traffic
+spikes and buffering delays.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

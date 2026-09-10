@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw WebM Video Frames to HTML5 Canvas in Real Time - webm</title>
+    <meta name="description" content="Drawing WebM video frames onto an HTML5 canvas for real-time processing is primarily achieved using the 2D Canvas rendering context method drawImage() driven by a synchronized animation loop such as requestVideoFrameCallback() or requestAnimationFrame().">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/draw-webm-video-frames-to-html5-canvas-in-real-time">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Draw WebM Video Frames to HTML5 Canvas in Real Time - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/draw-webm-video-frames-to-html5-canvas-in-real-time" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Drawing WebM video frames onto an HTML5 canvas for real-time processing is primarily achieved using the 2D Canvas rendering context method drawImage() driven by a synchronized animation loop such as requestVideoFrameCallback() or requestAnimationFrame()." />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="draw-webm-video-frames-to-html5-canvas-in-real-time">Draw WebM
+Video Frames to HTML5 Canvas in Real Time</h1>
+<p>Drawing WebM video frames onto an HTML5 canvas for real-time
+processing is primarily achieved using the 2D Canvas rendering context
+method <code>drawImage()</code> driven by a synchronized animation loop
+such as <code>requestVideoFrameCallback()</code> or
+<code>requestAnimationFrame()</code>. This technique allows developers
+to capture individual video frames from an HTML5
+<code>&lt;video&gt;</code> element playing a WebM stream, render them as
+graphical textures onto a <code>&lt;canvas&gt;</code>, and apply
+pixel-level modifications, computer vision algorithms, or WebGL shader
+effects in real time.</p>
+<h3 id="the-core-rendering-pipeline">The Core Rendering Pipeline</h3>
+<p>The rendering workflow relies on a direct bridge between the
+browser's video decoding engine and the HTML5 Canvas API.</p>
+<ol type="1">
+<li><strong>Source Playback:</strong> An HTML5
+<code>&lt;video&gt;</code> element decodes the WebM container (typically
+housing VP8, VP9, or AV1 video streams). The element does not need to be
+visible in the DOM; it can exist entirely in memory.</li>
+<li><strong>Frame Transfer:</strong> The Canvas 2D context executes
+<code>context.drawImage(videoElement, dx, dy, width, height)</code>.
+This method treats the <code>&lt;video&gt;</code> element as an image
+source, capturing the currently displayed video frame and painting it to
+the canvas buffer.</li>
+<li><strong>Execution Loop:</strong> The drawing operation is placed
+inside a recurring loop to continuously process frames as the video
+plays.</li>
+</ol>
+<h3 id="synchronization-with-requestvideoframecallback">Synchronization
+with <code>requestVideoFrameCallback</code></h3>
+<p>While standard web animations often use
+<code>window.requestAnimationFrame()</code>, the modern standard for
+video manipulation is
+<code>HTMLVideoElement.requestVideoFrameCallback()</code>.</p>
+<p><code>requestVideoFrameCallback()</code> provides dedicated hooks
+into the video compositor. It guarantees that the callback runs only
+when a genuinely new video frame has been decoded and submitted for
+composition. This prevents:</p>
+<ul>
+<li><strong>Frame duplication:</strong> Drawing the same frame multiple
+times when the screen refresh rate exceeds the video frame rate.</li>
+<li><strong>Tearing and dropped frames:</strong> Running out of sync
+with the underlying media decoder.</li>
+</ul>
+<p>If legacy browser support is required, developers fall back to
+<code>requestAnimationFrame()</code> tied to the video's
+<code>timeupdate</code> or <code>play</code> events.</p>
+<h3 id="real-time-frame-processing-and-manipulation">Real-Time Frame
+Processing and Manipulation</h3>
+<p>Once a WebM frame is rendered onto the canvas, real-time analysis or
+transformations can be applied using two main approaches:</p>
+<ul>
+<li><strong>CPU-Based Pixel Manipulation (Canvas 2D):</strong> Calling
+<code>context.getImageData()</code> returns a
+<code>Uint8ClampedArray</code> containing the RGBA values of every
+pixel. Developers can iterate through this array to implement custom
+filters, chroma keying (green screen removal), object tracking, or edge
+detection before pushing the modified data back via
+<code>context.putImageData()</code>.</li>
+<li><strong>GPU-Accelerated Shaders (WebGL / WebGPU):</strong> For
+high-performance processing, the <code>&lt;video&gt;</code> element or
+canvas buffer is imported as a WebGL texture using
+<code>gl.texImage2D()</code> or <code>gl.copyTexImage2D()</code>. Custom
+fragment shaders can then process complex transformations, color
+grading, or 3D mapping at hardware-accelerated speeds.</li>
+</ul>
+<h3 id="key-considerations-for-real-time-execution">Key Considerations
+for Real-Time Execution</h3>
+<ul>
+<li><strong>Cross-Origin Resource Sharing (CORS):</strong> If the WebM
+source is hosted on an external domain, the <code>&lt;video&gt;</code>
+element must include the <code>crossOrigin="anonymous"</code> attribute,
+and the server must return appropriate CORS headers. Without this,
+accessing canvas pixel data will trigger a security exception and taint
+the canvas.</li>
+<li><strong>Performance Budget:</strong> Operations like
+<code>getImageData()</code> involve memory bandwidth overhead between
+the GPU and CPU. For high-resolution (1080p or 4K) WebM streams,
+minimizing array read/write operations or offloading tasks to WebGL
+shaders or Web Workers via <code>OffscreenCanvas</code> ensures smooth
+playback without dropping frames.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detect Audio Video Sync Drift in WebM Files - webm</title>
+    <meta name="description" content="Audio-video (AV) synchronization drift occurs when the audio and visual tracks of a media container gradually fall out of alignment over time. This article covers automated methods and scripts used to detect and measure AV sync discrepancies in generated">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/detect-audio-video-sync-drift-in-webm-files">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Detect Audio Video Sync Drift in WebM Files - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/detect-audio-video-sync-drift-in-webm-files" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Audio-video (AV) synchronization drift occurs when the audio and visual tracks of a media container gradually fall out of alignment over time. This article covers automated methods and scripts used to detect and measure AV sync discrepancies in generated" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="detect-audio-video-sync-drift-in-webm-files">Detect Audio Video
+Sync Drift in WebM Files</h1>
+<p>Audio-video (AV) synchronization drift occurs when the audio and
+visual tracks of a media container gradually fall out of alignment over
+time. This article covers automated methods and scripts used to detect
+and measure AV sync discrepancies in generated WebM files, focusing on
+FFmpeg/FFprobe scripts, Python automation using packet presentation
+timestamps (PTS), and specialized media analysis tools.</p>
+<h2 id="understanding-av-drift-in-webm-containers">Understanding AV
+Drift in WebM Containers</h2>
+<p>WebM is a subset of the Matroska (MKV) container format that
+typically encapsulates VP8/VP9/AV1 video and Vorbis/Opus audio. Sync
+issues in generated WebM files generally stem from:</p>
+<ul>
+<li><strong>Variable Frame Rate (VFR) inconsistencies:</strong> Video
+frames dropping without corresponding timestamp adjustments.</li>
+<li><strong>Timestamp offsets:</strong> A difference between the initial
+audio PTS and video PTS (<code>start_time</code> offset).</li>
+<li><strong>Clock drift / Duration mismatch:</strong> Sampling rate
+discrepancies causing the audio stream's total duration to diverge from
+the video stream.</li>
+</ul>
+<hr />
+<h2 id="1-quick-duration-and-start-time-check-bash--ffprobe">1. Quick
+Duration and Start Time Check (Bash + FFprobe)</h2>
+<p>A fast method to detect gross desynchronization is comparing the
+start times and total durations of the primary audio and video streams
+using <code>ffprobe</code>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">FILE</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="ot">-z</span> <span class="st">&quot;</span><span class="va">$FILE</span><span class="st">&quot;</span> <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">&quot;Usage: </span><span class="va">$0</span><span class="st"> &lt;input.webm&gt;&quot;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">exit</span> 1</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract video and audio start times and durations</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="va">V_START</span><span class="op">=</span><span class="va">$(</span><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> v:0 <span class="at">-show_entries</span> stream=start_time <span class="at">-of</span> default=noprint_wrappers=1:nokey=1 <span class="st">&quot;</span><span class="va">$FILE</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="va">A_START</span><span class="op">=</span><span class="va">$(</span><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> a:0 <span class="at">-show_entries</span> stream=start_time <span class="at">-of</span> default=noprint_wrappers=1:nokey=1 <span class="st">&quot;</span><span class="va">$FILE</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="va">V_DUR</span><span class="op">=</span><span class="va">$(</span><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> v:0 <span class="at">-show_entries</span> stream=duration <span class="at">-of</span> default=noprint_wrappers=1:nokey=1 <span class="st">&quot;</span><span class="va">$FILE</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="va">A_DUR</span><span class="op">=</span><span class="va">$(</span><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> a:0 <span class="at">-show_entries</span> stream=duration <span class="at">-of</span> default=noprint_wrappers=1:nokey=1 <span class="st">&quot;</span><span class="va">$FILE</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Fallback to container-level duration if stream duration is empty</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="ot">-z</span> <span class="st">&quot;</span><span class="va">$V_DUR</span><span class="st">&quot;</span> <span class="bu">]</span> <span class="kw">||</span> <span class="bu">[</span> <span class="ot">-z</span> <span class="st">&quot;</span><span class="va">$A_DUR</span><span class="st">&quot;</span> <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="va">V_DUR</span><span class="op">=</span><span class="va">$(</span><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-show_entries</span> format=duration <span class="at">-of</span> default=noprint_wrappers=1:nokey=1 <span class="st">&quot;</span><span class="va">$FILE</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">A_DUR</span><span class="op">=</span><span class="va">$V_DUR</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate drift and offset using python for floating-point arithmetic</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-c</span> <span class="st">&quot;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="st">v_start = float(&#39;</span><span class="va">${V_START</span><span class="op">:-</span>0<span class="va">}</span><span class="st">&#39;)</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="st">a_start = float(&#39;</span><span class="va">${A_START</span><span class="op">:-</span>0<span class="va">}</span><span class="st">&#39;)</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="st">v_dur = float(&#39;</span><span class="va">${V_DUR</span><span class="op">:-</span>0<span class="va">}</span><span class="st">&#39;)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="st">a_dur = float(&#39;</span><span class="va">${A_DUR</span><span class="op">:-</span>0<span class="va">}</span><span class="st">&#39;)</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="st">start_offset = abs(v_start - a_start)</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="st">duration_drift = abs(v_dur - a_dur)</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="st">print(f&#39;Start Time Offset : {start_offset:.4f} s&#39;)</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="st">print(f&#39;Duration Drift    : {duration_drift:.4f} s&#39;)</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="st">THRESHOLD = 0.040 # 40ms standard broadcast tolerance</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="st">if start_offset &gt; THRESHOLD or duration_drift &gt; THRESHOLD:</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="st">    print(&#39;[FAIL] Desynchronization detected exceeding threshold.&#39;)</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="st">    exit(1)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="st">else:</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="st">    print(&#39;[PASS] Audio and video streams are synchronized.&#39;)</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span></code></pre></div>
+<hr />
+<h2 id="2-packet-level-timestamp-analysis-python">2. Packet-Level
+Timestamp Analysis (Python)</h2>
+<p>For generated files where streams are padded or frame drops cause
+gradual internal drift, packet-level analysis via <code>ffprobe</code>
+JSON output is required.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env python3</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> analyze_webm_sync(file_path, threshold_ms<span class="op">=</span><span class="dv">45</span>):</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    Analyzes packet presentation timestamps (PTS) to check for AV drift.</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    cmd <span class="op">=</span> [</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;ffprobe&quot;</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;-v&quot;</span>, <span class="st">&quot;error&quot;</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;-show_packets&quot;</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;-select_streams&quot;</span>, <span class="st">&quot;v:0,a:0&quot;</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;-show_entries&quot;</span>, <span class="st">&quot;packet=codec_type,pts_time,duration_time&quot;</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;-of&quot;</span>, <span class="st">&quot;json&quot;</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        file_path</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> subprocess.run(cmd, stdout<span class="op">=</span>subprocess.PIPE, stderr<span class="op">=</span>subprocess.PIPE, text<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> result.returncode <span class="op">!=</span> <span class="dv">0</span>:</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;Error reading file: </span><span class="sc">{</span>result<span class="sc">.</span>stderr<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        sys.exit(<span class="dv">1</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> json.loads(result.stdout)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    packets <span class="op">=</span> data.get(<span class="st">&quot;packets&quot;</span>, [])</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    video_pts <span class="op">=</span> [<span class="bu">float</span>(p[<span class="st">&quot;pts_time&quot;</span>]) <span class="cf">for</span> p <span class="kw">in</span> packets <span class="cf">if</span> p.get(<span class="st">&quot;codec_type&quot;</span>) <span class="op">==</span> <span class="st">&quot;video&quot;</span> <span class="kw">and</span> <span class="st">&quot;pts_time&quot;</span> <span class="kw">in</span> p]</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    audio_pts <span class="op">=</span> [<span class="bu">float</span>(p[<span class="st">&quot;pts_time&quot;</span>]) <span class="cf">for</span> p <span class="kw">in</span> packets <span class="cf">if</span> p.get(<span class="st">&quot;codec_type&quot;</span>) <span class="op">==</span> <span class="st">&quot;audio&quot;</span> <span class="kw">and</span> <span class="st">&quot;pts_time&quot;</span> <span class="kw">in</span> p]</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> video_pts <span class="kw">or</span> <span class="kw">not</span> audio_pts:</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">&quot;Error: Missing video or audio packets.&quot;</span>)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        sys.exit(<span class="dv">1</span>)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    initial_offset <span class="op">=</span> <span class="bu">abs</span>(video_pts[<span class="dv">0</span>] <span class="op">-</span> audio_pts[<span class="dv">0</span>]) <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    final_drift <span class="op">=</span> <span class="bu">abs</span>(video_pts[<span class="op">-</span><span class="dv">1</span>] <span class="op">-</span> audio_pts[<span class="op">-</span><span class="dv">1</span>]) <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;File: </span><span class="sc">{</span>file_path<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Initial Offset : </span><span class="sc">{</span>initial_offset<span class="sc">:.2f}</span><span class="ss"> ms&quot;</span>)</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Final End Delta: </span><span class="sc">{</span>final_drift<span class="sc">:.2f}</span><span class="ss"> ms&quot;</span>)</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> initial_offset <span class="op">&gt;</span> threshold_ms <span class="kw">or</span> final_drift <span class="op">&gt;</span> threshold_ms:</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;Result: FAIL (Exceeds </span><span class="sc">{</span>threshold_ms<span class="sc">}</span><span class="ss"> ms threshold)&quot;</span>)</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;Result: PASS&quot;</span>)</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(sys.argv) <span class="op">&lt;</span> <span class="dv">2</span>:</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">&quot;Usage: python3 sync_check.py &lt;file.webm&gt;&quot;</span>)</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>        sys.exit(<span class="dv">1</span>)</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>    success <span class="op">=</span> analyze_webm_sync(sys.argv[<span class="dv">1</span>])</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    sys.exit(<span class="dv">0</span> <span class="cf">if</span> success <span class="cf">else</span> <span class="dv">1</span>)</span></code></pre></div>
+<hr />
+<h2 id="3-signal-based-and-test-pattern-verification">3. Signal-Based
+and Test-Pattern Verification</h2>
+<p>When automated verification requires testing actual content
+synchronization (rather than only container metadata):</p>
+<ul>
+<li><strong>Flash-and-Beep Pattern Scripts:</strong> When generating
+synthetic WebM test media, inject a visual flash alongside an audio beep
+at set intervals (e.g., every 10 seconds). You can then run an automated
+script using FFmpeg filters (<code>blackdetect</code> /
+<code>freezedetect</code> combined with <code>ebur128</code> or
+<code>silencedetect</code>) to correlate the exact timestamps where the
+visual and audio events trigger.</li>
+<li><strong>QCTools CLI:</strong> The open-source <code>qcli</code> tool
+can process WebM files to output frame-by-frame quality metrics,
+including audio/video continuity flags that reveal dropped frames
+directly correlated to drift.</li>
+<li><strong>Cross-Correlation Automation:</strong> For transcode testing
+(e.g., source MP4 to generated WebM), scripts can extract the raw audio
+using FFmpeg, generate an acoustic fingerprint or cross-correlation
+matrix against the source audio track, and measure the exact sample
+shift.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How FFmpeg Libavformat Parses WebM EBML - webm</title>
+    <meta name="description" content="This article provides an overview of how FFmpeg’s libavformat library demuxes WebM media files by interpreting their underlying Extensible Binary Meta Language (EBML) architecture. It explores the shared relationship between Matroska and WebM within FF">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-ffmpeg-libavformat-parses-webm-ebml">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How FFmpeg Libavformat Parses WebM EBML - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-ffmpeg-libavformat-parses-webm-ebml" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of how FFmpeg’s libavformat library demuxes WebM media files by interpreting their underlying Extensible Binary Meta Language (EBML) architecture. It explores the shared relationship between Matroska and WebM within FF" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-ffmpeg-libavformat-parses-webm-ebml">How FFmpeg Libavformat
+Parses WebM EBML</h1>
+<p>This article provides an overview of how FFmpeg’s
+<code>libavformat</code> library demuxes WebM media files by
+interpreting their underlying Extensible Binary Meta Language (EBML)
+architecture. It explores the shared relationship between Matroska and
+WebM within FFmpeg's codebase, examines the declarative syntax mapping
+tables used in <code>matroskadec.c</code>, details the variable-length
+integer (VINT) decoding mechanism, and explains how hierarchical EBML
+elements are transformed into standard internal primitives such as
+streams, packets, and codec parameters.</p>
+<h3 id="the-unified-webm-and-matroska-demuxer">The Unified WebM and
+Matroska Demuxer</h3>
+<p>WebM is a constrained profile of the Matroska container format
+designed specifically for the web. Because WebM enforces Matroska’s
+underlying binary structure while restricting supported codecs primarily
+to VP8, VP9, AV1, Vorbis, and Opus, FFmpeg does not maintain an
+independent parsing engine for WebM. Instead, WebM files are routed
+directly through the unified Matroska demuxer implemented in
+<code>libavformat/matroskadec.c</code>.</p>
+<p>When FFmpeg probes an incoming stream, it scans the file signature
+for the EBML header. If the EBML <code>DocType</code> tag contains
+<code>webm</code>, the demuxer registers the stream under the
+Matroska/WebM parser context while enforcing standard WebM-specific
+constraints during demuxing.</p>
+<h3 id="declarative-parsing-with-ebmlsyntax">Declarative Parsing with
+<code>EbmlSyntax</code></h3>
+<p>Rather than using complex procedural state machines to parse every
+individual element, <code>libavformat</code> employs a declarative,
+table-driven approach. The core of this mechanism is the
+<code>EbmlSyntax</code> structure.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> EbmlSyntax <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> id<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> type<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> offset<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">union</span> <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">uint64_t</span> u<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">double</span>   f<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>s<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">const</span> <span class="kw">struct</span> EbmlSyntax <span class="op">*</span>n<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> def<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> EbmlSyntax<span class="op">;</span></span></code></pre></div>
+<p>Each <code>EbmlSyntax</code> definition links an EBML Element ID (a
+variable-length hexadecimal identifier) to a designated C data type
+(such as integers, floats, strings, binary data, or nested master
+elements) and an offset within internal demuxer structs like
+<code>MatroskaDemuxContext</code> or <code>MatroskaTrack</code>.</p>
+<p>FFmpeg defines hierarchical arrays of these syntax descriptors:</p>
+<ul>
+<li><strong>Header Elements:</strong> Tables define root-level metadata
+like <code>EBMLVersion</code> and <code>DocType</code>.</li>
+<li><strong>Segment Elements:</strong> Define Level 1 containers such as
+<code>Info</code>, <code>Tracks</code>, <code>Cues</code>, and
+<code>Cluster</code>.</li>
+<li><strong>Track Definitions:</strong> Define properties like
+<code>TrackNumber</code>, <code>TrackType</code>, <code>CodecID</code>,
+and default durations.</li>
+<li><strong>Master/Nested Elements:</strong> Use the
+<code>EBML_NEST</code> type to point recursively to sub-tables, directly
+mirroring the nested tree structure of the EBML file format.</li>
+</ul>
+<h3 id="decoding-variable-length-integers-vint">Decoding Variable-Length
+Integers (VINT)</h3>
+<p>All EBML elements are serialized in a Type-Length-Value (TLV) format
+using variable-length integers (VINTs). The FFmpeg demuxer reads the raw
+byte stream sequentially using helper routines like
+<code>ebml_read_num()</code>:</p>
+<ol type="1">
+<li><strong>Element ID Resolution:</strong> The parser reads the leading
+byte to count the number of consecutive zero bits preceding the first
+set bit. This determines the total byte length (between 1 and 4 bytes)
+of the Element ID.</li>
+<li><strong>Element Length Calculation:</strong> The parser immediately
+reads the subsequent VINT to determine the payload size of the element.
+A length filled with binary ones indicates an unknown length, which is
+standard for streaming WebM clusters.</li>
+<li><strong>Lookup and Deserialization:</strong> The demuxer takes the
+decoded Element ID and performs a lookup across the current
+<code>EbmlSyntax</code> table.</li>
+</ol>
+<p>If the ID is found, <code>ebml_parse_elem()</code> reads the payload
+according to the defined type and writes the value directly into the
+corresponding memory offset of the demuxer's state context. If an ID is
+unrecognized, FFmpeg uses the parsed length to seek past the unknown
+element, ensuring backward and forward format compatibility.</p>
+<h3 id="traversing-hierarchical-ebml-elements">Traversing Hierarchical
+EBML Elements</h3>
+<p>The WebM file structure maps to <code>libavformat</code> context
+structs through top-down recursive traversal:</p>
+<ul>
+<li><strong>EBML Header:</strong> Identifies protocol parameters and
+verifies that the file conforms to the <code>webm</code>
+specification.</li>
+<li><strong>Segment / Info:</strong> Extracts the container-level
+timescale (<code>TimestampScale</code>), application strings, and
+overall media duration.</li>
+<li><strong>Segment / Tracks:</strong> Parses individual track
+configurations. When an <code>EBML_NEST</code> containing track entries
+is encountered, the demuxer dynamically allocates a
+<code>MatroskaTrack</code> instance and populates video dimensions,
+pixel aspect ratios, audio sample rates, and channel layouts.</li>
+<li><strong>Segment / Cues:</strong> Parses random access indexes into
+the <code>MatroskaIndex</code> table to enable efficient seeking.</li>
+<li><strong>Segment / Cluster:</strong> Encapsulates the actual media
+payloads. Within each cluster, <code>Timecode</code> (timestamp) and
+<code>SimpleBlock</code> or <code>BlockGroup</code> elements are
+extracted.</li>
+</ul>
+<h3 id="mapping-ebml-payloads-to-ffmpeg-primitives">Mapping EBML
+Payloads to FFmpeg Primitives</h3>
+<p>Once the metadata hierarchy is resolved, <code>libavformat</code>
+maps the EBML tree into standard FFmpeg abstractions:</p>
+<ol type="1">
+<li><strong><code>AVStream</code> Creation:</strong> Each valid entry
+parsed from the <code>Tracks</code> element spawns a new
+<code>AVStream</code> attached to the <code>AVFormatContext</code>. The
+WebM <code>CodecID</code> (such as <code>V_VP9</code> or
+<code>A_OPUS</code>) is translated to an FFmpeg <code>AVCodecID</code>
+(e.g., <code>AV_CODEC_ID_VP9</code>, <code>AV_CODEC_ID_OPUS</code>) and
+stored in <code>AVStream-&gt;codecpar</code>.</li>
+<li><strong>Codec Private Data Extraction:</strong> Any
+<code>CodecPrivate</code> EBML binary element is copied into
+<code>AVStream-&gt;codecpar-&gt;extradata</code>, providing
+codec-specific initialization headers needed by downstream
+decoders.</li>
+<li><strong><code>AVPacket</code> Generation:</strong> When processing
+<code>SimpleBlock</code> structures within Clusters, the demuxer skips
+past the track number and relative timestamp flags, calculates the
+absolute presentation timestamp (PTS) by combining the Cluster timecode
+and the block's relative timecode, and packages the raw frame data into
+an <code>AVPacket</code>.</li>
+</ol>
+<p>Through this table-driven mapping system, <code>libavformat</code>
+decouples low-level EBML binary parsing from high-level media stream
+handling, ensuring efficient and memory-safe WebM ingestion.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

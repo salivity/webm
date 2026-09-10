@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Handles Multiple Subtitle Languages - webm</title>
+    <meta name="description" content="The WebM container format encapsulates multiple subtitle languages by utilizing the structural framework of Matroska and Extensible Binary Meta Language (EBML) to define independent subtitle tracks and multiplex their data into a single file. By declarin">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-webm-handles-multiple-subtitle-languages">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Handles Multiple Subtitle Languages - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-webm-handles-multiple-subtitle-languages" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format encapsulates multiple subtitle languages by utilizing the structural framework of Matroska and Extensible Binary Meta Language (EBML) to define independent subtitle tracks and multiplex their data into a single file. By declarin" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-webm-handles-multiple-subtitle-languages">How WebM Handles
+Multiple Subtitle Languages</h1>
+<p>The WebM container format encapsulates multiple subtitle languages by
+utilizing the structural framework of Matroska and Extensible Binary
+Meta Language (EBML) to define independent subtitle tracks and multiplex
+their data into a single file. By declaring separate track headers with
+specific language metadata and interleaving timestamped WebVTT payloads
+alongside audio and video packets, WebM allows media players to
+identify, select, and render different language streams
+synchronously.</p>
+<h3 id="ebml-track-architecture">EBML Track Architecture</h3>
+<p>WebM inherits its container hierarchy from Matroska, which organizes
+media streams using EBML master elements. Within the WebM header, the
+<code>Tracks</code> master element contains individual
+<code>TrackEntry</code> definitions for every stream in the file.</p>
+<p>To include multiple languages, the file author defines a separate
+<code>TrackEntry</code> for each language. Each subtitle entry contains
+essential descriptor tags:</p>
+<ul>
+<li><strong>TrackType:</strong> Set to <code>17</code> (or
+<code>0x11</code> in hexadecimal), identifying the stream specifically
+as subtitle data.</li>
+<li><strong>TrackNumber:</strong> A unique integer assigned to the
+track, used to identify its data packets throughout the file.</li>
+<li><strong>Language / LanguageIETF:</strong> Specifies the language
+code using ISO 639-2 (e.g., <code>eng</code>, <code>spa</code>,
+<code>fra</code>) or standard BCP 47 language tags.</li>
+<li><strong>Name:</strong> An optional human-readable label (such as
+"English SDH" or "Director's Commentary Subtitles") displayed in media
+player menus.</li>
+<li><strong>CodecID:</strong> Defines the format of the subtitle
+payload, typically <code>D_WEBVTT/SUBTITLES</code> or
+<code>D_WEBVTT/CAPTIONS</code> for WebM.</li>
+</ul>
+<h3 id="webvtt-payload-encapsulation">WebVTT Payload Encapsulation</h3>
+<p>WebM officially supports subtitles formatted as WebVTT (Web Video
+Text Tracks). In a multi-language WebM file, the text cues, formatting
+settings, and timing data are segmented into discrete WebVTT cue
+payloads. These text fragments are stored without the standard
+<code>WEBVTT</code> file header, as the container headers already define
+the stream parameters.</p>
+<h3 id="interleaving-in-clusters">Interleaving in Clusters</h3>
+<p>WebM stores media data chronologically within <code>Cluster</code>
+elements. Inside each cluster, media payloads are wrapped in
+<code>Block</code> or <code>SimpleBlock</code> elements.</p>
+<p>Every subtitle block includes:</p>
+<ol type="1">
+<li><strong>Track Reference:</strong> The <code>TrackNumber</code>
+linking the block back to its specific <code>TrackEntry</code> language
+definition.</li>
+<li><strong>Timestamp:</strong> The exact time code relative to the
+cluster's timecode, ensuring synchronization with the video and audio
+streams.</li>
+<li><strong>Payload:</strong> The raw WebVTT cue text for that specific
+time window.</li>
+</ol>
+<p>Because these blocks are interleaved chronologically based on their
+presentation timecodes, all language tracks coexist alongside audio and
+video packets within the same stream timeline.</p>
+<h3 id="demuxing-and-playback-selection">Demuxing and Playback
+Selection</h3>
+<p>When a media player or web browser loads a WebM file, the demuxer
+reads the <code>Tracks</code> header and registers all available
+subtitle tracks. It presents the language options to the user based on
+the <code>Language</code> and <code>Name</code> metadata.</p>
+<p>Once the user selects a language, the demuxer filters the incoming
+cluster blocks during playback, decoding only the <code>Block</code>
+elements matching the chosen <code>TrackNumber</code> while ignoring the
+data blocks corresponding to unselected languages.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Void Elements: Padding Rules and Constraints - webm</title>
+    <meta name="description" content="Void elements in WebM provide a mechanism to reserve space, align data blocks, or overwrite obsolete data without altering the overall structural validity of the media file. Because WebM is a strict subset of the Extensible Binary Meta Language (EBML) an">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-void-elements-padding-rules-and-constraints">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Void Elements: Padding Rules and Constraints - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-void-elements-padding-rules-and-constraints" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Void elements in WebM provide a mechanism to reserve space, align data blocks, or overwrite obsolete data without altering the overall structural validity of the media file. Because WebM is a strict subset of the Extensible Binary Meta Language (EBML) an" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-void-elements-padding-rules-and-constraints">WebM Void
+Elements: Padding Rules and Constraints</h1>
+<p>Void elements in WebM provide a mechanism to reserve space, align
+data blocks, or overwrite obsolete data without altering the overall
+structural validity of the media file. Because WebM is a strict subset
+of the Extensible Binary Meta Language (EBML) and Matroska
+specifications, specific constraints govern how Void elements must be
+constructed, sized, and placed within a container. Understanding these
+constraints is essential for maintaining standard compliance,
+streamability, and parser compatibility.</p>
+<h3 id="minimum-size-requirement">Minimum Size Requirement</h3>
+<p>The most fundamental constraint on a Void element is its minimum
+size. An EBML Void element consists of:</p>
+<ul>
+<li><strong>Element ID:</strong> 1 byte (<code>0xEC</code>)</li>
+<li><strong>Data Size Descriptor:</strong> A variable-length integer
+(VINT) of at least 1 byte</li>
+<li><strong>Payload:</strong> Zero or more bytes of arbitrary padding
+data</li>
+</ul>
+<p>Because the identifier and the length descriptor each require at
+least one byte, the smallest possible Void element occupies <strong>2
+bytes</strong> (a 1-byte ID followed by a 1-byte length of
+<code>0x00</code>). Consequently, a single byte of unused space cannot
+be converted into a Void element; single-byte gaps must instead be
+absorbed by expanding the length descriptor of an adjacent EBML
+element.</p>
+<h3 id="structural-placement-rules">Structural Placement Rules</h3>
+<p>Void elements are valid EBML elements and must adhere to the
+structural hierarchy of the container:</p>
+<ul>
+<li><strong>Element-Level Boundaries:</strong> Void elements may only be
+inserted where top-level or child EBML elements are permitted (for
+example, directly inside the <code>Segment</code> element, between
+<code>Cluster</code> elements, or within metadata headers).</li>
+<li><strong>No Mid-Element Splitting:</strong> A Void element cannot be
+placed inside an atomic data element, such as within a
+<code>SimpleBlock</code>, <code>BlockGroup</code>, or raw codec
+payload.</li>
+<li><strong>Sequential Integrity:</strong> While WebM readers must skip
+Void elements encountered anywhere in the container hierarchy, placing
+them within performance-sensitive sequences (such as inside individual
+<code>Cluster</code> payloads) can lead to inefficient parsing and
+should be limited to alignment boundaries.</li>
+</ul>
+<h3 id="length-descriptor-integrity-and-re-encoding">Length Descriptor
+Integrity and Re-encoding</h3>
+<p>When modifying a file in-place:</p>
+<ul>
+<li>The VINT indicating the size of the Void element must accurately
+match the exact number of padding bytes that follow.</li>
+<li>If an existing element is shrunk and replaced with a Void element,
+the length descriptor of the Void element must be calculated to consume
+the precise remaining byte count.</li>
+<li>If resizing alters the number of bytes required to encode the VINT
+itself, the payload size must be adjusted accordingly to prevent byte
+misalignment in the stream.</li>
+</ul>
+<h3 id="parser-behavior-and-payload-constraints">Parser Behavior and
+Payload Constraints</h3>
+<ul>
+<li><strong>Payload Agnosticism:</strong> The WebM specification
+dictates that the contents of a Void element's payload are undefined.
+WebM multiplexers commonly fill this space with zeroes, but parsers must
+safely skip the designated byte length regardless of content.</li>
+<li><strong>Non-Fatal Recognition:</strong> Compliant WebM demuxers and
+decoders must ignore Void elements without throwing errors or
+interrupting progressive playback.</li>
+</ul>
+<h3 id="streaming-and-profiling-considerations">Streaming and Profiling
+Considerations</h3>
+<p>WebM is optimized for progressive downloading and web streaming.
+Excessive or irregularly placed Void elements increase file overhead and
+can degrade buffer utilization. While the specification allows arbitrary
+padding, best practices dictate using Void elements primarily in the
+header region to reserve space for seek heads and cue tables during
+single-pass encoding.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

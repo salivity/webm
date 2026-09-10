@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Recorded WebM Blobs in Real-Time - webm</title>
+    <meta name="description" content="Streaming recorded WebM media blobs from a web browser to a remote server in real-time requires capturing media chunks as they are generated and transmitting them over a low-latency network protocol. This article outlines how to segment media data using">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/stream-recorded-webm-blobs-in-real-time">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Stream Recorded WebM Blobs in Real-Time - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/stream-recorded-webm-blobs-in-real-time" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Streaming recorded WebM media blobs from a web browser to a remote server in real-time requires capturing media chunks as they are generated and transmitting them over a low-latency network protocol. This article outlines how to segment media data using" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="stream-recorded-webm-blobs-in-real-time">Stream Recorded WebM
+Blobs in Real-Time</h1>
+<p>Streaming recorded WebM media blobs from a web browser to a remote
+server in real-time requires capturing media chunks as they are
+generated and transmitting them over a low-latency network protocol.
+This article outlines how to segment media data using the
+<code>MediaRecorder</code> API and details the primary JavaScript
+networking methods—WebSockets, WebTransport, the Fetch API with
+streaming request bodies, and WebRTC—used to transmit these WebM chunks
+to a backend server.</p>
+<h2 id="capturing-webm-blobs-in-real-time">Capturing WebM Blobs in
+Real-Time</h2>
+<p>The browser cannot stream a live recording as a single monolithic
+file. Instead, the <code>MediaRecorder</code> API must be configured to
+slice the recording into time-based chunks.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> stream <span class="op">=</span> <span class="cf">await</span> <span class="bu">navigator</span><span class="op">.</span><span class="at">mediaDevices</span><span class="op">.</span><span class="fu">getUserMedia</span>({ <span class="dt">video</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">audio</span><span class="op">:</span> <span class="kw">true</span> })<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> { <span class="dt">mimeType</span><span class="op">:</span> <span class="st">&#39;video/webm; codecs=vp8,opus&#39;</span> })<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Request data every 1000 milliseconds</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="fu">start</span>(<span class="dv">1000</span>)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span> <span class="op">&amp;&amp;</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sendChunkToServer</span>(<span class="bu">event</span><span class="op">.</span><span class="at">data</span>)<span class="op">;</span> <span class="co">// event.data is a WebM Blob</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<p>Passing a <code>timeslice</code> (in milliseconds) to
+<code>mediaRecorder.start(timeslice)</code> ensures that the
+<code>ondataavailable</code> event fires repeatedly at the specified
+interval, providing individual WebM <code>Blob</code> segments ready for
+transmission.</p>
+<hr />
+<h2 id="javascript-methods-for-streaming-to-a-server">JavaScript Methods
+for Streaming to a Server</h2>
+<h3 id="1-websocket-api-websocketsend">1. WebSocket API
+(<code>WebSocket.send()</code>)</h3>
+<p>WebSockets provide a persistent, bidirectional TCP connection and
+represent the most common method for relaying WebM blobs to a
+backend.</p>
+<ul>
+<li><strong>Method:</strong> <code>socket.send(blob)</code> or
+<code>socket.send(arrayBuffer)</code></li>
+<li><strong>Protocol:</strong> TCP (WS/WSS)</li>
+<li><strong>Best for:</strong> General-purpose real-time streaming where
+standard TCP reliability is acceptable.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> socket <span class="op">=</span> <span class="kw">new</span> <span class="bu">WebSocket</span>(<span class="st">&#39;wss://example.com/media-stream&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>socket<span class="op">.</span><span class="at">binaryType</span> <span class="op">=</span> <span class="st">&#39;arraybuffer&#39;</span><span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> <span class="kw">async</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">&amp;&amp;</span> socket<span class="op">.</span><span class="at">readyState</span> <span class="op">===</span> <span class="bu">WebSocket</span><span class="op">.</span><span class="at">OPEN</span>) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Send Blob directly or convert to ArrayBuffer</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> buffer <span class="op">=</span> <span class="cf">await</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="fu">arrayBuffer</span>()<span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    socket<span class="op">.</span><span class="fu">send</span>(buffer)<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<h3 id="2-webtransport-api-webtransportcreateunidirectionalstream">2.
+WebTransport API
+(<code>WebTransport.createUnidirectionalStream()</code>)</h3>
+<p>WebTransport is a modern alternative to WebSockets that operates over
+HTTP/3 (QUIC). It provides bidirectional and unidirectional streams with
+lower latency and avoids head-of-line blocking.</p>
+<ul>
+<li><strong>Method:</strong>
+<code>writableStream.getWriter().write(chunk)</code></li>
+<li><strong>Protocol:</strong> UDP (QUIC/HTTP/3)</li>
+<li><strong>Best for:</strong> Ultra-low latency streaming and
+environments requiring multiplexed, independent streams.</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> transport <span class="op">=</span> <span class="kw">new</span> <span class="fu">WebTransport</span>(<span class="st">&#39;https://example.com:4433/stream&#39;</span>)<span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> transport<span class="op">.</span><span class="at">ready</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> stream <span class="op">=</span> <span class="cf">await</span> transport<span class="op">.</span><span class="fu">createUnidirectionalStream</span>()<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> writer <span class="op">=</span> stream<span class="op">.</span><span class="fu">getWriter</span>()<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> <span class="kw">async</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> buffer <span class="op">=</span> <span class="kw">new</span> <span class="bu">Uint8Array</span>(<span class="cf">await</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="fu">arrayBuffer</span>())<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> writer<span class="op">.</span><span class="fu">write</span>(buffer)<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<h3 id="3-fetch-api-with-streaming-request-bodies">3. Fetch API with
+Streaming Request Bodies</h3>
+<p>Modern browsers support streaming request bodies with the
+<code>fetch()</code> API via <code>ReadableStream</code>. This allows
+sending an ongoing stream over a standard HTTP/2 or HTTP/3 POST request
+without managing long-lived WebSocket connections.</p>
+<ul>
+<li><strong>Method:</strong>
+<code>fetch(url, { method: 'POST', body: readableStream, duplex: 'half' })</code></li>
+<li><strong>Protocol:</strong> HTTP/2 or HTTP/3</li>
+<li><strong>Best for:</strong> REST-oriented architectures and standard
+HTTP server endpoints.</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> streamController<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> customStream <span class="op">=</span> <span class="kw">new</span> <span class="fu">ReadableStream</span>({</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">start</span>(controller) {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    streamController <span class="op">=</span> controller<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">// Initiate the chunked HTTP POST request</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">fetch</span>(<span class="st">&#39;/api/upload-stream&#39;</span><span class="op">,</span> {</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">method</span><span class="op">:</span> <span class="st">&#39;POST&#39;</span><span class="op">,</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">body</span><span class="op">:</span> customStream<span class="op">,</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">headers</span><span class="op">:</span> { <span class="st">&#39;Content-Type&#39;</span><span class="op">:</span> <span class="st">&#39;video/webm&#39;</span> }<span class="op">,</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">duplex</span><span class="op">:</span> <span class="st">&#39;half&#39;</span> <span class="co">// Required for streaming request bodies in Chromium</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> <span class="kw">async</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">&amp;&amp;</span> streamController) {</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> buffer <span class="op">=</span> <span class="kw">new</span> <span class="bu">Uint8Array</span>(<span class="cf">await</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="fu">arrayBuffer</span>())<span class="op">;</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    streamController<span class="op">.</span><span class="fu">enqueue</span>(buffer)<span class="op">;</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="at">onstop</span> <span class="op">=</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  streamController<span class="op">.</span><span class="fu">close</span>()<span class="op">;</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<h3 id="4-webrtc-data-channels-rtcdatachannelsend">4. WebRTC Data
+Channels (<code>RTCDataChannel.send()</code>)</h3>
+<p>While WebRTC natively streams media using RTP tracks, recorded WebM
+blobs can also be sent directly over an established
+<code>RTCDataChannel</code> using SCTP/UDP.</p>
+<ul>
+<li><strong>Method:</strong> <code>dataChannel.send(blob)</code> or
+<code>dataChannel.send(arrayBuffer)</code></li>
+<li><strong>Protocol:</strong> UDP (SCTP via DTLS)</li>
+<li><strong>Best for:</strong> Low-latency peer-to-peer transmissions or
+integration with Selective Forwarding Units (SFUs).</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> peerConnection <span class="op">=</span> <span class="kw">new</span> <span class="bu">RTCPeerConnection</span>(servers)<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> dataChannel <span class="op">=</span> peerConnection<span class="op">.</span><span class="fu">createDataChannel</span>(<span class="st">&#39;media-recording&#39;</span>)<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>dataChannel<span class="op">.</span><span class="at">binaryType</span> <span class="op">=</span> <span class="st">&#39;arraybuffer&#39;</span><span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> <span class="kw">async</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">&amp;&amp;</span> dataChannel<span class="op">.</span><span class="at">readyState</span> <span class="op">===</span> <span class="st">&#39;open&#39;</span>) {</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> buffer <span class="op">=</span> <span class="cf">await</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="fu">arrayBuffer</span>()<span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    dataChannel<span class="op">.</span><span class="fu">send</span>(buffer)<span class="op">;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<hr />
+<h2 id="key-technical-considerations">Key Technical Considerations</h2>
+<ol type="1">
+<li><strong>Initialization Metadata:</strong> The first WebM blob
+emitted by <code>MediaRecorder</code> contains the initialization
+segment (EBML header, Segment, and Track metadata). Subsequent chunks
+contain media Clusters. If a client connects mid-stream or chunks are
+processed out of order, the server or player requires the initial header
+chunk to decode subsequent frames.</li>
+<li><strong>Backpressure:</strong> Network latency can cause data to
+accumulate faster than it can be transmitted. Monitor properties like
+<code>WebSocket.bufferedAmount</code> or
+<code>RTCDataChannel.bufferedAmount</code> to prevent memory bloat
+during connectivity drops.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

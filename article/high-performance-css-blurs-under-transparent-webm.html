@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Performance CSS Blurs Under Transparent WebM - webm</title>
+    <meta name="description" content="Applying real-time CSS backdrop-filter effects beneath transparent WebM video can easily introduce frame drops and GPU throttling if not properly optimized. This guide outlines the exact CSS configurations, stacking strategies, and hardware acceleration">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/high-performance-css-blurs-under-transparent-webm">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="High-Performance CSS Blurs Under Transparent WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/high-performance-css-blurs-under-transparent-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Applying real-time CSS backdrop-filter effects beneath transparent WebM video can easily introduce frame drops and GPU throttling if not properly optimized. This guide outlines the exact CSS configurations, stacking strategies, and hardware acceleration" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1
+id="high-performance-css-blurs-under-transparent-webm">High-Performance
+CSS Blurs Under Transparent WebM</h1>
+<p>Applying real-time CSS <code>backdrop-filter</code> effects beneath
+transparent WebM video can easily introduce frame drops and GPU
+throttling if not properly optimized. This guide outlines the exact CSS
+configurations, stacking strategies, and hardware acceleration
+techniques required to render smooth, 60fps blur effects under dynamic
+alpha-channel video layers.</p>
+<h3 id="the-performance-challenge">The Performance Challenge</h3>
+<p>Transparent WebM videos (encoded with VP8, VP9, or AV1 alpha
+channels) require the browser to perform per-frame alpha blending. When
+you place a <code>backdrop-filter: blur()</code> effect behind or within
+that rendering pipeline, the GPU must calculate Gaussian blurs
+dynamically over constantly changing pixels. Without proper layer
+separation, this triggers continuous full-page repaints and severe
+compositing bottlenecks.</p>
+<h3 id="the-optimal-css-implementation">The Optimal CSS
+Implementation</h3>
+<p>To achieve optimal framerates, isolate the blur onto a dedicated
+pseudo-element or sibling element directly beneath the video, rather
+than applying it to an overarching parent container.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode css"><code class="sourceCode css"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">/* Container establishing an isolated stacking context */</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">.video-stage</span> {</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">position</span><span class="ch">:</span> <span class="dv">relative</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">width</span><span class="ch">:</span> <span class="dv">100</span><span class="dt">%</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">max-width</span><span class="ch">:</span> <span class="dv">800</span><span class="dt">px</span><span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">isolation</span><span class="ch">:</span> <span class="dv">isolate</span><span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">contain</span><span class="ch">:</span> <span class="dv">paint</span><span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">/* Background blur layer */</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">.video-stage</span><span class="in">::before</span> {</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">content</span><span class="ch">:</span> <span class="st">&quot;&quot;</span><span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">position</span><span class="ch">:</span> <span class="dv">absolute</span><span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">inset</span><span class="ch">:</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">z-index</span><span class="ch">:</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">backdrop-filter</span><span class="ch">:</span> <span class="fu">blur(</span><span class="dv">12</span><span class="dt">px</span><span class="fu">)</span> <span class="fu">saturate(</span><span class="dv">130</span><span class="dt">%</span><span class="fu">)</span><span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">-webkit-backdrop-filter</span><span class="ch">:</span> <span class="fu">blur(</span><span class="dv">12</span><span class="dt">px</span><span class="fu">)</span> <span class="fu">saturate(</span><span class="dv">130</span><span class="dt">%</span><span class="fu">)</span><span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">transform</span><span class="ch">:</span> <span class="fu">translateZ(</span><span class="dv">0</span><span class="fu">)</span><span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">will-change</span><span class="ch">:</span> <span class="dv">backdrop-filter</span><span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">pointer-events</span><span class="ch">:</span> <span class="dv">none</span><span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">/* Transparent WebM video layer */</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">.video-stage</span> video {</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="kw">display</span><span class="ch">:</span> <span class="dv">block</span><span class="op">;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  <span class="kw">position</span><span class="ch">:</span> <span class="dv">relative</span><span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="kw">z-index</span><span class="ch">:</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="kw">width</span><span class="ch">:</span> <span class="dv">100</span><span class="dt">%</span><span class="op">;</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="kw">height</span><span class="ch">:</span> <span class="bu">auto</span><span class="op">;</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="kw">background</span><span class="ch">:</span> <span class="dv">transparent</span><span class="op">;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="kw">transform</span><span class="ch">:</span> <span class="fu">translateZ(</span><span class="dv">0</span><span class="fu">)</span><span class="op">;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="essential-rules-for-maximizing-frame-rates">Essential Rules for
+Maximizing Frame Rates</h3>
+<h4 id="1-cap-the-blur-radius-between-8px-and-16px">1. Cap the Blur
+Radius Between 8px and 16px</h4>
+<p>The computational cost of a Gaussian blur scales exponentially with
+its radius. Radiuses above 20px demand significantly more GPU fill rate.
+If you need a stronger frosted-glass effect, pair a moderate blur radius
+(<code>10px</code> to <code>14px</code>) with
+<code>saturate(130%)</code> or a subtle semi-transparent background
+color (<code>rgba(255, 255, 255, 0.15)</code>) instead of increasing
+blur radius.</p>
+<h4 id="2-promote-layers-with-transform-translatez0">2. Promote Layers
+with <code>transform: translateZ(0)</code></h4>
+<p>Force both the blur layer and the transparent video onto their own
+hardware-accelerated GPU compositing planes using
+<code>transform: translateZ(0)</code> or
+<code>backface-visibility: hidden</code>. This prevents the continuous
+pixel updates of the WebM file from forcing CPU-side repaints of the
+surrounding DOM.</p>
+<h4 id="3-restrict-render-bounds-with-contain-paint">3. Restrict Render
+Bounds with <code>contain: paint</code></h4>
+<p>Use the CSS <code>contain: paint;</code> (or
+<code>contain: strict;</code>) property on the parent container. This
+informs the browser's rendering engine that no visual elements will
+bleed outside the element's box, effectively scoping the GPU repaint
+cycles exclusively to that boundary.</p>
+<h4 id="4-establish-an-isolated-stacking-context">4. Establish an
+Isolated Stacking Context</h4>
+<p>Applying <code>isolation: isolate;</code> ensures that the
+<code>backdrop-filter</code> only samples pixels from the immediate
+stacking context behind it, preventing the GPU from recalculating blurs
+against the entire document hierarchy.</p>
+<h4 id="5-avoid-stacking-multiple-filters">5. Avoid Stacking Multiple
+Filters</h4>
+<p>Never combine <code>filter: blur()</code> on the video with
+<code>backdrop-filter: blur()</code> on the background. Keep the video
+stream clean of CSS filters and delegate all image processing entirely
+to the single underlying backdrop layer.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

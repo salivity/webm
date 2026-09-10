@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How the WebM Video Specification Is Maintained - webm</title>
+    <meta name="description" content="The WebM specification is maintained and updated through a collaborative open-source model led by Google in conjunction with independent developers, browser vendors, and multimedia working groups. By relying on a restricted subset of the Matroska (MKV) c">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-the-webm-video-specification-is-maintained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How the WebM Video Specification Is Maintained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-the-webm-video-specification-is-maintained" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM specification is maintained and updated through a collaborative open-source model led by Google in conjunction with independent developers, browser vendors, and multimedia working groups. By relying on a restricted subset of the Matroska (MKV) c" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-the-webm-video-specification-is-maintained">How the WebM
+Video Specification Is Maintained</h1>
+<p>The WebM specification is maintained and updated through a
+collaborative open-source model led by Google in conjunction with
+independent developers, browser vendors, and multimedia working groups.
+By relying on a restricted subset of the Matroska (MKV) container format
+alongside standardized open-source codecs—such as VP8, VP9, AV1, Vorbis,
+and Opus—the community updates the format via public code repositories,
+standards body alignment, and structured peer-review processes.</p>
+<h3 id="stewardship-and-governance">Stewardship and Governance</h3>
+<p>Google launched the WebM Project in 2010 under a permissive BSD-style
+license, providing the initial foundation for the container and codec
+implementations. While Google provides engineering resources and
+infrastructure, governance functions as an open-source collaboration.
+Technical steering occurs through open developer mailing lists, public
+issue trackers, and direct contributions from browser vendors like
+Mozilla and multimedia software teams like FFmpeg and VLC.</p>
+<h3 id="matroska-and-ietf-cellar-working-group-alignment">Matroska and
+IETF CELLAR Working Group Alignment</h3>
+<p>Because the WebM container is fundamentally a profile of the Matroska
+format, changes to the WebM container architecture are closely tied to
+the Matroska specification. The underlying EBML (Extensible Binary Meta
+Language) and Matroska specifications are standardized through the
+Internet Engineering Task Force (IETF) CELLAR (Codec Encoding for
+LossLess Archiving and Real-time transmission) Working Group. When new
+structural elements or metadata fields are proposed for WebM, they must
+comply with or expand upon the Matroska standard to prevent ecosystem
+fragmentation.</p>
+<h3 id="codec-integration-and-evolution">Codec Integration and
+Evolution</h3>
+<p>WebM’s capability expands primarily through the integration of newer,
+more efficient audio and video codecs. Updates to support
+next-generation codecs follow established industry standards:</p>
+<ul>
+<li><strong>Video Codecs:</strong> Updates to video capabilities—such as
+transitioning from VP8 to VP9, and later adopting AV1—are coordinated
+with the Alliance for Open Media (AOMedia) to ensure bitstream
+specifications and container mappings are standardized.</li>
+<li><strong>Audio Codecs:</strong> Integration and updates for audio
+formats, notably Vorbis and Opus, are coordinated through specifications
+defined by the Xiph.Org Foundation and standardized via the IETF.</li>
+</ul>
+<h3 id="code-repositories-and-patch-reviews">Code Repositories and Patch
+Reviews</h3>
+<p>The reference implementations—primarily <code>libwebm</code> for
+container muxing/demuxing and <code>libvpx</code> or <code>libaom</code>
+for video encoding—are hosted on public Git repositories. Maintenance
+follows a standard patch-review lifecycle:</p>
+<ol type="1">
+<li><strong>Proposal and Implementation:</strong> Developers submit
+feature requests, bug fixes, or spec amendments via the project's issue
+tracker or code review tools (such as Gerrit).</li>
+<li><strong>Automated Testing:</strong> Continuous Integration (CI)
+pipelines test code against regression suites to ensure backward
+compatibility with existing decoders.</li>
+<li><strong>Peer Review:</strong> Core maintainers evaluate the patch
+for compliance with the WebM container guidelines, memory safety, and
+performance.</li>
+<li><strong>Integration:</strong> Approved changes are merged into the
+main tree and tagged in official library releases.</li>
+</ol>
+<h3 id="documentation-and-public-releases">Documentation and Public
+Releases</h3>
+<p>Once changes are validated in reference libraries, the official
+documentation hosted on the WebM Project website is updated. These
+updates specify byte-level requirements, container constraints (such as
+restricted DocType and element exclusions compared to full Matroska),
+and guidelines for hardware and software implementers to maintain
+universal interoperability across the web.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTX and Comfort Noise Generation in WebM Opus - webm</title>
+    <meta name="description" content="In WebM media using the Opus audio codec, Discontinuous Transmission (DTX) and Comfort Noise Generation (CNG) work in tandem to reduce file size and bandwidth consumption during silent or inactive audio segments without introducing jarring "dead air." Th">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/dtx-and-comfort-noise-generation-in-webm-opus">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DTX and Comfort Noise Generation in WebM Opus - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/dtx-and-comfort-noise-generation-in-webm-opus" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In WebM media using the Opus audio codec, Discontinuous Transmission (DTX) and Comfort Noise Generation (CNG) work in tandem to reduce file size and bandwidth consumption during silent or inactive audio segments without introducing jarring "dead air." Th" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="dtx-and-comfort-noise-generation-in-webm-opus">DTX and Comfort
+Noise Generation in WebM Opus</h1>
+<p>In WebM media using the Opus audio codec, Discontinuous Transmission
+(DTX) and Comfort Noise Generation (CNG) work in tandem to reduce file
+size and bandwidth consumption during silent or inactive audio segments
+without introducing jarring "dead air." The Opus encoder utilizes an
+internal Voice Activity Detector (VAD) to identify pauses in speech or
+sound, halts regular high-bitrate frame transmission via DTX, and sends
+minimal spectral information so the decoder can synthesize
+natural-sounding comfort noise locally during playback.</p>
+<h3 id="voice-activity-detection-vad">Voice Activity Detection
+(VAD)</h3>
+<p>The process begins inside the Opus encoder's analysis stage. Opus
+continuously processes audio frames (typically 20 ms in duration) and
+evaluates spectral dynamics, signal energy, and pitch characteristics
+using its integrated Voice Activity Detection algorithm.</p>
+<p>When the audio energy drops below a dynamic background noise
+threshold and no voice or meaningful audio harmonic is present, the
+encoder marks the incoming frames as silence or inactive background
+noise.</p>
+<h3 id="triggering-discontinuous-transmission-dtx">Triggering
+Discontinuous Transmission (DTX)</h3>
+<p>Once the VAD detects sustained inactivity, the encoder activates
+Discontinuous Transmission (DTX). Instead of outputting the standard
+stream of compressed audio packets:</p>
+<ol type="1">
+<li><strong>Transmission Cutoff:</strong> The encoder ceases the
+transmission of regular audio packets.</li>
+<li><strong>Periodic Update Frames:</strong> To keep the decoder updated
+on changing ambient conditions, the encoder periodically emits a
+low-bitrate update frame (sometimes referred to as a Silence Insertion
+Descriptor or comfort noise update) roughly once every 400 ms.</li>
+<li><strong>Bandwidth Reduction:</strong> During extended pauses, the
+data rate drops from its standard operating bitrate down to near
+zero.</li>
+</ol>
+<h3 id="comfort-noise-generation-cng-at-the-decoder">Comfort Noise
+Generation (CNG) at the Decoder</h3>
+<p>Complete digital silence can make listeners perceive a call or stream
+as disconnected. To resolve this, the Opus decoder implements Comfort
+Noise Generation.</p>
+<p>When the decoder encounters gaps caused by DTX or receives periodic
+update frames:</p>
+<ol type="1">
+<li><strong>Noise Characterization:</strong> The decoder reads the
+spectral envelope and energy level parameters included in the most
+recent audio frames or update packets.</li>
+<li><strong>Local Noise Synthesis:</strong> The decoder’s internal noise
+generator creates a pseudo-random noise floor that mimics the acoustic
+profile of the original background environment.</li>
+<li><strong>Smooth Transition:</strong> The generated comfort noise is
+smoothly cross-faded with incoming active audio when speech resumes,
+preventing audible clicks or sudden shifts in ambient tone.</li>
+</ol>
+<h3 id="webm-container-integration">WebM Container Integration</h3>
+<p>In a WebM container (which is based on the Matroska specification),
+Opus audio is stored inside <code>SimpleBlock</code> or
+<code>Block</code> elements. When DTX is engaged:</p>
+<ul>
+<li><strong>Sparse Block Storage:</strong> The WebM multiplexer writes
+blocks only when Opus outputs a frame. During DTX pauses, time gaps
+appear between successive audio <code>SimpleBlock</code>
+timestamps.</li>
+<li><strong>Demuxer and Decoder Handoff:</strong> During playback, the
+WebM demuxer passes these timestamped packets to the Opus decoder. When
+the demuxer encounters timestamp jumps (indicating DTX periods), the
+Opus decoder fills the missing duration by generating comfort noise
+until the next regular audio packet arrives.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

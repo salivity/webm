@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit WebM Color Space Metadata Without Re-Encoding - webm</title>
+    <meta name="description" content="WebM video files store essential color space metadata—including color primaries, matrix coefficients, transfer characteristics, and range—within EBML container headers or internal codec bitstreams. Incorrectly tagged files can result in washed-out co">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/edit-webm-color-space-metadata-without-re-encoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Edit WebM Color Space Metadata Without Re-Encoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/edit-webm-color-space-metadata-without-re-encoding" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM video files store essential color space metadata—including color primaries, matrix coefficients, transfer characteristics, and range—within EBML container headers or internal codec bitstreams. Incorrectly tagged files can result in washed-out co" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="edit-webm-color-space-metadata-without-re-encoding">Edit WebM
+Color Space Metadata Without Re-Encoding</h1>
+<p>WebM video files store essential color space metadata—including color
+primaries, matrix coefficients, transfer characteristics, and
+range—within EBML container headers or internal codec bitstreams.
+Incorrectly tagged files can result in washed-out colors or improper
+HDR-to-SDR mapping across different media players and browsers.
+Fortunately, because WebM is a restricted subset of the Matroska (MKV)
+container, you can inspect and modify these color parameters in seconds
+using container-level header editors and remuxing utilities without the
+quality loss or processing overhead of full video re-encoding.</p>
+<h2 id="tools-for-previewing-webm-color-metadata">Tools for Previewing
+WebM Color Metadata</h2>
+<p>Before modifying a file, you need tools that read and display stream-
+and container-level metadata without altering the underlying video
+track.</p>
+<h3 id="1-mediainfo">1. MediaInfo</h3>
+<p>MediaInfo is the standard cross-platform utility for checking video
+parameters. It displays detailed color information in its GUI or
+command-line interface, including:</p>
+<ul>
+<li><strong>Color range:</strong> Limited (TV) or Full (PC)</li>
+<li><strong>Color primaries:</strong> BT.709, BT.2020, etc.</li>
+<li><strong>Transfer characteristics:</strong> BT.709, SMPTE 2084 (PQ),
+HLG</li>
+<li><strong>Matrix coefficients:</strong> BT.709, BT.2020 non-constant
+luminance</li>
+</ul>
+<h3 id="2-ffprobe">2. FFprobe</h3>
+<p>Part of the FFmpeg suite, <code>ffprobe</code> extracts container-
+and stream-level color metadata directly from the command line.</p>
+<p>Command to preview stream color properties:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> v:0 <span class="at">-show_entries</span> stream=color_range,color_space,color_primaries,color_transfer <span class="at">-of</span> default=noprint_wrappers=1 input.webm</span></code></pre></div>
+<h3 id="3-mkvtoolnix-mkvinfo">3. MKVToolNix (mkvinfo)</h3>
+<p><code>mkvinfo</code> outputs the raw EBML element tree of Matroska
+and WebM files. It allows you to verify whether the container includes
+the <code>Colour</code> sub-elements (<code>MatrixCoefficients</code>,
+<code>BitsPerChannel</code>, <code>Primaries</code>,
+<code>TransferCharacteristics</code>, and <code>Range</code>) under the
+video track definition.</p>
+<hr />
+<h2
+id="tools-for-adjusting-webm-color-metadata-without-re-encoding">Tools
+for Adjusting WebM Color Metadata Without Re-Encoding</h2>
+<h3 id="1-mkvtoolnix-mkvpropedit--header-editor">1. MKVToolNix
+(<code>mkvpropedit</code> &amp; Header Editor)</h3>
+<p>MKVToolNix is the most efficient solution for lossless metadata
+modification. Its command-line component, <code>mkvpropedit</code>,
+modifies file headers directly in place within milliseconds.</p>
+<h4 id="common-mkvpropedit-parameters-for-webm">Common
+<code>mkvpropedit</code> Parameters for WebM:</h4>
+<ul>
+<li><code>--set colour-matrix-coefficients=&lt;value&gt;</code> (e.g.,
+<code>1</code> for BT.709, <code>9</code> for BT.2020)</li>
+<li><code>--set colour-primaries=&lt;value&gt;</code> (e.g.,
+<code>1</code> for BT.709, <code>9</code> for BT.2020)</li>
+<li><code>--set colour-transfer-characteristics=&lt;value&gt;</code>
+(e.g., <code>1</code> for BT.709, <code>16</code> for PQ/HDR10)</li>
+<li><code>--set colour-range=&lt;value&gt;</code> (<code>1</code> for
+broadcast/limited range, <code>2</code> for full range)</li>
+</ul>
+<h4 id="example-command">Example Command:</h4>
+<p>To tag a WebM file with standard Rec.709 parameters in-place:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvpropedit</span> input.webm <span class="at">--edit</span> track:v1 <span class="at">--set</span> colour-matrix-coefficients=1 <span class="at">--set</span> colour-primaries=1 <span class="at">--set</span> colour-transfer-characteristics=1 <span class="at">--set</span> colour-range=1</span></code></pre></div>
+<p><em>Note: MKVToolNix GUI also features a visual <strong>Header
+Editor</strong> where you can open a WebM file, navigate to the video
+track's color properties, change the dropdown values, and save
+instantly.</em></p>
+<hr />
+<h3 id="2-ffmpeg-stream-copy--remuxing">2. FFmpeg (Stream Copy /
+Remuxing)</h3>
+<p>FFmpeg can rewrite container headers and inject bitstream filters
+without decoding the video frames using <code>-c copy</code>.</p>
+<h4 id="remuxing-with-webm-specific-container-metadata">Remuxing with
+WebM-Specific Container Metadata:</h4>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-c</span> copy <span class="at">-color_primaries</span> bt709 <span class="at">-color_trc</span> bt709 <span class="at">-colorspace</span> bt709 <span class="at">-color_range</span> tv output.webm</span></code></pre></div>
+<h4 id="modifying-vp9-codec-level-bitstream-metadata">Modifying VP9
+Codec-Level Bitstream Metadata:</h4>
+<p>For WebM files using the VP9 codec, the color space may also be
+defined inside the VP9 bitstream itself. FFmpeg provides the
+<code>vp9_metadata</code> bitstream filter to alter these values
+losslessly:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-c:v</span> copy <span class="at">-bsf:v</span> vp9_metadata=color_space=bt709:color_range=tv <span class="at">-c:a</span> copy output.webm</span></code></pre></div>
+<p>Supported <code>color_space</code> values for the filter include
+<code>bt709</code>, <code>bt601</code>, <code>bt2020-ncl</code>, and
+<code>smpte240m</code>.</p>
+<hr />
+<h2 id="summary-of-values-reference-table">Summary of Values Reference
+Table</h2>
+<p>When modifying EBML header integers (via <code>mkvpropedit</code>),
+use standard ITU-T H.273 numerical identifiers:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Standard / Target</th>
+<th style="text-align: left;">Primaries Value</th>
+<th style="text-align: left;">Transfer Characteristics Value</th>
+<th style="text-align: left;">Matrix Coefficients Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>BT.709 (HD/Web)</strong></td>
+<td style="text-align: left;"><code>1</code></td>
+<td style="text-align: left;"><code>1</code></td>
+<td style="text-align: left;"><code>1</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BT.601 (PAL)</strong></td>
+<td style="text-align: left;"><code>5</code></td>
+<td style="text-align: left;"><code>6</code></td>
+<td style="text-align: left;"><code>5</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BT.601 (NTSC)</strong></td>
+<td style="text-align: left;"><code>6</code></td>
+<td style="text-align: left;"><code>6</code></td>
+<td style="text-align: left;"><code>6</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BT.2020 (SDR)</strong></td>
+<td style="text-align: left;"><code>9</code></td>
+<td style="text-align: left;"><code>14</code></td>
+<td style="text-align: left;"><code>9</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>HDR10 (PQ)</strong></td>
+<td style="text-align: left;"><code>9</code></td>
+<td style="text-align: left;"><code>16</code></td>
+<td style="text-align: left;"><code>9</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>HLG</strong></td>
+<td style="text-align: left;"><code>9</code></td>
+<td style="text-align: left;"><code>18</code></td>
+<td style="text-align: left;"><code>9</code></td>
+</tr>
+</tbody>
+</table></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

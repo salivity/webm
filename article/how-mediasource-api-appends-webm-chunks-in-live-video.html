@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How MediaSource API Appends WebM Chunks in Live Video - webm</title>
+    <meta name="description" content="The MediaSource Extensions (MSE) API enables browsers to stream live video seamlessly by allowing JavaScript to pass media data directly to an HTML5 <video> element. During live WebM playback, the browser receives raw video/audio chunks from a server via">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-mediasource-api-appends-webm-chunks-in-live-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How MediaSource API Appends WebM Chunks in Live Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-mediasource-api-appends-webm-chunks-in-live-video" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The MediaSource Extensions (MSE) API enables browsers to stream live video seamlessly by allowing JavaScript to pass media data directly to an HTML5 <video> element. During live WebM playback, the browser receives raw video/audio chunks from a server via" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-mediasource-api-appends-webm-chunks-in-live-video">How
+MediaSource API Appends WebM Chunks in Live Video</h1>
+<p>The MediaSource Extensions (MSE) API enables browsers to stream live
+video seamlessly by allowing JavaScript to pass media data directly to
+an HTML5 <code>&lt;video&gt;</code> element. During live WebM playback,
+the browser receives raw video/audio chunks from a server via WebSockets
+or HTTP, parses the container data, and appends it to a
+<code>SourceBuffer</code> instance. This article explains the technical
+lifecycle of initializing the <code>MediaSource</code>, structuring WebM
+initialization and media segments, managing the append queue, and
+handling buffer eviction for continuous live playback.</p>
+<h3 id="initializing-the-mediasource-and-sourcebuffer">Initializing the
+MediaSource and SourceBuffer</h3>
+<p>The playback pipeline begins by creating a <code>MediaSource</code>
+object and assigning its object URL to the <code>src</code> attribute of
+a standard <code>&lt;video&gt;</code> element.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> video <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">querySelector</span>(<span class="st">&#39;video&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mediaSource <span class="op">=</span> <span class="kw">new</span> <span class="fu">MediaSource</span>()<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="at">src</span> <span class="op">=</span> URL<span class="op">.</span><span class="fu">createObjectURL</span>(mediaSource)<span class="op">;</span></span></code></pre></div>
+<p>Once attached, the <code>mediaSource</code> fires the
+<code>sourceopen</code> event. At this stage, you register a
+<code>SourceBuffer</code> by specifying the WebM MIME type and codec
+string:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>mediaSource<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;sourceopen&#39;</span><span class="op">,</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> mimeCodec <span class="op">=</span> <span class="st">&#39;video/webm; codecs=&quot;vp9, opus&quot;&#39;</span><span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> sourceBuffer <span class="op">=</span> mediaSource<span class="op">.</span><span class="fu">addSourceBuffer</span>(mimeCodec)<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="webm-stream-structure-init-segment-vs-media-segments">WebM
+Stream Structure: Init Segment vs. Media Segments</h3>
+<p>WebM is a subset of the Matroska (MKV) container format based on
+Extensible Binary Meta Language (EBML). To correctly decode live chunks,
+the stream must be split into two types of segments:</p>
+<ol type="1">
+<li><strong>Initialization Segment:</strong> Contains the EBML Header,
+Segment Header, and Tracks element (which defines codec private data,
+resolution, and audio channels). This must be appended first so the
+decoder understands how to process incoming frames.</li>
+<li><strong>Media Segments (Clusters):</strong> Contain one or more EBML
+<code>Cluster</code> elements holding the actual time-stamped video and
+audio frames (<code>SimpleBlock</code> or <code>BlockGroup</code>).</li>
+</ol>
+<h3 id="appending-data-via-appendbuffer">Appending Data via
+<code>appendBuffer()</code></h3>
+<p>Live chunks are fetched continuously across the network as
+<code>ArrayBuffer</code> or <code>Uint8Array</code> objects. When a
+chunk arrives, it is fed to the <code>SourceBuffer</code> using
+<code>appendBuffer()</code>:</p>
+<ol type="1">
+<li><strong>Check State:</strong> The application must verify that
+<code>sourceBuffer.updating</code> is <code>false</code> before
+appending.</li>
+<li><strong>Append Data:</strong> Calling
+<code>sourceBuffer.appendBuffer(chunk)</code> transitions
+<code>updating</code> to <code>true</code>.</li>
+<li><strong>Parse and Decode:</strong> The browser parses the EBML data,
+extracts the Presentation Time Stamps (PTS), and places the frames into
+the <code>SourceBuffer</code>'s internal timeline track.</li>
+<li><strong>Completion Event:</strong> Once the chunk is integrated into
+the buffer, the <code>SourceBuffer</code> dispatches the
+<code>updateend</code> event, setting <code>updating</code> back to
+<code>false</code> and signaling that the next chunk can be
+appended.</li>
+</ol>
+<p>To prevent runtime errors, incoming network chunks should be stored
+in an in-memory queue and pushed to <code>appendBuffer()</code>
+sequentially upon every <code>updateend</code> event.</p>
+<h3 id="managing-live-timelines-and-buffer-eviction">Managing Live
+Timelines and Buffer Eviction</h3>
+<p>During live streaming, video runs indefinitely, introducing two
+specific requirements:</p>
+<ul>
+<li><strong>Append Mode and Timestamp Offset:</strong> If the live
+stream segments contain disjointed or resetting internal timestamps, set
+<code>sourceBuffer.mode = 'sequence'</code>. This causes the browser to
+ignore container-level timestamps and append each new cluster
+immediately after the previous one. Alternatively, in
+<code>'segments'</code> mode, the browser places clusters according to
+their internal timestamps, requiring continuous timestamps or manual
+adjustments using <code>sourceBuffer.timestampOffset</code>.</li>
+<li><strong>Memory Management (Buffer Eviction):</strong> Because
+browser memory is limited, retaining hours of live video in memory will
+crash the tab. The application must periodically remove older,
+already-viewed data from the buffer using
+<code>sourceBuffer.remove(start, end)</code>:</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> currentTime <span class="op">=</span> video<span class="op">.</span><span class="at">currentTime</span><span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (currentTime <span class="op">&gt;</span> <span class="dv">60</span> <span class="op">&amp;&amp;</span> <span class="op">!</span>sourceBuffer<span class="op">.</span><span class="at">updating</span>) {</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Retain the last 30 seconds, remove everything older</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  sourceBuffer<span class="op">.</span><span class="fu">remove</span>(<span class="dv">0</span><span class="op">,</span> currentTime <span class="op">-</span> <span class="dv">30</span>)<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Through this continuous cycle—fetching WebM clusters, queueing them,
+appending them to the <code>SourceBuffer</code>, and pruning old
+ranges—the MediaSource API delivers uninterrupted, low-latency live
+video playback.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

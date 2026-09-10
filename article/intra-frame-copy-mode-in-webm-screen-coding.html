@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intra-Frame Copy Mode in WebM Screen Coding - webm</title>
+    <meta name="description" content="Intra-frame copy mode, commonly referred to as Intra Block Copy (IntraBC), is a specialized prediction tool used in modern video codecs like AV1 and VP9 within the WebM container to efficiently compress screen content. Unlike standard intra prediction, w">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/intra-frame-copy-mode-in-webm-screen-coding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Intra-Frame Copy Mode in WebM Screen Coding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/intra-frame-copy-mode-in-webm-screen-coding" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Intra-frame copy mode, commonly referred to as Intra Block Copy (IntraBC), is a specialized prediction tool used in modern video codecs like AV1 and VP9 within the WebM container to efficiently compress screen content. Unlike standard intra prediction, w" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="intra-frame-copy-mode-in-webm-screen-coding">Intra-Frame Copy
+Mode in WebM Screen Coding</h1>
+<p>Intra-frame copy mode, commonly referred to as Intra Block Copy
+(IntraBC), is a specialized prediction tool used in modern video codecs
+like AV1 and VP9 within the WebM container to efficiently compress
+screen content. Unlike standard intra prediction, which interpolates
+adjacent pixels, intra-frame copy treats the current frame as a
+reference frame, reusing previously reconstructed pixel blocks to
+represent repetitive graphics, text, and user interface elements. This
+article explains the technical mechanics of intra-frame copy, its search
+and displacement processes, and why it is essential for high-efficiency
+screen capture and streaming.</p>
+<h2 id="understanding-screen-content-vs-natural-video">Understanding
+Screen Content vs. Natural Video</h2>
+<p>Standard video compression techniques are optimized for
+camera-captured continuous-tone imagery, which features smooth
+gradients, sensor noise, and natural motion. Screen content—such as
+software interfaces, web pages, slide decks, and code editors—has
+fundamentally different characteristics:</p>
+<ul>
+<li>Sharp edges and high-contrast color transitions.</li>
+<li>Large uniform background areas without noise.</li>
+<li>Frequent repetition of identical visual patterns, such as fonts,
+icons, buttons, and logos within the exact same frame.</li>
+</ul>
+<p>Conventional intra prediction relies on directional spatial
+extrapolation (such as DC, horizontal, or vertical modes), which
+struggles with sharp, detached patterns like text glyphs. Intra-frame
+copy resolves this by sampling identical, fully formed blocks directly
+from the already decoded area of the current picture.</p>
+<h2 id="the-core-mechanism-of-intra-frame-copy">The Core Mechanism of
+Intra-Frame Copy</h2>
+<p>Intra-frame copy operates similarly to motion-compensated inter
+prediction, but entirely within the boundaries of a single frame.</p>
+<pre><code>+---------------------------------------------------+
+| Decoded / Reconstructed Area                      |
+|                                                   |
+|   [ Reference Block ] &lt;-----------+               |
+|                                   |               |
+|                           - - - - | - - - - -     |
+|                          |        | Block         |
+|                          |        | Vector (BV)   |
+|                          |        |               |
+|                          |   [ Current Block ]    |
+|                          |                        |
++--------------------------|------------------------+
+                           | Undecoded Area</code></pre>
+<h3 id="1-2d-block-vector-bv-signaling">1. 2D Block Vector (BV)
+Signaling</h3>
+<p>Instead of calculating complex spatial angles, the encoder determines
+a 2D spatial displacement vector, known as a <strong>Block Vector
+(BV)</strong>.</p>
+<ul>
+<li>The BV points from the current coding block to a matching reference
+block located in the already reconstructed region of the same
+frame.</li>
+<li>Because screen content often repeats along exact pixel grids, BVs
+typically operate with full-pixel precision to preserve crisp text and
+interface geometry without introducing interpolation blur.</li>
+</ul>
+<h3 id="2-reference-search-and-memory-constraints">2. Reference Search
+and Memory Constraints</h3>
+<p>To prevent race conditions during hardware decoding and reduce memory
+bandwidth:</p>
+<ul>
+<li>The encoder restricts the search area to already reconstructed
+pixels within the same tile or frame slice.</li>
+<li>Depending on the specific codec profile (such as AV1's SCC tools),
+hardware constraints often limit the search window to local on-chip line
+buffers or recently processed superblocks to keep memory access
+low.</li>
+</ul>
+<h3 id="3-residual-calculation">3. Residual Calculation</h3>
+<p>Once the reference block is identified via the block vector:</p>
+<ul>
+<li>If the match is exact (common in digital graphics and text), the
+prediction error (residual) is zero, requiring only the signaling of the
+BV.</li>
+<li>If slight differences exist (such as anti-aliased font variations or
+sub-pixel rendering differences), a residual signal is computed,
+transformed, quantized, and transmitted alongside the vector.</li>
+</ul>
+<h2 id="intra-frame-copy-in-the-webm-ecosystem-vp9-and-av1">Intra-Frame
+Copy in the WebM Ecosystem (VP9 and AV1)</h2>
+<p>WebM relies primarily on VP9 and AV1 codecs, both of which implement
+screen-content coding extensions:</p>
+<ul>
+<li><strong>VP9 Screen Content Tools:</strong> Early iterations
+introduced dictionary-based and pattern-matching intra predictions
+designed to handle high-frequency text elements without standard DCT
+transform artifacts.</li>
+<li><strong>AV1 IntraBC:</strong> AV1 formalized and standardized Intra
+Block Copy as a core screen-content coding tool. When the encoder
+detects screen content (or when explicitly enabled via encoder flags
+like <code>--enable-intrabc=1</code> in <code>libaom</code>), the frame
+header signals that intra-frame copy mode is active for that frame,
+allowing coding blocks down to <span class="math inline">\(4 \times
+4\)</span> pixels to use block vectors.</li>
+</ul>
+<h2 id="advantages-of-intra-frame-copy">Advantages of Intra-Frame
+Copy</h2>
+<ul>
+<li><strong>Bitrate Reduction:</strong> Eliminates the need to
+repeatedly encode recurring elements (e.g., the letter "e" appearing
+hundreds of times across a document), significantly lowering the bit
+budget.</li>
+<li><strong>Pixel-Perfect Sharpness:</strong> Avoids the blurriness and
+ringing artifacts introduced by frequency transforms on high-contrast
+edges.</li>
+<li><strong>Low Latency for Screen Sharing:</strong> Enables rapid
+encoding for real-time WebRTC and WebM streaming pipelines by reducing
+complex spatial analysis to fast 2D pattern matching.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

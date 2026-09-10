@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Demuxer Integer Overflows in Browsers - webm</title>
+    <meta name="description" content="Integer overflow vulnerabilities in WebM demuxers represent a severe security threat to modern web browsers, often enabling attackers to trigger memory corruption, browser crashes, or remote code execution (RCE). Because web browsers automatically proces">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-demuxer-integer-overflows-in-browsers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Demuxer Integer Overflows in Browsers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-demuxer-integer-overflows-in-browsers" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Integer overflow vulnerabilities in WebM demuxers represent a severe security threat to modern web browsers, often enabling attackers to trigger memory corruption, browser crashes, or remote code execution (RCE). Because web browsers automatically proces" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-demuxer-integer-overflows-in-browsers">WebM Demuxer Integer
+Overflows in Browsers</h1>
+<p>Integer overflow vulnerabilities in WebM demuxers represent a severe
+security threat to modern web browsers, often enabling attackers to
+trigger memory corruption, browser crashes, or remote code execution
+(RCE). Because web browsers automatically process multimedia content
+embedded in web pages, flaws within media-parsing components like WebM
+demuxers can be exploited with zero user interaction beyond simply
+visiting a malicious webpage. This article examines what WebM demuxers
+do, how integer arithmetic flaws occur, and the specific security risks
+they introduce to browser environments.</p>
+<h3 id="the-role-of-webm-demuxers">The Role of WebM Demuxers</h3>
+<p>WebM is an open, royalty-free media file format based on the Matroska
+(MKV) container profile, commonly used for streaming VP8, VP9, and AV1
+video alongside Vorbis or Opus audio. When a browser loads a WebM file,
+the WebM demuxer is the software module responsible for reading the
+container structure, separating the multiplexed audio and video streams,
+and feeding raw encoded data to the appropriate decoders.</p>
+<p>Because demuxing involves parsing untrusted binary input directly
+from the web, the demuxer must strictly validate element headers, block
+sizes, track configurations, and timestamps before processing or
+allocating memory.</p>
+<h3 id="how-integer-overflows-occur-in-demuxers">How Integer Overflows
+Occur in Demuxers</h3>
+<p>An integer overflow occurs when an arithmetic operation attempts to
+create a numeric value that falls outside the range that can be
+represented with a given number of bits or data type. In WebM demuxers,
+this typically happens during calculations related to:</p>
+<ul>
+<li><strong>Buffer Size Allocations:</strong> Calculating the total
+memory required to store frame data, metadata, or packet queues (e.g.,
+<code>frame_count * frame_size</code>).</li>
+<li><strong>Offset and Length Calculations:</strong> Determining byte
+offsets within the media stream when skipping chunks or seeking.</li>
+<li><strong>Timestamp and Duration Scaling:</strong> Converting timecode
+scale factors into absolute playback durations.</li>
+</ul>
+<p>When an attacker crafts a malicious WebM file with excessively large
+header fields, an arithmetic operation can wrap around. For instance,
+adding two large 32-bit integers might wrap around to a very small
+positive integer.</p>
+<h3 id="the-security-risks-to-web-browsers">The Security Risks to Web
+Browsers</h3>
+<h4 id="1-heap-buffer-overflows-and-memory-corruption">1. Heap Buffer
+Overflows and Memory Corruption</h4>
+<p>The most dangerous consequence of an integer overflow is the
+subsequent heap buffer overflow. When an arithmetic calculation wraps
+around to a small number, the browser allocates a small memory buffer on
+the heap. However, the demuxer then attempts to write the actual (large)
+amount of data into this undersized buffer. This out-of-bounds write
+corrupts adjacent heap metadata or critical program objects.</p>
+<h4 id="2-remote-code-execution-rce">2. Remote Code Execution (RCE)</h4>
+<p>By carefully structuring the corrupted memory data, an attacker can
+overwrite function pointers, virtual method tables (vtables), or memory
+structures used by the browser engine. This manipulation allows the
+attacker to hijack the execution flow and execute arbitrary code within
+the context of the browser process.</p>
+<h4 id="3-denial-of-service-dos">3. Denial of Service (DoS)</h4>
+<p>Even if an integer overflow does not yield predictable memory
+corruption for code execution, it routinely leads to invalid memory
+access or null pointer dereferences, terminating the tab or crashing the
+entire browser application.</p>
+<h4 id="4-sandbox-compromise-and-exploitation-chains">4. Sandbox
+Compromise and Exploitation Chains</h4>
+<p>Most modern web browsers isolate media processing inside restricted
+renderer or utility sandboxes. While an RCE in a demuxer typically
+grants code execution only inside this sandboxed process, attackers
+frequently chain demuxer vulnerabilities with operating system or
+sandbox-escape exploits to gain full control over the host system.</p>
+<h3 id="mitigating-demuxer-vulnerabilities">Mitigating Demuxer
+Vulnerabilities</h3>
+<p>Protecting web browsers from WebM demuxer vulnerabilities requires
+multiple layers of defense:</p>
+<ul>
+<li><strong>Safe Arithmetic Libraries:</strong> Implementing checked
+arithmetic functions (such as <code>base::CheckAdd</code> and
+<code>base::CheckMul</code> in Chromium) that detect overflow conditions
+and fail safely before allocation.</li>
+<li><strong>Strict Input Validation:</strong> Enforcing upper limits on
+element sizes and frame dimensions defined in the WebM container
+specification.</li>
+<li><strong>Continuous Fuzz Testing:</strong> Subjecting demuxer
+implementations to automated fuzzing tools like AFL and libFuzzer with
+address sanitizers (ASan) to catch memory safety errors early.</li>
+<li><strong>Process Isolation:</strong> Confining media parsing
+components to tightly restricted sandbox environments with minimal OS
+permissions to limit the blast radius of any successful exploit.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

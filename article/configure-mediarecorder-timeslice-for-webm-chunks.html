@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure MediaRecorder Timeslice for WebM Chunks - webm</title>
+    <meta name="description" content="This guide explains how to configure the MediaRecorder API to emit chunked WebM data packets at fixed time intervals using the timeslice parameter. You will learn how to initialize the recorder with the appropriate WebM MIME types, trigger periodic dataa">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/configure-mediarecorder-timeslice-for-webm-chunks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Configure MediaRecorder Timeslice for WebM Chunks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/configure-mediarecorder-timeslice-for-webm-chunks" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide explains how to configure the MediaRecorder API to emit chunked WebM data packets at fixed time intervals using the timeslice parameter. You will learn how to initialize the recorder with the appropriate WebM MIME types, trigger periodic dataa" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="configure-mediarecorder-timeslice-for-webm-chunks">Configure
+MediaRecorder Timeslice for WebM Chunks</h1>
+<p>This guide explains how to configure the <code>MediaRecorder</code>
+API to emit chunked WebM data packets at fixed time intervals using the
+<code>timeslice</code> parameter. You will learn how to initialize the
+recorder with the appropriate WebM MIME types, trigger periodic
+<code>dataavailable</code> events, handle the resulting
+<code>Blob</code> chunks, and manage stream data for real-time
+processing or uploading.</p>
+<h2 id="understanding-the-timeslice-parameter">Understanding the
+Timeslice Parameter</h2>
+<p>By default, the <code>MediaRecorder</code> interface generates a
+single large <code>Blob</code> when recording stops. However, passing a
+<code>timeslice</code> argument (measured in milliseconds) to the
+<code>MediaRecorder.start()</code> method forces the recorder to slice
+the recording into separate chunks.</p>
+<p>Whenever the specified interval elapses, or when the recording ends,
+the recorder fires a <code>dataavailable</code> event containing a
+WebM-encoded <code>Blob</code> for that duration.</p>
+<h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
+<h3 id="1-capture-the-media-stream">1. Capture the Media Stream</h3>
+<p>First, obtain a media stream from the user's camera, microphone, or
+display surface using
+<code>navigator.mediaDevices.getUserMedia()</code>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> stream <span class="op">=</span> <span class="cf">await</span> <span class="bu">navigator</span><span class="op">.</span><span class="at">mediaDevices</span><span class="op">.</span><span class="fu">getUserMedia</span>({</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">video</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">audio</span><span class="op">:</span> <span class="kw">true</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="2-instantiate-mediarecorder-with-webm-mime-type">2. Instantiate
+MediaRecorder with WebM MIME Type</h3>
+<p>Check for supported WebM container formats and codecs, then
+initialize the <code>MediaRecorder</code> instance.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> options <span class="op">=</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">mimeType</span><span class="op">:</span> <span class="st">&#39;video/webm; codecs=vp8,opus&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Fallback to default WebM container if specific codecs are not supported</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mimeType <span class="op">=</span> <span class="bu">MediaRecorder</span><span class="op">.</span><span class="fu">isTypeSupported</span>(options<span class="op">.</span><span class="at">mimeType</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">?</span> options<span class="op">.</span><span class="at">mimeType</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">:</span> <span class="st">&#39;video/webm&#39;</span><span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> { mimeType })<span class="op">;</span></span></code></pre></div>
+<h3 id="3-handle-the-emitted-data-packets">3. Handle the Emitted Data
+Packets</h3>
+<p>Attach an event listener to the <code>dataavailable</code> event.
+Every time the interval defined by <code>timeslice</code> expires, this
+event provides access to the chunked packet via
+<code>event.data</code>.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span> <span class="op">&amp;&amp;</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> chunk <span class="op">=</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">;</span> <span class="co">// Blob containing the WebM packet</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">processWebMChunk</span>(chunk)<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">processWebMChunk</span>(blob) {</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Transmit over WebSocket, push to an array, or upload via Fetch API</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`Received WebM chunk: </span><span class="sc">${</span>blob<span class="op">.</span><span class="at">size</span><span class="sc">}</span><span class="vs"> bytes`</span>)<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="4-start-recording-with-a-timeslice">4. Start Recording with a
+Timeslice</h3>
+<p>Pass the desired millisecond interval to
+<code>mediaRecorder.start(timeslice)</code>. For example, to emit data
+packets every 1000 milliseconds (1 second):</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> timesliceInterval <span class="op">=</span> <span class="dv">1000</span><span class="op">;</span> <span class="co">// Emit chunk every 1 second</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="fu">start</span>(timesliceInterval)<span class="op">;</span></span></code></pre></div>
+<p>To stop recording and receive the final remaining packet:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mediaRecorder<span class="op">.</span><span class="fu">stop</span>()<span class="op">;</span></span></code></pre></div>
+<h2 id="complete-example">Complete Example</h2>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">startWebMStreaming</span>() {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">try</span> {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> stream <span class="op">=</span> <span class="cf">await</span> <span class="bu">navigator</span><span class="op">.</span><span class="at">mediaDevices</span><span class="op">.</span><span class="fu">getUserMedia</span>({ <span class="dt">video</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">audio</span><span class="op">:</span> <span class="kw">true</span> })<span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> {</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">mimeType</span><span class="op">:</span> <span class="st">&#39;video/webm; codecs=vp8,opus&#39;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Send chunk to server or append to buffer</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Emitted chunk size:&#39;</span><span class="op">,</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span>)<span class="op">;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    }<span class="op">;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Emit a chunk every 500ms</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    mediaRecorder<span class="op">.</span><span class="fu">start</span>(<span class="dv">500</span>)<span class="op">;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Stop recording after 5 seconds</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="pp">setTimeout</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>      mediaRecorder<span class="op">.</span><span class="fu">stop</span>()<span class="op">;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>      stream<span class="op">.</span><span class="fu">getTracks</span>()<span class="op">.</span><span class="fu">forEach</span>(track <span class="kw">=&gt;</span> track<span class="op">.</span><span class="fu">stop</span>())<span class="op">;</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span> <span class="dv">5000</span>)<span class="op">;</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">catch</span> (error) {</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;Error recording stream:&#39;</span><span class="op">,</span> error)<span class="op">;</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h2 id="key-considerations-for-webm-chunking">Key Considerations for
+WebM Chunking</h2>
+<ul>
+<li><strong>Container Headers (Initialization Segment):</strong> The
+very first chunk emitted contains the WebM initialization metadata (EBML
+header, Segment, and Track elements). Subsequent chunks contain media
+Clusters. If you are replaying or streaming these chunks to another
+destination, the receiving decoder must receive the first chunk to
+decode subsequent slices correctly.</li>
+<li><strong>Interval Accuracy:</strong> The <code>timeslice</code>
+duration is not strictly guaranteed to the exact millisecond. Browsers
+typically align chunk emission to keyframes or internal buffer limits,
+causing slight variations in chunk delivery timing.</li>
+<li><strong>Manual Requesting:</strong> You can manually trigger a data
+packet emission without stopping the recorder by invoking
+<code>mediaRecorder.requestData()</code>.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

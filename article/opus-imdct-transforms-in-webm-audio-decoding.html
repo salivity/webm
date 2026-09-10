@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opus IMDCT Transforms in WebM Audio Decoding - webm</title>
+    <meta name="description" content="WebM containers frequently encapsulate Opus audio streams, relying on the CELT (Constrained Energy Lapped Transform) layer to reproduce high-fidelity audio from frequency-domain data. Converting these quantized frequency bins back into continuous, uncomp">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/opus-imdct-transforms-in-webm-audio-decoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Opus IMDCT Transforms in WebM Audio Decoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/opus-imdct-transforms-in-webm-audio-decoding" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM containers frequently encapsulate Opus audio streams, relying on the CELT (Constrained Energy Lapped Transform) layer to reproduce high-fidelity audio from frequency-domain data. Converting these quantized frequency bins back into continuous, uncomp" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="opus-imdct-transforms-in-webm-audio-decoding">Opus IMDCT
+Transforms in WebM Audio Decoding</h1>
+<p>WebM containers frequently encapsulate Opus audio streams, relying on
+the CELT (Constrained Energy Lapped Transform) layer to reproduce
+high-fidelity audio from frequency-domain data. Converting these
+quantized frequency bins back into continuous, uncompressed PCM audio
+requires a deterministic mathematical pipeline. This process centers on
+the Inverse Modified Discrete Cosine Transform (IMDCT), accelerated via
+complex Fast Fourier Transforms (FFT), followed by windowing,
+Time-Domain Aliasing Cancellation (TDAC), and de-emphasis filtering.</p>
+<h3 id="1-spectral-de-quantization-and-normalization">1. Spectral
+De-quantization and Normalization</h3>
+<p>Before applying time-frequency transforms, the decoder reads the
+normalized algebraic vector quantized (AVQ) bins and scales them by the
+decoded band energies. For a given critical band, the decoded
+frequency-domain coefficients <span class="math inline">\(X(k)\)</span>
+are reconstructed such that their total energy matches the transmitted
+envelope parameters across all <span class="math inline">\(N\)</span>
+sub-band frequency bins.</p>
+<h3 id="2-the-inverse-modified-discrete-cosine-transform-imdct">2. The
+Inverse Modified Discrete Cosine Transform (IMDCT)</h3>
+<p>The foundational mathematical transform that projects
+frequency-domain coefficients <span class="math inline">\(X(k)\)</span>
+back into the time domain is the IMDCT. For a frame of <span
+class="math inline">\(N\)</span> frequency bins producing <span
+class="math inline">\(2N\)</span> aliased time-domain samples <span
+class="math inline">\(y(n)\)</span>, the analytical transform is defined
+as:</p>
+<p><span class="math display">\[y(n) = \frac{2}{N} \sum_{k=0}^{N-1} X(k)
+\cos \left[ \frac{\pi}{N} \left( n + \frac{1}{2} + \frac{N}{2} \right)
+\left( k + \frac{1}{2} \right) \right]\]</span></p>
+<p>where <span class="math inline">\(n = 0, 1, \dots, 2N-1\)</span>.</p>
+<p>Because direct calculation of this summation is computationally
+prohibitive (<span class="math inline">\(O(N^2)\)</span> complexity),
+Opus computes the transform using an <span
+class="math inline">\(N/2\)</span>-point complex Inverse Fast Fourier
+Transform (IFFT) through pre- and post-rotation operations (<span
+class="math inline">\(O(N \log N)\)</span> complexity).</p>
+<h3 id="3-fft-based-imdct-implementation">3. FFT-Based IMDCT
+Implementation</h3>
+<p>The fast IMDCT combines trigonometric shift operators and a complex
+IFFT:</p>
+<ol type="1">
+<li><p><strong>Pre-rotation:</strong> The <span
+class="math inline">\(N\)</span> real coefficients <span
+class="math inline">\(X(k)\)</span> are modulated and folded into an
+<span class="math inline">\(N/2\)</span>-length complex sequence <span
+class="math inline">\(Z(k)\)</span>: <span class="math display">\[Z(k) =
+\left( X(2k) + j \cdot X(N - 1 - 2k) \right) e^{-j \frac{2\pi
+k}{N}}\]</span> for <span class="math inline">\(k = 0, 1, \dots,
+\frac{N}{2}-1\)</span>.</p></li>
+<li><p><strong>Complex IFFT:</strong> A standard Inverse Fast Fourier
+Transform is applied to <span class="math inline">\(Z(k)\)</span>: <span
+class="math display">\[z(m) = \frac{1}{N/2} \sum_{k=0}^{N/2-1} Z(k) e^{j
+\frac{2\pi m k}{N/2}}\]</span></p></li>
+<li><p><strong>Post-rotation:</strong> The complex time-domain sequence
+<span class="math inline">\(z(m)\)</span> is multiplied by another
+complex exponential twiddle factor to extract the <span
+class="math inline">\(2N\)</span> real aliased time-domain samples:
+<span class="math display">\[y&#39;(m) = z(m) e^{-j \frac{\pi (2m +
+1)}{2N}}\]</span> The resulting components are then mapped symmetrically
+to reconstruct the full length-<span class="math inline">\(2N\)</span>
+frame vector <span class="math inline">\(y(n)\)</span>.</p></li>
+</ol>
+<h3 id="4-windowing-and-time-domain-aliasing-cancellation-tdac">4.
+Windowing and Time-Domain Aliasing Cancellation (TDAC)</h3>
+<p>The <span class="math inline">\(2N\)</span> output samples from the
+IMDCT contain intentional time-domain aliasing introduced by the forward
+MDCT lapping process. To eliminate this aliasing, the decoder executes
+Time-Domain Aliasing Cancellation (TDAC) using a smooth window function
+<span class="math inline">\(w(n)\)</span>.</p>
+<p>Opus applies a low-overlap or full-overlap sine-derived window that
+satisfies the Princen-Bradley condition:</p>
+<p><span class="math display">\[w^2(n) + w^2(n + N) = 1\]</span></p>
+<p>The windowed block is calculated by pointwise multiplication:</p>
+<p><span class="math display">\[\tilde{y}_m(n) = y_m(n) \cdot
+w(n)\]</span></p>
+<p>The actual unaliased time-domain PCM output <span
+class="math inline">\(x(n)\)</span> for the current frame <span
+class="math inline">\(m\)</span> is obtained by summing the second half
+of the previous windowed frame with the first half of the current
+windowed frame (Overlap-Add, or OLA):</p>
+<p><span class="math display">\[x_m(n) = \tilde{y}_{m-1}(n + N) +
+\tilde{y}_m(n), \quad \text{for } n = 0, 1, \dots, N-1\]</span></p>
+<p>The negative symmetry of the aliasing terms between adjacent
+overlapped frames cancels the mirrored artifacts completely, yielding
+bit-exact time reconstruction.</p>
+<h3 id="5-de-emphasis-filtering">5. De-Emphasis Filtering</h3>
+<p>To counteract the high-frequency pre-emphasis applied during the
+encoding phase to maximize psychoacoustic masking, the reconstructed
+samples <span class="math inline">\(x_m(n)\)</span> pass through a
+first-order Infinite Impulse Response (IIR) de-emphasis filter.</p>
+<p>The transfer function of this filter is:</p>
+<p><span class="math display">\[H(z) = \frac{1}{1 - \alpha
+z^{-1}}\]</span></p>
+<p>Expressed as a linear difference equation, the final audio sample
+<span class="math inline">\(s(n)\)</span> is generated by:</p>
+<p><span class="math display">\[s(n) = x_m(n) + \alpha \cdot s(n -
+1)\]</span></p>
+<p>In the Opus specification, <span
+class="math inline">\(\alpha\)</span> is typically set to <span
+class="math inline">\(0.85\)</span> (or tailored based on the sample
+rate). The resulting signal <span class="math inline">\(s(n)\)</span>
+represents the linear Pulse Code Modulation (PCM) audio stream, fully
+decoded from the WebM file's Opus packets and ready for
+digital-to-analog conversion.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

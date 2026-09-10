@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Demuxers Identify Keyframes and Delta Frames - webm</title>
+    <meta name="description" content="A WebM demuxer determines whether a video frame is a keyframe (intra-frame) or a delta frame (inter-frame) by inspecting container-level structural flags within the Matroska/EBML format, and secondarily by examining the underlying video codec bitstream.">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-webm-demuxers-identify-keyframes-and-delta-frames">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Demuxers Identify Keyframes and Delta Frames - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-webm-demuxers-identify-keyframes-and-delta-frames" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="A WebM demuxer determines whether a video frame is a keyframe (intra-frame) or a delta frame (inter-frame) by inspecting container-level structural flags within the Matroska/EBML format, and secondarily by examining the underlying video codec bitstream." />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-webm-demuxers-identify-keyframes-and-delta-frames">How WebM
+Demuxers Identify Keyframes and Delta Frames</h1>
+<p>A WebM demuxer determines whether a video frame is a keyframe
+(intra-frame) or a delta frame (inter-frame) by inspecting
+container-level structural flags within the Matroska/EBML format, and
+secondarily by examining the underlying video codec bitstream. Because
+WebM is a restricted subset of the Matroska container, it uses specific
+structural elements—primarily <code>SimpleBlock</code> flags and
+<code>BlockGroup</code> reference tags—to convey frame dependency
+information directly to the demuxer without requiring full video
+decoding.</p>
+<h3 id="1-the-simpleblock-flags-primary-method">1. The
+<code>SimpleBlock</code> Flags (Primary Method)</h3>
+<p>The vast majority of modern WebM files store video data inside
+<code>SimpleBlock</code> elements. A <code>SimpleBlock</code> contains a
+compact binary header preceding the raw video payload, which includes a
+1-byte flags field.</p>
+<p>The demuxer identifies frame types using the <strong>Keyframe
+bit</strong> located in this flags byte:</p>
+<ul>
+<li><strong>Keyframe (Intra-frame):</strong> Bit 7 (the most significant
+bit, or bit 0 depending on bit-numbering conventions, value
+<code>0x80</code>) is set to <code>1</code>. This explicitly signals
+that the block contains an independent frame that does not rely on
+previous or future frames for reconstruction.</li>
+<li><strong>Delta Frame (Inter-frame):</strong> The Keyframe bit is set
+to <code>0</code>. This tells the demuxer that the frame depends on
+referenced reference frames to be decoded properly.</li>
+</ul>
+<h3
+id="2-the-blockgroup-and-referenceblock-structure-legacyalternative-method">2.
+The <code>BlockGroup</code> and <code>ReferenceBlock</code> Structure
+(Legacy/Alternative Method)</h3>
+<p>When a WebM file uses <code>BlockGroup</code> elements instead of
+<code>SimpleBlock</code> elements, the demuxer detects keyframes by
+checking for dependency elements within the group:</p>
+<ul>
+<li><strong>Keyframe:</strong> A <code>BlockGroup</code> that contains a
+<code>Block</code> element but <strong>no</strong>
+<code>ReferenceBlock</code> element is treated as a keyframe. The
+absence of a reference indicates no temporal dependencies.</li>
+<li><strong>Delta Frame:</strong> If one or more
+<code>ReferenceBlock</code> elements are present inside the
+<code>BlockGroup</code>, the frame is a delta frame. The
+<code>ReferenceBlock</code> contains the relative timestamp of the
+frame(s) upon which this delta frame depends.</li>
+</ul>
+<h3 id="3-codec-bitstream-inspection-fallback-method">3. Codec Bitstream
+Inspection (Fallback Method)</h3>
+<p>If the container metadata is missing, corrupted, or generated by a
+non-compliant muxer, the demuxer can inspect the initial bytes of the
+video payload to identify the frame type based on the codec:</p>
+<ul>
+<li><strong>VP8:</strong> The demuxer reads the first byte of the
+payload. If the least significant bit (bit 0) is <code>0</code>, it is a
+Keyframe; if it is <code>1</code>, it is an Inter-frame.</li>
+<li><strong>VP9:</strong> The demuxer parses the uncompressed header.
+The <code>frame_type</code> bit determines the frame type
+(<code>0</code> indicates a Keyframe, while <code>1</code> indicates an
+Inter-frame).</li>
+<li><strong>AV1:</strong> The demuxer reads the Open Bitstream Unit
+(OBU) header and parses the <code>frame_header_obu</code> to extract the
+<code>frame_type</code> syntax element (<code>0</code> corresponds to
+<code>KEY_FRAME</code>).</li>
+</ul>
+<h3 id="summary">Summary</h3>
+<p>WebM demuxers prioritize the <strong>Keyframe flag in the
+<code>SimpleBlock</code> header</strong> for fast and efficient parsing.
+This allows media players and processing pipelines to perform seeking,
+indexing, and adaptive streaming operations rapidly without parsing the
+compressed video payload itself.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

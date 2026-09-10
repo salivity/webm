@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebCodecs API: Low-Level WebM Decoding in JavaScript - webm</title>
+    <meta name="description" content="The WebCodecs API provides web applications with fine-grained, low-level access to the browser’s internal media processing pipeline, bypassing the traditional, high-level <video> element abstraction. By decoupling demuxing, decoding, and rendering, Web">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webcodecs-api-low-level-webm-decoding-in-javascript">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebCodecs API: Low-Level WebM Decoding in JavaScript - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webcodecs-api-low-level-webm-decoding-in-javascript" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebCodecs API provides web applications with fine-grained, low-level access to the browser’s internal media processing pipeline, bypassing the traditional, high-level <video> element abstraction. By decoupling demuxing, decoding, and rendering, Web" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webcodecs-api-low-level-webm-decoding-in-javascript">WebCodecs
+API: Low-Level WebM Decoding in JavaScript</h1>
+<p>The WebCodecs API provides web applications with fine-grained,
+low-level access to the browser’s internal media processing pipeline,
+bypassing the traditional, high-level <code>&lt;video&gt;</code> element
+abstraction. By decoupling demuxing, decoding, and rendering, WebCodecs
+allows JavaScript to unpack WebM containers, stream individual encoded
+VP8, VP9, or AV1 frames into a dedicated hardware-accelerated decoder,
+and receive raw GPU-backed surfaces represented as
+<code>VideoFrame</code> objects for direct manipulation.</p>
+<h3 id="separating-demuxing-from-decoding">Separating Demuxing from
+Decoding</h3>
+<p>Traditional web playback relies on the browser to handle container
+parsing, decoding, and synchronization monolithically. WebCodecs does
+not parse container formats like WebM natively; instead, it delegates
+container parsing to user space.</p>
+<p>To decode a WebM file, a JavaScript demuxer (often implemented in
+native JavaScript or compiled from C/Rust via WebAssembly) parses the
+Extensible Binary Meta Language (EBML) structure of the WebM file. This
+demuxing step extracts essential metadata, such as the codec string
+(e.g., <code>vp09.00.10.08</code>), track definitions, timestamps, and
+the raw encoded bitstream chunks without initiating any rendering
+pipeline.</p>
+<h3 id="configuring-the-videodecoder">Configuring the
+<code>VideoDecoder</code></h3>
+<p>Once track metadata is extracted from the WebM header, JavaScript
+initializes a <code>VideoDecoder</code> instance. The decoder is
+instantiated with two mandatory callbacks: <code>output</code> and
+<code>error</code>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> decoder <span class="op">=</span> <span class="kw">new</span> <span class="fu">VideoDecoder</span>({</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">output</span><span class="op">:</span> (frame) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Low-level surface handle available here</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">handleFrame</span>(frame)<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  }<span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">error</span><span class="op">:</span> (err) <span class="kw">=&gt;</span> <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(err)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>decoder<span class="op">.</span><span class="fu">configure</span>({</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">codec</span><span class="op">:</span> <span class="st">&#39;vp8&#39;</span><span class="op">,</span> <span class="co">// or &#39;vp09.00.10.08&#39;, &#39;av01.0.04M.08&#39;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">codedWidth</span><span class="op">:</span> <span class="dv">1920</span><span class="op">,</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">codedHeight</span><span class="op">:</span> <span class="dv">1080</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>The <code>configure()</code> method prepares the underlying platform
+decoder (typically a hardware decoder backed by DirectX, VA-API,
+VideoToolbox, or similar OS-level frameworks) to receive that specific
+compression format.</p>
+<h3 id="ingesting-webm-chunks-via-encodedvideochunk">Ingesting WebM
+Chunks via <code>EncodedVideoChunk</code></h3>
+<p>As the WebM demuxer iterates over the file’s simple blocks or block
+groups, it constructs <code>EncodedVideoChunk</code> objects. Each chunk
+contains:</p>
+<ul>
+<li><strong>Type:</strong> Identifies whether the chunk is a
+<code>key</code> frame (independent) or a <code>delta</code> frame
+(predictive).</li>
+<li><strong>Timestamp:</strong> The presentation timestamp (PTS)
+extracted from the WebM block.</li>
+<li><strong>Duration:</strong> The block's presentation duration (if
+present).</li>
+<li><strong>Data:</strong> An <code>ArrayBuffer</code> or
+<code>TypedArray</code> containing the raw compressed frame data.</li>
+</ul>
+<p>These chunks are dispatched sequentially into
+<code>decoder.decode(chunk)</code>. Because WebCodecs handles frame
+ordering internally according to codec specifications, decoding
+operations are queued asynchronously without blocking the main
+JavaScript execution thread.</p>
+<h3 id="exposing-low-level-surfaces-via-videoframe">Exposing Low-Level
+Surfaces via <code>VideoFrame</code></h3>
+<p>The core advantage of WebCodecs lies in the <code>output</code>
+callback, which yields a <code>VideoFrame</code> object for every
+successfully decoded frame. A <code>VideoFrame</code> is not a standard
+byte array; it is a direct JavaScript handle to an internal,
+platform-native surface—often an uncompressed YUV or NV12 surface
+residing in GPU memory.</p>
+<p>This mechanism exposes low-level video surfaces to JavaScript in
+several ways:</p>
+<ol type="1">
+<li><strong>Direct GPU Binding:</strong> A <code>VideoFrame</code>
+implements the <code>CanvasImageSource</code> interface. It can be drawn
+directly into a 2D canvas, uploaded as an external texture to WebGL via
+<code>texImage2D()</code>, or imported into WebGPU via
+<code>importExternalTexture()</code>. This creates a zero-copy or
+minimal-copy path directly from the platform decoder to the graphics
+context.</li>
+<li><strong>Raw Memory Access:</strong> If pixel-level manipulation on
+the CPU is necessary, the <code>VideoFrame.copyTo()</code> method copies
+raw pixel planes (such as Y, U, and V planes) into an
+<code>ArrayBuffer</code>, respecting the layout, stride, and pixel
+format (e.g., <code>I420</code>, <code>RGBA</code>).</li>
+<li><strong>Explicit Lifetime Management:</strong> Because
+<code>VideoFrame</code> instances point to limited hardware resources
+and GPU textures, WebCodecs requires manual resource management.
+Invoking <code>frame.close()</code> immediately releases the underlying
+surface back to the decoder's frame pool, preventing memory leaks and
+backpressure stalls in the decoding pipeline.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

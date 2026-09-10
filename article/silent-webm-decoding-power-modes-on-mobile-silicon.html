@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silent WebM Decoding Power Modes on Mobile Silicon - webm</title>
+    <meta name="description" content="Decoding silent WebM media on modern mobile System-on-Chips (SoCs) triggers a coordinated set of hardware-level power-saving states designed to minimize energy consumption. Because WebM containers typically encapsulate VP8, VP9, or AV1 video without an a">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/silent-webm-decoding-power-modes-on-mobile-silicon">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Silent WebM Decoding Power Modes on Mobile Silicon - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/silent-webm-decoding-power-modes-on-mobile-silicon" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Decoding silent WebM media on modern mobile System-on-Chips (SoCs) triggers a coordinated set of hardware-level power-saving states designed to minimize energy consumption. Because WebM containers typically encapsulate VP8, VP9, or AV1 video without an a" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="silent-webm-decoding-power-modes-on-mobile-silicon">Silent WebM
+Decoding Power Modes on Mobile Silicon</h1>
+<p>Decoding silent WebM media on modern mobile System-on-Chips (SoCs)
+triggers a coordinated set of hardware-level power-saving states
+designed to minimize energy consumption. Because WebM containers
+typically encapsulate VP8, VP9, or AV1 video without an accompanying
+Opus or Vorbis audio stream, the mobile silicon can selectively
+power-down the entire digital signal processing (DSP) audio subsystem,
+maximize application processor idle states, lower memory bus
+frequencies, and confine execution strictly to low-voltage
+fixed-function video processing units.</p>
+<h3 id="complete-audio-subsystem-power-gating">Complete Audio Subsystem
+Power-Gating</h3>
+<p>When a WebM video lacks an audio track, the mobile operating system's
+media framework identifies the absent stream during demuxing and avoids
+initializing the audio hardware pipeline. This enables aggressive
+power-gating across several discrete silicon blocks:</p>
+<ul>
+<li><strong>Audio DSP Sleep:</strong> Dedicated low-power audio
+processors (such as the Qualcomm Hexagon DSP audio core or Apple’s audio
+subsystem) remain in deep retention or complete power-off states rather
+than operating in active or low-power polling modes.</li>
+<li><strong>Bus Interface Disabling:</strong> Inter-chip audio buses
+like SoundWire, I2S, or SLIMbus remain unclocked, eliminating dynamic
+switching losses.</li>
+<li><strong>Codec and Amp Power-Down:</strong> The mixed-signal audio
+codec and speaker/headphone amplifiers remain powered off, avoiding
+quiescent current draw from analog stages.</li>
+</ul>
+<h3 id="deep-cpu-c-states-and-wfi-modes">Deep CPU C-States and WFI
+Modes</h3>
+<p>Software demuxing of lightweight container structures like WebM
+(derived from Matroska) demands negligible compute power. As a result,
+the application processor (AP) cores—both performance and efficiency
+clusters—spend the vast majority of their execution time in low-power
+idle states:</p>
+<ul>
+<li><strong>Wait For Interrupt (WFI) and Retention:</strong> Host CPU
+cores enter architectural idle states (such as ARM WFI or retention
+modes) between frame submissions.</li>
+<li><strong>Core and Cluster Power-Gating (C6/C7 equivalent):</strong>
+Cores drop into deep sleep states where architectural state is saved to
+low-leakage SRAM and the core logic is entirely unpowered until the
+hardware decoder issues a completion interrupt.</li>
+</ul>
+<h3
+id="fixed-function-video-processing-unit-vpu-downclocking">Fixed-Function
+Video Processing Unit (VPU) Downclocking</h3>
+<p>Hardware-accelerated decoding of VP9 or AV1 streams is handled by
+dedicated fixed-function VPUs (such as Samsung's Multi-Format Codec,
+MediaTek's MiraVision VDEC, or Qualcomm’s video core) rather than
+software rendering on the CPU or GPU:</p>
+<ul>
+<li><strong>Dynamic Voltage and Frequency Scaling (DVFS):</strong>
+Without audio synchronization overhead, the VPU decodes video frames in
+short, high-efficiency bursts and scales down to its lowest Operating
+Performance Point (OPP) voltage and clock frequency adequate for the
+target frame rate.</li>
+<li><strong>Asynchronous Operation:</strong> The VPU operates
+autonomously via Direct Memory Access (DMA), only waking the CPU host
+briefly to signal that decoded YUV frames are ready in memory.</li>
+</ul>
+<h3 id="gpu-bypassing-and-display-direct-scanout">GPU Bypassing and
+Display Direct Scanout</h3>
+<p>Silent WebM playback bypasses the 3D rendering pipeline entirely,
+conserving substantial dynamic power:</p>
+<ul>
+<li><strong>Hardware Overlay Planes:</strong> The display controller
+uses hardware overlays (such as DRM/KMS hardware planes on Android) to
+composite the decoded YUV frame directly onto the screen buffer without
+engaging the GPU for color space conversion or scaling.</li>
+<li><strong>GPU Power-Gating:</strong> The GPU remains in an unclocked
+or power-gated sleep state throughout playback, avoiding the significant
+static leakage and dynamic draw associated with graphics compute.</li>
+</ul>
+<h3 id="memory-controller-and-lpddr-low-power-states">Memory Controller
+and LPDDR Low-Power States</h3>
+<p>Memory bandwidth demands are reduced to the absolute minimum required
+to stream raw compressed packets into the VPU and dump decoded frames to
+framebuffers:</p>
+<ul>
+<li><strong>LPDDR DVFS Scaling:</strong> The memory controller
+dynamically scales down LPDDR clock rates to lower frequency steps
+because audio buffering, mixing, and graphics re-sampling pipelines are
+completely inactive.</li>
+<li><strong>Self-Refresh Modes:</strong> Between frame decoding and
+display refresh cycles, sections of the dynamic RAM can enter brief
+self-refresh states, curtailing memory subsystem power draw.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

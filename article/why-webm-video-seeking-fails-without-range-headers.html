@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why WebM Video Seeking Fails Without Range Headers - webm</title>
+    <meta name="description" content="When streaming WebM media in modern web browsers, seeking requires the web server to support HTTP byte-range requests. Without proper byte-range headers, browsers cannot request specific segments of a video file on demand, causing seeking attempts to fai">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/why-webm-video-seeking-fails-without-range-headers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why WebM Video Seeking Fails Without Range Headers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/why-webm-video-seeking-fails-without-range-headers" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When streaming WebM media in modern web browsers, seeking requires the web server to support HTTP byte-range requests. Without proper byte-range headers, browsers cannot request specific segments of a video file on demand, causing seeking attempts to fai" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-webm-video-seeking-fails-without-range-headers">Why WebM
+Video Seeking Fails Without Range Headers</h1>
+<p>When streaming WebM media in modern web browsers, seeking requires
+the web server to support HTTP byte-range requests. Without proper
+byte-range headers, browsers cannot request specific segments of a video
+file on demand, causing seeking attempts to fail, reset playback to the
+beginning, or freeze the media player entirely.</p>
+<h3 id="how-seeking-relies-on-byte-range-requests">How Seeking Relies on
+Byte-Range Requests</h3>
+<p>WebM files, which are based on the Matroska (MKV) container format,
+store audio, video, and indexing data (called Cues). When a user clicks
+a point on a video's progress bar, the browser calculates the target
+timestamp, references the Cues element to locate the corresponding byte
+offset, and requests only that specific slice of the file.</p>
+<p>To fetch that slice, the browser sends an HTTP request containing a
+<code>Range</code> header:</p>
+<pre class="http"><code>GET /video.webm HTTP/1.1
+Range: bytes=10485760-</code></pre>
+<h3 id="the-role-of-essential-http-headers">The Role of Essential HTTP
+Headers</h3>
+<p>For seeking to function properly, the server and client exchange
+specific headers:</p>
+<ol type="1">
+<li><strong><code>Accept-Ranges: bytes</code></strong><br />
+Sent by the server in the initial <code>200 OK</code> response to inform
+the browser that partial content requests are supported.</li>
+<li><strong><code>Range: bytes=start-end</code></strong><br />
+Sent by the browser when attempting to seek, specifying the exact byte
+offset where the requested video frame starts.</li>
+<li><strong><code>HTTP/206 Partial Content</code></strong><br />
+Returned by the server alongside a <code>Content-Range</code> header
+(e.g., <code>Content-Range: bytes 10485760-20971519/52428800</code>)
+confirming that only the requested segment is being transmitted.</li>
+</ol>
+<h3 id="why-seeking-fails-without-range-headers">Why Seeking Fails
+Without Range Headers</h3>
+<p>If the hosting server or an intermediary proxy fails to support or
+strip these headers, the seeking workflow breaks in several ways:</p>
+<ul>
+<li><strong>Entire File Re-downloading:</strong> If the server ignores
+the <code>Range</code> header, it responds with <code>200 OK</code> and
+streams the file from byte 0. The browser cannot skip ahead and instead
+resets the playback to the start of the video.</li>
+<li><strong>Playback Freezing:</strong> If the browser expects a
+<code>206 Partial Content</code> response but receives unseekable data
+or an error (such as <code>416 Range Not Satisfiable</code>), the HTML5
+<code>&lt;video&gt;</code> element pauses indefinitely while waiting for
+the requested frame data.</li>
+<li><strong>Disabled Scrubber UI:</strong> When the browser detects that
+<code>Accept-Ranges: bytes</code> is missing in the initial response, it
+may mark the stream as unseekable, preventing user interaction on the
+timeline scrubber.</li>
+</ul>
+<h3 id="resolving-range-header-failures">Resolving Range Header
+Failures</h3>
+<p>To fix WebM seeking issues:</p>
+<ul>
+<li><strong>Configure Web Servers:</strong> Ensure your server (such as
+Nginx or Apache) is configured to handle static file range requests
+natively.</li>
+<li><strong>Check Reverse Proxies and CDNs:</strong> Verify that load
+balancers, CDNs, or application middleware do not strip the
+<code>Range</code>, <code>Accept-Ranges</code>, and
+<code>Content-Range</code> headers from requests and responses.</li>
+<li><strong>Properly Structure WebM Metadata:</strong> Ensure the WebM
+container includes a Cues index placed at the beginning of the file so
+the browser can map timestamps to byte offsets immediately upon
+loading.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

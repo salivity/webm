@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Chapter Edition Flags for Alternate Cuts - webm</title>
+    <meta name="description" content="WebM files can store multiple versions of a video—such as theatrical releases, director's cuts, or censored versions—within a single file by utilizing Matroska-based Chapter Edition structures. By defining multiple timeline playlists through chapter">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-chapter-edition-flags-for-alternate-cuts">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Chapter Edition Flags for Alternate Cuts - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-chapter-edition-flags-for-alternate-cuts" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM files can store multiple versions of a video—such as theatrical releases, director's cuts, or censored versions—within a single file by utilizing Matroska-based Chapter Edition structures. By defining multiple timeline playlists through chapter" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-chapter-edition-flags-for-alternate-cuts">WebM Chapter
+Edition Flags for Alternate Cuts</h1>
+<p>WebM files can store multiple versions of a video—such as theatrical
+releases, director's cuts, or censored versions—within a single file by
+utilizing Matroska-based Chapter Edition structures. By defining
+multiple timeline playlists through chapter entries and setting specific
+flags like <code>EditionFlagOrdered</code> and
+<code>EditionFlagDefault</code>, a media player can construct different
+viewable cuts using shared audio and video data without duplicating
+footage.</p>
+<h3 id="the-mechanism-editions-and-ordered-chapters">The Mechanism:
+Editions and Ordered Chapters</h3>
+<p>Because the WebM format is a restricted subset of the Matroska (EBML)
+specification, it inherits the container's robust chaptering
+architecture. In standard playback, chapters simply mark jump points
+across a continuous timeline. However, the specification allows chapters
+to be organized into distinct <code>EditionEntry</code> groupings, where
+each edition represents a completely different timeline or cut.</p>
+<p>Within an <code>EditionEntry</code>, the
+<code>EditionFlagOrdered</code> element is the primary mechanism that
+enables alternate cuts. When <code>EditionFlagOrdered</code> is set to
+true (1):</p>
+<ul>
+<li>The media player treats the chapters in that edition as a sequential
+playlist rather than mere bookmarks.</li>
+<li>The player plays the exact timestamp segments defined by each
+chapter's start and end times, jumping across gaps in the source
+video.</li>
+<li>Shared scenes only need to be encoded once. Alternate scenes,
+extended takes, or bonus footage are appended elsewhere in the video
+track and referenced only by the editions that require them.</li>
+</ul>
+<h3 id="key-chapter-edition-flags">Key Chapter Edition Flags</h3>
+<p>To manage how players interact with these alternate cuts, the
+container relies on several flags defined at the
+<code>EditionEntry</code> level:</p>
+<ul>
+<li><strong>EditionFlagDefault:</strong> Dictates whether an edition
+should be selected automatically if the user has not chosen a
+preference. Only one edition per file should have this flag set to true
+(1). For example, a studio can set the standard theatrical cut as the
+default while keeping the director's cut accessible in the menu.</li>
+<li><strong>EditionFlagOrdered:</strong> Informs the parser that the
+chapters define a non-linear, ordered timeline. The player must assemble
+the playback path sequentially according to the chapter start and end
+timestamps rather than playing the physical stream from start to
+finish.</li>
+<li><strong>EditionFlagHidden:</strong> Marks an edition as hidden from
+the user interface. This is typically used for background structural
+logic, testing, or nested segment transitions that should not appear as
+user-selectable options in playback menus.</li>
+</ul>
+<h3 id="how-alternate-cuts-function-in-practice">How Alternate Cuts
+Function in Practice</h3>
+<p>Consider a film with a common introduction, an alternate middle
+scene, and a common ending:</p>
+<ol type="1">
+<li>The underlying video track contains: Segment A (Intro), Segment B
+(Theatrical Middle), Segment C (Director's Cut Middle), and Segment D
+(Ending).</li>
+<li><strong>Edition 1 (Theatrical Cut):</strong>
+<code>EditionFlagDefault</code> is set to 1, and
+<code>EditionFlagOrdered</code> is set to 1. The chapter list explicitly
+references timestamps for Segment A, jumps directly to Segment B
+(skipping Segment C), and ends with Segment D.</li>
+<li><strong>Edition 2 (Director's Cut):</strong>
+<code>EditionFlagDefault</code> is set to 0, and
+<code>EditionFlagOrdered</code> is set to 1. The chapter list references
+timestamps for Segment A, jumps over Segment B directly to Segment C,
+and concludes with Segment D.</li>
+</ol>
+<p>When a compatible player opens the file, it reads the edition
+headers, presents the user with the choices, and seamlessly seeks
+between the designated time codes, delivering distinct viewing
+experiences from a single, storage-efficient file.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

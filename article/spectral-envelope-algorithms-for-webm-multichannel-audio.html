@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spectral Envelope Algorithms for WebM Multichannel Audio - webm</title>
+    <meta name="description" content="The WebM container primarily encapsulates multi-channel audio using two lossy compression formats: Opus and Vorbis. Calculating the spectral envelope—the smoothed curve tracking the distribution of energy across the frequency spectrum—is essential fo">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/spectral-envelope-algorithms-for-webm-multichannel-audio">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Spectral Envelope Algorithms for WebM Multichannel Audio - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/spectral-envelope-algorithms-for-webm-multichannel-audio" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container primarily encapsulates multi-channel audio using two lossy compression formats: Opus and Vorbis. Calculating the spectral envelope—the smoothed curve tracking the distribution of energy across the frequency spectrum—is essential fo" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1
+id="spectral-envelope-algorithms-for-webm-multichannel-audio">Spectral
+Envelope Algorithms for WebM Multichannel Audio</h1>
+<p>The WebM container primarily encapsulates multi-channel audio using
+two lossy compression formats: Opus and Vorbis. Calculating the spectral
+envelope—the smoothed curve tracking the distribution of energy across
+the frequency spectrum—is essential for psychoacoustic bit allocation,
+spectral shaping, and multichannel spatial coding. This article outlines
+the primary mathematical and digital signal processing algorithms used
+to compute the spectral envelope in multi-channel WebM audio tracks,
+focusing on linear prediction, critical band energy analysis, and
+multichannel inter-channel coupling mechanisms.</p>
+<h3 id="linear-predictive-coding-lpc">Linear Predictive Coding
+(LPC)</h3>
+<p>Linear Predictive Coding represents the spectral envelope by modeling
+the audio signal as the output of an all-pole linear filter driven by an
+excitation signal. In WebM's Opus codec (specifically its speech-centric
+SILK layer) and Vorbis (via its legacy "Floor 0" envelope mode), LPC is
+a foundational envelope estimator.</p>
+<ul>
+<li><strong>Autocorrelation and Levinson-Durbin Recursion:</strong> The
+short-term spectral envelope is computed by windowing the time-domain
+signal, generating autocorrelation coefficients, and applying the
+Levinson-Durbin algorithm to compute optimal filter coefficients.</li>
+<li><strong>Line Spectral Frequencies (LSF / LSP):</strong> To preserve
+filter stability and facilitate multi-channel quantization, the LPC
+polynomial roots are converted into Line Spectral Pairs. In
+multi-channel setups, LSFs capture individual channel resonance
+distributions while minimizing cross-channel distortion during
+transmission.</li>
+</ul>
+<h3 id="critical-band-energy-integration">Critical Band Energy
+Integration</h3>
+<p>The primary spectral envelope representation in both modern Vorbis
+and the CELT layer of Opus relies on dividing the frequency spectrum
+into psychoacoustically motivated subbands (approximating the Bark or
+ERB scales) and measuring energy within each band.</p>
+<ul>
+<li><strong>MDCT Subband Energy Calculation:</strong> The signal is
+transformed via the Modified Discrete Cosine Transform (MDCT). The
+spectrum is partitioned into non-linear critical bands. The spectral
+envelope is calculated by taking the root mean square (RMS) or
+logarithmic energy of the MDCT coefficients within each band: <span
+class="math display">\[\text{Energy}_b = \log_2 \left( \sum_{k \in
+\text{Band}_b} X[k]^2 \right)\]</span></li>
+<li><strong>Piecewise Linear Interpolation (Vorbis Floor 1):</strong>
+Vorbis's standard "Floor 1" envelope algorithm models the spectral
+envelope as a series of connected linear segments in the
+log-frequency/log-amplitude domain. The envelope is defined by a sparse
+set of control points determined through non-linear curve fitting across
+critical bands, producing an efficient, low-artifact approximation of
+the spectrum.</li>
+</ul>
+<h3 id="cepstral-smoothing-and-the-true-envelope-algorithm">Cepstral
+Smoothing and the True Envelope Algorithm</h3>
+<p>When analyzing arbitrary multi-channel audio extracted from WebM
+files (such as in acoustic analysis or speech enhancement), cepstral
+techniques are often utilized rather than direct codec-internal
+tools.</p>
+<ul>
+<li><strong>Homomorphic Deconvolution (Real Cepstrum):</strong> The
+Fourier transform of the signal is computed, followed by the logarithm
+of its magnitude, and then the inverse Fourier transform (IFFT) to yield
+the real cepstrum. Liftering (low-pass filtering in the quefrency
+domain) removes the excitation harmonics and isolates the slow-varying
+spectral envelope.</li>
+<li><strong>True Envelope Algorithm:</strong> An iterative cepstral
+smoothing algorithm that updates the cepstral coefficients until the
+resulting envelope completely encloses the spectral peaks rather than
+cutting through their averages. This is particularly valuable for
+complex multi-channel arrangements where phase cancellation between
+channels can distort harmonic peak representation.</li>
+</ul>
+<h3
+id="multi-channel-processing-and-channel-coupling-algorithms">Multi-Channel
+Processing and Channel Coupling Algorithms</h3>
+<p>In multi-channel configurations (such as 5.1 or 7.1 surround sound),
+calculating the spectral envelope for each channel independently leads
+to redundancy and inter-channel masking artifacts. Codecs inside WebM
+employ joint envelope algorithms:</p>
+<ul>
+<li><strong>Mid/Side (M/S) Matrixing:</strong> Envelopes are calculated
+on sum (<span class="math inline">\(M = (L+R)/\sqrt{2}\)</span>) and
+difference (<span class="math inline">\(S = (L-R)/\sqrt{2}\)</span>)
+channels. The spectral envelope of the side channel is evaluated
+relative to the mid channel to eliminate cross-talk and phase
+discrepancies.</li>
+<li><strong>Intensity Stereo and Dynamic Channel Coupling:</strong> At
+higher frequencies, human spatial localization depends primarily on
+energy envelopes rather than phase. The codec computes a single, shared
+composite spectral envelope for multiple surround channels, alongside a
+vector of scale factors (Inter-channel Level Differences, or ILDs) to
+reconstruct the spatial envelope profile for each output speaker.</li>
+<li><strong>Band-by-Band Energy Normalization:</strong> In Opus CELT,
+once the band energy envelope is computed across all channels,
+individual MDCT coefficients are normalized by their band energy.
+Multi-channel correlation matrices are then used to steer the energy
+vectors, allowing the decoder to restore the multi-channel envelope with
+precise spatial positioning.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

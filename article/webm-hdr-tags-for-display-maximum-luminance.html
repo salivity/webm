@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM HDR Tags for Display Maximum Luminance - webm</title>
+    <meta name="description" content="High Dynamic Range (HDR) video in WebM containers relies on standardized metadata to inform playback hardware and displays how to accurately tone-map luminance levels. This guide outlines the specific Matroska/WebM container elements responsible for sign">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-hdr-tags-for-display-maximum-luminance">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM HDR Tags for Display Maximum Luminance - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-hdr-tags-for-display-maximum-luminance" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="High Dynamic Range (HDR) video in WebM containers relies on standardized metadata to inform playback hardware and displays how to accurately tone-map luminance levels. This guide outlines the specific Matroska/WebM container elements responsible for sign" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-hdr-tags-for-display-maximum-luminance">WebM HDR Tags for
+Display Maximum Luminance</h1>
+<p>High Dynamic Range (HDR) video in WebM containers relies on
+standardized metadata to inform playback hardware and displays how to
+accurately tone-map luminance levels. This guide outlines the specific
+Matroska/WebM container elements responsible for signaling maximum
+luminance values for mastering displays and content peak brightness.</p>
+<h3 id="the-primary-display-luminance-tag-luminancemax">The Primary
+Display Luminance Tag: <code>LuminanceMax</code></h3>
+<p>In a WebM container, the maximum luminance of the mastering display
+is signaled using the <strong><code>LuminanceMax</code></strong>
+element.</p>
+<p>This tag is nested within the video track's color hierarchy:</p>
+<ul>
+<li><strong>Segment</strong> (<code>0x18538067</code>)
+<ul>
+<li><strong>Tracks</strong> (<code>0x1654AE6B</code>)
+<ul>
+<li><strong>TrackEntry</strong> (<code>0xAE</code>)
+<ul>
+<li><strong>Video</strong> (<code>0xE0</code>)
+<ul>
+<li><strong>Colour</strong> (<code>0x55B0</code>)
+<ul>
+<li><strong>MasteringMetadata</strong> (<code>0x55D0</code>)
+<ul>
+<li><strong><code>LuminanceMax</code></strong>
+(<code>0x55D9</code>)</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="specifications-for-luminancemax">Specifications for
+<code>LuminanceMax</code>:</h4>
+<ul>
+<li><strong>Data Type:</strong> Float</li>
+<li><strong>Units:</strong> Candelas per square meter (<span
+class="math inline">\(\text{cd/m}^2\)</span>, commonly referred to as
+nits)</li>
+<li><strong>Function:</strong> Specifies the maximum luminance
+capability of the mastering monitor used during content grading (e.g.,
+<code>1000.0</code> for a 1,000-nit display or <code>4000.0</code> for a
+4,000-nit display).</li>
+</ul>
+<hr />
+<h3 id="related-hdr-luminance-elements-in-webm">Related HDR Luminance
+Elements in WebM</h3>
+<p>For complete and standard-compliant HDR signaling (such as HDR10),
+<code>LuminanceMax</code> works alongside several complementary elements
+within the same container block:</p>
+<h4 id="1-luminancemin-0x55da">1. <code>LuminanceMin</code>
+(<code>0x55DA</code>)</h4>
+<ul>
+<li><strong>Location:</strong> Inside
+<code>MasteringMetadata</code></li>
+<li><strong>Data Type:</strong> Float (<span
+class="math inline">\(\text{cd/m}^2\)</span>)</li>
+<li><strong>Function:</strong> Specifies the minimum black level
+capability of the mastering display (e.g., <code>0.005</code> or
+<code>0.0001</code> nits).</li>
+</ul>
+<h4 id="2-maxcll-0x55e9--maximum-content-light-level">2.
+<code>MaxCLL</code> (<code>0x55E9</code>) — Maximum Content Light
+Level</h4>
+<ul>
+<li><strong>Location:</strong> Directly inside <code>Colour</code>
+(<code>0x55B0</code>)</li>
+<li><strong>Data Type:</strong> Unsigned Integer (nits)</li>
+<li><strong>Function:</strong> Denotes the maximum luminance of the
+brightest individual pixel across the entire video stream.</li>
+</ul>
+<h4 id="3-maxfall-0x55ea--maximum-frame-average-light-level">3.
+<code>MaxFALL</code> (<code>0x55EA</code>) — Maximum Frame-Average Light
+Level</h4>
+<ul>
+<li><strong>Location:</strong> Directly inside <code>Colour</code>
+(<code>0x55B0</code>)</li>
+<li><strong>Data Type:</strong> Unsigned Integer (nits)</li>
+<li><strong>Function:</strong> Defines the highest average luminance
+across any single frame in the video stream.</li>
+</ul>
+<p>Together, <strong><code>LuminanceMax</code></strong> and
+<strong><code>MaxCLL</code></strong> give decoders and displays the
+static HDR metadata necessary to optimize brightness mapping without
+clipping highlights or crushing shadow details.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

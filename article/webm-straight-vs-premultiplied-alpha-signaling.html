@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Straight vs Premultiplied Alpha Signaling - webm</title>
+    <meta name="description" content="The WebM container format indicates the presence of transparency through specific video track metadata and container-level frame packaging, standardizing natively on straight alpha rather than providing a toggle for premultiplied alpha. Understanding how">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-straight-vs-premultiplied-alpha-signaling">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Straight vs Premultiplied Alpha Signaling - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-straight-vs-premultiplied-alpha-signaling" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format indicates the presence of transparency through specific video track metadata and container-level frame packaging, standardizing natively on straight alpha rather than providing a toggle for premultiplied alpha. Understanding how" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-straight-vs-premultiplied-alpha-signaling">WebM Straight vs
+Premultiplied Alpha Signaling</h1>
+<p>The WebM container format indicates the presence of transparency
+through specific video track metadata and container-level frame
+packaging, standardizing natively on straight alpha rather than
+providing a toggle for premultiplied alpha. Understanding how WebM
+signals transparency involves examining the <code>AlphaMode</code>
+container element, auxiliary alpha data storage via
+<code>BlockAdditional</code>, and how decoders handle the interpretation
+of color and opacity data during playback and compositing.</p>
+<h3 id="the-alphamode-element">The AlphaMode Element</h3>
+<p>WebM inherits its container structure from Matroska (EBML).
+Transparency signaling is primarily handled in the container header
+under the <code>TrackEntry</code> -&gt; <code>Video</code> element using
+the <code>AlphaMode</code> flag (EBML ID <code>0x53C0</code>):</p>
+<ul>
+<li><strong><code>0</code> (Default):</strong> The video stream contains
+no alpha channel.</li>
+<li><strong><code>1</code>:</strong> The video stream contains an alpha
+channel.</li>
+</ul>
+<p>When <code>AlphaMode</code> is set to <code>1</code>, demuxers and
+decoders are instructed to look for auxiliary alpha data alongside the
+primary video frames.</p>
+<h3 id="alpha-storage-via-blockadditional">Alpha Storage via
+BlockAdditional</h3>
+<p>WebM does not interleave alpha components into a single standard
+32-bit pixel format (like RGBA) inside VP8 or VP9 compressed bitstreams.
+Instead, it stores alpha data in a dedicated sub-stream within the
+container:</p>
+<ol type="1">
+<li>The primary compressed VP8/VP9 frame contains the color (YUV)
+information.</li>
+<li>The alpha channel is compressed as a separate monochrome VP8/VP9
+frame.</li>
+<li>This secondary alpha frame is packaged in the container alongside
+the base video frame using the <code>BlockAdditional</code> structure
+with a <code>BlockAddID</code> of <code>1</code>.</li>
+</ol>
+<h3 id="straight-alpha-standardization">Straight Alpha
+Standardization</h3>
+<p>The WebM specification natively defines alpha data as
+<strong>straight alpha</strong> (also known as unassociated alpha).</p>
+<ul>
+<li><strong>No Dedicated Container Flag:</strong> There is no separate
+container-level metadata tag inside WebM to toggle between straight and
+premultiplied color channels.</li>
+<li><strong>Color Independence:</strong> The primary video stream stores
+color values without prior multiplication by the corresponding alpha
+values.</li>
+<li><strong>Opacity Mask:</strong> The auxiliary alpha stream stores the
+raw, unmultiplied 8-bit transparency mask values ranging from 0 (fully
+transparent) to 255 (fully opaque).</li>
+</ul>
+<h3 id="playback-and-compositing-interpretation">Playback and
+Compositing Interpretation</h3>
+<p>Because the container signals the presence of an alpha channel via
+<code>AlphaMode = 1</code> and assumes straight alpha conventions, the
+responsibility for handling premultiplication rests entirely on the
+rendering pipeline:</p>
+<ul>
+<li><strong>Demuxing/Decoding:</strong> The WebM demuxer parses the
+<code>BlockAdditional</code> data and passes the primary YUV color frame
+and the alpha frame to the decoders.</li>
+<li><strong>Color Space Conversion:</strong> Decoders convert the YUV
+data to RGB and align it with the decoded alpha plane.</li>
+<li><strong>Compositor Multiplication:</strong> If the rendering engine
+(such as a web browser graphics engine or a video editing timeline)
+requires premultiplied alpha for blending operations, it performs the
+premultiplication step in memory after decoding, multiplying the RGB
+values by the alpha factor prior to drawing the frame to the
+screen.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

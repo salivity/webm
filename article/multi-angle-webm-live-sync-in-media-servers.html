@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Angle WebM Live Sync in Media Servers - webm</title>
+    <meta name="description" content="Media servers achieve frame synchronization across multi-angle WebM live camera feeds by anchoring disparate video streams to a unified time reference, normalizing network jitter, and aligning presentation timestamps prior to delivery. This process relie">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/multi-angle-webm-live-sync-in-media-servers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Multi-Angle WebM Live Sync in Media Servers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/multi-angle-webm-live-sync-in-media-servers" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Media servers achieve frame synchronization across multi-angle WebM live camera feeds by anchoring disparate video streams to a unified time reference, normalizing network jitter, and aligning presentation timestamps prior to delivery. This process relie" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="multi-angle-webm-live-sync-in-media-servers">Multi-Angle WebM
+Live Sync in Media Servers</h1>
+<p>Media servers achieve frame synchronization across multi-angle WebM
+live camera feeds by anchoring disparate video streams to a unified time
+reference, normalizing network jitter, and aligning presentation
+timestamps prior to delivery. This process relies on hardware- or
+network-level clock synchronization at capture, RTCP sender report
+mapping during transport, container-level timestamp normalization inside
+the WebM stream, and server-side jitter buffering. Together, these
+mechanisms allow seamless, instantaneous switching between camera angles
+without drift, frame tearing, or playback buffering.</p>
+<h3 id="1-absolute-clock-synchronization-at-capture">1. Absolute Clock
+Synchronization at Capture</h3>
+<p>Synchronization begins at the source cameras before encoding occurs.
+In a multi-camera setup, each camera must share an identical clock
+reference using Network Time Protocol (NTP) or Precision Time Protocol
+(PTP). When encoders capture video frames, they tag each raw frame with
+an absolute wall-clock timestamp (epoch time). Without this shared time
+reference at the hardware or ingestion level, media servers cannot
+determine which frames from different angles occurred
+simultaneously.</p>
+<h3 id="2-transport-layer-mapping-via-rtp-and-rtcp">2. Transport-Layer
+Mapping via RTP and RTCP</h3>
+<p>When WebM streams (typically utilizing VP8, VP9, or AV1 video
+alongside Opus audio) are transmitted live to a media server via
+protocols like WebRTC or RTSP, they are packaged into Real-time
+Transport Protocol (RTP) packets.</p>
+<ul>
+<li><strong>RTP Timestamps:</strong> Each media packet receives a
+relative RTP timestamp based on the encoder’s clock frequency (e.g., 90
+kHz for video).</li>
+<li><strong>RTCP Sender Reports:</strong> Periodically, the encoder
+transmits RTP Control Protocol (RTCP) Sender Reports. These reports
+explicitly map the relative RTP timestamp to the camera's absolute
+wall-clock NTP timestamp.</li>
+</ul>
+<p>The media server uses these RTCP reports to correlate the arbitrary
+stream-specific RTP timelines of each camera to a single, absolute
+timeline.</p>
+<h3 id="3-webm-container-timecode-alignment">3. WebM Container Timecode
+Alignment</h3>
+<p>The WebM format, derived from Matroska (MKV), organizes media into
+Clusters containing SimpleBlocks or BlockGroups. Each Block carries a
+relative timecode based on the Cluster's base <code>Timecode</code> and
+the segment's <code>TimecodeScale</code> (typically 1 millisecond).</p>
+<p>When a media server ingests separate WebM feeds, it extracts these
+container timecodes and reconciles them against the absolute capture
+time established by the transport layer. The media server can rewrite or
+normalize the WebM Cluster timecodes so that identical presentation
+timestamps (PTS) correspond to the exact same temporal moment across all
+camera tracks.</p>
+<h3 id="4-server-side-playout-and-jitter-buffering">4. Server-Side
+Playout and Jitter Buffering</h3>
+<p>Network latency varies for each camera stream due to differing
+routing paths, encoding complexities, and network conditions. To
+synchronize multi-angle feeds, the media server maintains an adaptive
+playout (jitter) buffer for each incoming stream.</p>
+<p>The server deliberately delays the fastest feeds to match the latency
+of the slowest feed, up to a defined threshold. By buffering incoming
+WebM frames across all angles, the server can sort and pair frames with
+matching presentation timestamps into synchronized bundles. If an angle
+drops frames or experiences temporary delay, the server can insert
+duplicate frames or signal a concealed frame to keep the overall
+timeline aligned.</p>
+<h3 id="5-synchronized-egress-and-client-switching">5. Synchronized
+Egress and Client Switching</h3>
+<p>Once frames are aligned, the media server handles egress to ensure
+the client-side player can switch angles instantly:</p>
+<ul>
+<li><strong>Keyframe (GOP) Alignment:</strong> For seamless multi-angle
+switching, the media server either enforces synchronized Group of
+Pictures (GOP) boundaries across all encoders via upstream signaling
+(like RTCP FIR/PLI requests) or dynamically transcodes incoming streams
+so that IDR/Keyframes occur at the exact same PTS.</li>
+<li><strong>Unified Delivery:</strong> When streaming downstream via
+WebRTC or fragmented WebM over WebSockets, the media server delivers all
+feeds locked to a single master clock reference. When a viewer switches
+from one angle to another, the client player simply renders the
+alternative track matching the current PTS, resulting in a zero-latency,
+frame-accurate camera cut.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Native C APIs for Google libvpx WebM Encoder - webm</title>
+    <meta name="description" content="This guide provides an overview of the native C Application Programming Interfaces (APIs) used to interface directly with Google's libvpx reference encoder for VP8 and VP9 video formats. It details the essential header files, primary data structures, lif">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/native-c-apis-for-google-libvpx-webm-encoder">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Native C APIs for Google libvpx WebM Encoder - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/native-c-apis-for-google-libvpx-webm-encoder" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide provides an overview of the native C Application Programming Interfaces (APIs) used to interface directly with Google's libvpx reference encoder for VP8 and VP9 video formats. It details the essential header files, primary data structures, lif" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="native-c-apis-for-google-libvpx-webm-encoder">Native C APIs for
+Google libvpx WebM Encoder</h1>
+<p>This guide provides an overview of the native C Application
+Programming Interfaces (APIs) used to interface directly with Google's
+libvpx reference encoder for VP8 and VP9 video formats. It details the
+essential header files, primary data structures, lifecycle management
+functions, frame submission workflows, and control macros necessary to
+configure and run the encoder efficiently within C or C++
+applications.</p>
+<h3 id="core-headers-and-interface-selection">Core Headers and Interface
+Selection</h3>
+<p>To directly access the encoding APIs, include the primary encoder
+header and the VP8/VP9 interface definitions:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vpx/vpx_encoder.h&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vpx/vp8cx.h&gt;</span></span></code></pre></div>
+<p>Direct interaction relies on codec interface pointers defined in
+<code>vp8cx.h</code>:</p>
+<ul>
+<li><code>vpx_codec_vp8_cx()</code>: Returns the interface pointer for
+the VP8 encoder.</li>
+<li><code>vpx_codec_vp9_cx()</code>: Returns the interface pointer for
+the VP9 encoder.</li>
+</ul>
+<h3 id="primary-data-structures">Primary Data Structures</h3>
+<p>Direct interaction with libvpx revolves around four essential
+structures:</p>
+<ul>
+<li><strong><code>vpx_codec_ctx_t</code></strong>: The primary context
+object holding the state of the codec instance.</li>
+<li><strong><code>vpx_codec_enc_cfg_t</code></strong>: Holds high-level
+configuration parameters, including target bitrate, frame dimensions,
+timebase, multithreading settings, and rate control modes.</li>
+<li><strong><code>vpx_image_t</code></strong>: Represents raw,
+uncompressed image data (such as YUV420p) fed into the encoder.</li>
+<li><strong><code>vpx_codec_cx_pkt_t</code></strong>: Holds compressed
+packet data produced by the encoder, containing the bitstream payload,
+packet size, timestamps, and frame type flags (e.g., keyframe
+identification).</li>
+</ul>
+<h3 id="configuration-and-initialization">Configuration and
+Initialization</h3>
+<p>Before encoding starts, the encoder configuration must be populated
+and bound to a codec context:</p>
+<ol type="1">
+<li><strong><code>vpx_codec_enc_config_default</code></strong>:
+Populates a <code>vpx_codec_enc_cfg_t</code> structure with default
+settings suited for a chosen algorithm (VP8 or VP9) and target usage
+profile (e.g., realtime or standard streaming).</li>
+<li><strong><code>vpx_codec_enc_init</code></strong> (or the
+version-checked macro
+<strong><code>vpx_codec_enc_init_ver</code></strong>): Initializes the
+<code>vpx_codec_ctx_t</code> context using the specified codec interface
+and configuration settings.</li>
+</ol>
+<h3 id="dynamic-control-and-codec-tuning">Dynamic Control and Codec
+Tuning</h3>
+<p>To tune parameters beyond the standard configuration struct, the API
+provides the generic control function and macro:</p>
+<ul>
+<li><strong><code>vpx_codec_control()</code></strong>: A variadic
+function that takes a context pointer and a control ID (defined in
+<code>vp8cx.h</code>), followed by parameter values.</li>
+</ul>
+<p>Common control IDs include:</p>
+<ul>
+<li><code>VP8E_SET_CPUUSED</code>: Adjusts the speed/quality trade-off
+(negative values prioritize quality; positive values prioritize encoding
+speed).</li>
+<li><code>VP8E_SET_STATIC_THRESHOLD</code>: Sets the threshold for
+macroblock skipping in stationary scenes.</li>
+<li><code>VP9E_SET_TILE_COLUMNS</code> and
+<code>VP9E_SET_TILE_ROWS</code>: Configures multi-threading tile
+partitions in VP9.</li>
+<li><code>VP9E_SET_LOSSLESS</code>: Enables spatial lossless encoding
+for VP9.</li>
+</ul>
+<h3 id="frame-processing-and-ingestion">Frame Processing and
+Ingestion</h3>
+<p>Uncompressed video frames are structured using the
+<code>vpx_image_t</code> API before being handed to the encoder:</p>
+<ul>
+<li><strong><code>vpx_img_alloc()</code></strong>: Allocates an image
+buffer managed directly by libvpx.</li>
+<li><strong><code>vpx_img_wrap()</code></strong>: Wraps an existing
+external memory buffer into a <code>vpx_image_t</code> structure without
+copying the raw data.</li>
+</ul>
+<p>Once prepared, frames are passed to:</p>
+<ul>
+<li><strong><code>vpx_codec_encode()</code></strong>: Submits an
+uncompressed frame (<code>vpx_image_t</code>) to the encoder context.
+This call accepts presentation timestamps (PTS), duration, deadline
+flags (e.g., <code>VPX_DL_REALTIME</code>,
+<code>VPX_DL_GOOD_QUALITY</code>), and encoding flags such as
+<code>VPX_EFLAG_FORCE_KF</code> to force a keyframe. Passing a
+<code>NULL</code> pointer instead of an image signals the end of the
+stream and flushes remaining frames.</li>
+</ul>
+<h3 id="packet-retrieval">Packet Retrieval</h3>
+<p>After each call to <code>vpx_codec_encode</code>, compressed frames
+are retrieved sequentially using an iterator:</p>
+<ul>
+<li><strong><code>vpx_codec_get_cx_data()</code></strong>: Iterates over
+the context to return a pointer to a <code>vpx_codec_cx_pkt_t</code>
+structure. This function is called repeatedly in a loop until it returns
+<code>NULL</code>, ensuring all available output packets for the
+submitted frame are extracted and written to a WebM container or network
+stream.</li>
+</ul>
+<h3 id="teardown-and-cleanup">Teardown and Cleanup</h3>
+<ul>
+<li><strong><code>vpx_codec_destroy()</code></strong>: Releases all
+internal state memory, tables, and thread contexts allocated to the
+<code>vpx_codec_ctx_t</code>.</li>
+<li><strong><code>vpx_img_free()</code></strong>: Frees memory allocated
+specifically via <code>vpx_img_alloc</code>.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

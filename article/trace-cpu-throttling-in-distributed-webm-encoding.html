@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trace CPU Throttling in Distributed WebM Encoding - webm</title>
+    <meta name="description" content="Distributed WebM encoding using codecs like VP8, VP9, or AV1 pushes multi-core CPU architectures to their absolute limits, frequently triggering thermal throttling or container-level Completely Fair Scheduler (CFS) quota constraints. This article details">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/trace-cpu-throttling-in-distributed-webm-encoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Trace CPU Throttling in Distributed WebM Encoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/trace-cpu-throttling-in-distributed-webm-encoding" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Distributed WebM encoding using codecs like VP8, VP9, or AV1 pushes multi-core CPU architectures to their absolute limits, frequently triggering thermal throttling or container-level Completely Fair Scheduler (CFS) quota constraints. This article details" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="trace-cpu-throttling-in-distributed-webm-encoding">Trace CPU
+Throttling in Distributed WebM Encoding</h1>
+<p>Distributed WebM encoding using codecs like VP8, VP9, or AV1 pushes
+multi-core CPU architectures to their absolute limits, frequently
+triggering thermal throttling or container-level Completely Fair
+Scheduler (CFS) quota constraints. This article details the essential
+server monitoring tools—ranging from low-level Linux kernel utilities
+and eBPF profilers to real-time distributed metric engines—capable of
+detecting and diagnosing real-time CPU throttling across your encoding
+nodes.</p>
+<h3 id="understanding-the-bottlenecks">Understanding the
+Bottlenecks</h3>
+<p>In a distributed encoding pipeline (e.g., FFmpeg workers managed via
+Celery, Kafka, or Kubernetes), CPU throttling typically manifests in two
+ways:</p>
+<ol type="1">
+<li><strong>Hardware/Thermal Throttling:</strong> Physical CPU cores
+reduce clock speeds (downclocking) when thermal thresholds (Tjunction)
+or power limits (RAPL) are exceeded.</li>
+<li><strong>CFS Quota Throttling:</strong> In containerized fleets
+(Docker/Kubernetes), CPU limits enforce hard runtime caps, forcing the
+Linux scheduler to pause container threads when limits are reached
+during heavy encoding frames.</li>
+</ol>
+<h3 id="1-prometheus-with-cadvisor-and-node-exporter">1. Prometheus with
+cAdvisor and Node Exporter</h3>
+<p>For containerized distributed nodes, the combination of Prometheus,
+Node Exporter, and cAdvisor is the industry standard for monitoring
+throttling metrics at scale.</p>
+<ul>
+<li><strong>cAdvisor (CFS Throttling):</strong> When encoding jobs
+saturate their allotted core limits, cAdvisor exposes critical kernel
+scheduler metrics:
+<ul>
+<li><code>container_cpu_cfs_throttled_periods_total</code>: Total number
+of run periods where the container was throttled.</li>
+<li><code>container_cpu_cfs_throttled_seconds_total</code>: The
+cumulative duration container processes spent waiting for their next
+quota allocation.</li>
+</ul></li>
+<li><strong>Node Exporter (Host/Thermal Throttling):</strong> Node
+Exporter exposes thermal metrics directly from the kernel sysfs
+interface via <code>node_thermal_zone_temp</code> and flags like
+<code>node_cpu_scaling_frequency_hertz</code>, indicating whether cores
+are running below base clock frequency.</li>
+</ul>
+<h3 id="2-netdata">2. Netdata</h3>
+<p>Netdata delivers per-second metric granularity with minimal overhead,
+making it well-suited for diagnosing sudden encoding stalls across
+worker nodes.</p>
+<ul>
+<li>It visualizes CPU frequency scaling alongside real-time core
+temperatures.</li>
+<li>It automatically parses cgroup metrics to display container
+throttling graphs without requiring complex scrape configurations.</li>
+<li>Its microsecond-level telemetry immediately highlights the exact
+frame or chunk where a worker process experiences scheduler
+latency.</li>
+</ul>
+<h3 id="3-ebpf-and-bcc-tools">3. eBPF and BCC Tools</h3>
+<p>For zero-overhead, deep-kernel tracing on bare-metal or virtualized
+encoding nodes, Extended Berkeley Packet Filter (eBPF) tools provide
+unmatched visibility into process scheduling.</p>
+<ul>
+<li><strong><code>runqlat</code> (BCC):</strong> Measures the time an
+FFmpeg or libvpx/libaom process waits in the CPU run queue before
+executing. High run-queue latency indicates CPU starvation or scheduler
+throttling.</li>
+<li><strong><code>cpufreq</code> (eBPF):</strong> Traces changes in CPU
+core frequencies, instantly logging when power-capping or thermal limits
+force dynamic frequency scaling.</li>
+<li><strong>Custom Probes on
+<code>sched:sched_stat_throttled</code>:</strong> Allows operators to
+trace the precise instances when the Linux kernel suspends worker
+threads due to quota violations.</li>
+</ul>
+<h3 id="4-turbostat">4. Turbostat</h3>
+<p>When profiling bare-metal distributed encoders,
+<code>turbostat</code> (part of the <code>linux-tools-common</code>
+package) is the definitive diagnostic tool. It directly queries CPU
+Model-Specific Registers (MSRs) to output:</p>
+<ul>
+<li>Actual operating frequencies per core (Bzy_MHz).</li>
+<li>Current core and package temperatures.</li>
+<li>Real-time flags for thermal throttling (<code>PKG_TEMP</code>,
+<code>CORE_TEMP</code>) and running average power limits (RAPL).</li>
+</ul>
+<p>Running <code>turbostat --interval 1</code> alongside a live
+distributed encoding batch reveals whether hardware thermal constraints
+or power policies are reducing encoding throughput across individual
+cluster nodes.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

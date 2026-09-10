@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prevent WebM Hotlinking and Save Bandwidth - webm</title>
+    <meta name="description" content="Hotlinking WebM video files directly from your server can quickly drain your bandwidth, increase hosting costs, and degrade overall website performance. This guide covers actionable server-level configurations to secure your WebM media, including referer">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/prevent-webm-hotlinking-and-save-bandwidth">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Prevent WebM Hotlinking and Save Bandwidth - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/prevent-webm-hotlinking-and-save-bandwidth" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Hotlinking WebM video files directly from your server can quickly drain your bandwidth, increase hosting costs, and degrade overall website performance. This guide covers actionable server-level configurations to secure your WebM media, including referer" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="prevent-webm-hotlinking-and-save-bandwidth">Prevent WebM
+Hotlinking and Save Bandwidth</h1>
+<p>Hotlinking WebM video files directly from your server can quickly
+drain your bandwidth, increase hosting costs, and degrade overall
+website performance. This guide covers actionable server-level
+configurations to secure your WebM media, including referer-based
+blocking in Nginx and Apache, CDN-level firewall rules, Cross-Origin
+Resource Sharing (CORS) restrictions, and token-based signed URLs.</p>
+<h3 id="1-nginx-configuration-using-the-valid_referers-directive">1.
+Nginx Configuration Using the <code>valid_referers</code> Directive</h3>
+<p>Nginx handles hotlink prevention natively using the
+<code>ngx_http_referer_module</code>. This module inspects the
+<code>Referer</code> header sent by the client's browser and blocks
+requests originating from unauthorized domains.</p>
+<p>Add the following block inside your <code>server</code> configuration
+in <code>nginx.conf</code>:</p>
+<pre class="nginx"><code>location ~* \.(webm)$ {
+    valid_referers none blocked server_names *.yourdomain.com yourdomain.com;
+    if ($invalid_referer) {
+        return 403;
+    }
+}</code></pre>
+<ul>
+<li><code>none</code>: Allows direct visits (e.g., users entering the
+URL directly or using bookmarks without a referer header).</li>
+<li><code>blocked</code>: Permits requests where the referer header was
+stripped by firewalls or proxies.</li>
+<li><code>server_names</code>: Allows your own domain and
+subdomains.</li>
+<li><code>return 403</code>: Denies unauthorized third-party domains
+immediately without serving the video data.</li>
+</ul>
+<h3 id="2-apache-configuration-using-htaccess-and-mod_rewrite">2. Apache
+Configuration Using <code>.htaccess</code> and
+<code>mod_rewrite</code></h3>
+<p>Apache uses <code>mod_rewrite</code> to match incoming referer
+headers against authorized domain patterns.</p>
+<p>Add these directives to your root <code>.htaccess</code> file or main
+virtual host configuration:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode apache"><code class="sourceCode apache"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">RewriteEngine</span><span class="ch"> </span><span class="kw">On</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>RewriteCond<span class="st"> %{HTTP_REFERER} !^$</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>RewriteCond<span class="st"> %{HTTP_REFERER} !^https?://(www\.)?yourdomain\.com [NC]</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>RewriteCond<span class="st"> %{HTTP_REFERER} !^https?://(www\.)?trustedpartner\.com [NC]</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>RewriteRule<span class="st"> \.(webm)$ - [F,NC,L]</span></span></code></pre></div>
+<ul>
+<li><code>!^$</code>: Allows blank referrers (direct hits).</li>
+<li><code>[NC]</code>: Makes the domain matching case-insensitive.</li>
+<li><code>[F]</code>: Sends a standard <code>403 Forbidden</code>
+response to unauthorized referers.</li>
+<li><code>[L]</code>: Stops processing further rewrite rules if this
+condition matches.</li>
+</ul>
+<h3 id="3-restrict-video-playback-via-cors-headers">3. Restrict Video
+Playback via CORS Headers</h3>
+<p>Browsers fetching WebM assets via JavaScript (<code>fetch</code> or
+<code>XMLHttpRequest</code>) or cross-origin <code>&lt;video&gt;</code>
+tags with specific credential requirements honor Cross-Origin Resource
+Sharing (CORS) rules.</p>
+<p><strong>For Nginx:</strong></p>
+<pre class="nginx"><code>location ~* \.webm$ {
+    add_header Access-Control-Allow-Origin &quot;https://yourdomain.com&quot;;
+    add_header Access-Control-Allow-Methods &quot;GET, OPTIONS&quot;;
+}</code></pre>
+<p><strong>For Apache:</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode apache"><code class="sourceCode apache"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;FilesMatch</span><span class="at"> &quot;\.webm$&quot;</span><span class="fu">&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    Header<span class="st"> set Access-Control-Allow-Origin &quot;https://yourdomain.com&quot;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;/FilesMatch&gt;</span></span></code></pre></div>
+<h3 id="4-advanced-protection-signed-urls-and-time-limited-tokens">4.
+Advanced Protection: Signed URLs and Time-Limited Tokens</h3>
+<p>Referer headers can be spoofed or stripped. For premium or
+proprietary WebM content, token authentication ensures that each video
+URL is unique, signed with a cryptographic secret, and set to expire
+after a defined period.</p>
+<ul>
+<li><strong>Nginx <code>secure_link</code> Module:</strong> Generates an
+MD5 hash incorporating the client's IP, the file path, and an expiration
+timestamp. If the hash does not match or the time expires, Nginx refuses
+to serve the WebM file.</li>
+<li><strong>CDN-Level Signed URLs:</strong> Platforms like Cloudflare,
+AWS CloudFront, or Fastly support signed cookies or query parameters.
+Media links generated by your backend application only function for
+valid sessions, rendering static hotlinks useless on third-party
+sites.</li>
+</ul>
+<h3 id="5-edge-level-hotlink-protection-cloudflare--cdns">5. Edge-Level
+Hotlink Protection (Cloudflare / CDNs)</h3>
+<p>Blocking requests before they hit your origin server saves the most
+bandwidth.</p>
+<ul>
+<li><strong>Cloudflare ScrapeShield:</strong> Enable the built-in
+"Hotlink Protection" toggle under the ScrapeShield settings dashboard to
+automatically block unauthorized image and media embedding.</li>
+<li><strong>WAF Custom Rules:</strong> Create a Cloudflare WAF rule to
+block requests where <code>http.request.uri.path contains ".webm"</code>
+and <code>not http.referer contains "yourdomain.com"</code> and
+<code>http.referer ne ""</code>. This filters traffic entirely at the
+edge layer.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

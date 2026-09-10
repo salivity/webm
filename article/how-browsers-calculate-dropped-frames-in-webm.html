@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Browsers Calculate Dropped Frames in WebM - webm</title>
+    <meta name="description" content="During high-resolution 60fps WebM playback, web browsers monitor dropped frames by measuring the timing discrepancies between a video frame's presentation timestamp and the display's hardware refresh cycle. When decoding delays or resource bottlenecks pr">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-browsers-calculate-dropped-frames-in-webm">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Browsers Calculate Dropped Frames in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-browsers-calculate-dropped-frames-in-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="During high-resolution 60fps WebM playback, web browsers monitor dropped frames by measuring the timing discrepancies between a video frame's presentation timestamp and the display's hardware refresh cycle. When decoding delays or resource bottlenecks pr" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-browsers-calculate-dropped-frames-in-webm">How Browsers
+Calculate Dropped Frames in WebM</h1>
+<p>During high-resolution 60fps WebM playback, web browsers monitor
+dropped frames by measuring the timing discrepancies between a video
+frame's presentation timestamp and the display's hardware refresh cycle.
+When decoding delays or resource bottlenecks prevent a frame from
+reaching the rendering compositor before its designated display
+deadline, the browser discards or bypasses the frame and increments its
+internal drop counter. This mechanism operates at the intersection of
+media demuxing, video decoding pipelines, and the operating system's
+vertical synchronization (VSync) events.</p>
+<h3 id="presentation-timestamps-and-deadlines">Presentation Timestamps
+and Deadlines</h3>
+<p>Every WebM file—typically encoding video using VP8, VP9, or AV1
+inside a Matroska-based container—tags each frame with a Presentation
+Timestamp (PTS). At 60 frames per second (fps), a new frame must be
+rendered approximately every 16.67 milliseconds.</p>
+<p>When playback begins, the browser’s media engine synchronizes an
+internal media clock with the audio clock (or a monotonic system clock
+if no audio exists). Each decoded video frame is placed into a buffer
+with an assigned target presentation deadline derived from its PTS and
+the current media time:</p>
+<p><code>Frame Deadline = Media Clock Start + Presentation Timestamp</code></p>
+<h3 id="the-two-stages-of-frame-drops">The Two Stages of Frame
+Drops</h3>
+<p>Browsers track frame drops across two distinct phases: the decoding
+phase and the composition phase.</p>
+<h4 id="1-decoder-level-drops">1. Decoder-Level Drops</h4>
+<p>At 4K or 8K resolutions, decoding 60 frames per second places immense
+pressure on CPU threads or dedicated GPU hardware decoders (such as
+NVDEC or Intel Quick Sync). If the hardware cannot decode frames as fast
+as the media clock advances, the decoder queue starves.</p>
+<p>To catch up to real-time playback, modern browser engines (such as
+Chromium’s Blink/media pipeline or Gecko in Firefox) employ dynamic
+quality-of-service (QoS) strategies:</p>
+<ul>
+<li>The decoder selectively skips decoding non-reference frames
+(B-frames or non-keyframes that are not referenced by subsequent
+frames).</li>
+<li>Frames that finish decoding past their valid display window are
+flagged immediately as late and discarded before reaching the rendering
+pipeline.</li>
+<li>Each discarded frame increments the browser's internal
+<code>dropped_frames</code> counter.</li>
+</ul>
+<h4 id="2-compositor-and-vsync-drops">2. Compositor and VSync Drops</h4>
+<p>Even when frames are decoded on time, they must still be uploaded to
+the GPU as textures and composited onto the webpage. Modern browsers
+decouple the video decoder thread from the rendering/compositor thread
+to keep playback smooth.</p>
+<p>The compositor aligns frame presentation with the display's VSync
+signal (e.g., 60Hz, 120Hz, or 144Hz):</p>
+<ul>
+<li><strong>Missed VSync Window:</strong> If the compositor queries the
+video frame queue at the VSync tick and the expected frame is not yet
+available, the compositor re-renders the previous frame to avoid visual
+tearing.</li>
+<li><strong>Stale Frame Retirement:</strong> When the delayed frame
+finally arrives, the media clock may have already advanced past its
+presentation window. The browser discards this "expired" frame in favor
+of a newer frame that matches the upcoming VSync tick.</li>
+<li>Any frame that was decoded but never presented to the screen is
+classified as a dropped frame.</li>
+</ul>
+<h3 id="the-algorithm-tracking-via-video-playback-quality">The
+Algorithm: Tracking via Video Playback Quality</h3>
+<p>Browsers expose this frame accounting via the standard W3C
+<code>HTMLVideoElement.getVideoPlaybackQuality()</code> API. Under the
+hood, browser engines calculate dropped frames using counters maintained
+in the video rendering engine:</p>
+<ol type="1">
+<li><strong><code>totalVideoFrames</code>:</strong> The cumulative count
+of all frames passed from the demuxer to the video pipeline that were
+eligible for presentation.</li>
+<li><strong><code>droppedVideoFrames</code>:</strong> The total number
+of frames that either failed to decode before their presentation
+deadline or were discarded by the compositor without being
+displayed.</li>
+<li><strong><code>corruptedVideoFrames</code>:</strong> Frames dropped
+specifically due to bitstream corruption or hardware decode errors.</li>
+</ol>
+<p>The mathematical representation of display efficiency is evaluated
+as:</p>
+<p><code>Dropped Frame Ratio = droppedVideoFrames / totalVideoFrames</code></p>
+<p>In Chromium's rendering engine, this is tracked inside classes such
+as <code>VideoRendererAlgorithm</code> and
+<code>VideoFrameCompositor</code>. The algorithm calculates how many
+display intervals have elapsed since the last rendered frame. If more
+intervals have passed than the frame duration warrants (e.g., two
+16.67ms VSync periods pass for a single 60fps frame), the algorithm
+marks the intervening missing frame as dropped.</p>
+<h3 id="impact-of-high-resolution-60fps-playback">Impact of
+High-Resolution 60fps Playback</h3>
+<p>At 1080p, software decoders often have enough headroom to absorb
+micro-stutters. However, with 4K or 8K 60fps WebM (predominantly
+utilizing VP9 or AV1), calculations for dropped frames accelerate
+dramatically under system strain due to:</p>
+<ul>
+<li><strong>GPU Memory Bandwidth Bottlenecks:</strong> Uploading massive
+YUV frame textures to the GPU can saturate PCIe lanes, causing frames to
+arrive milliseconds late to the compositor.</li>
+<li><strong>Thread Contention:</strong> High-bitrate 60fps streams
+require aggressive multi-threaded decoding. If CPU cores bottleneck on
+VP9 tile decoding, latency spikes cause cascading drops across
+consecutive frame presentation windows.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

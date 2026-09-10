@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rendering Transparent WebM Video Textures in Unity - webm</title>
+    <meta name="description" content="Rendering transparent WebM video textures in game engines like Unity involves decoding multi-channel video streams, routing the output to render textures, and applying transparent shaders within the rendering pipeline. This article explains how Unity dec">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/rendering-transparent-webm-video-textures-in-unity">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rendering Transparent WebM Video Textures in Unity - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/rendering-transparent-webm-video-textures-in-unity" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering transparent WebM video textures in game engines like Unity involves decoding multi-channel video streams, routing the output to render textures, and applying transparent shaders within the rendering pipeline. This article explains how Unity dec" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="rendering-transparent-webm-video-textures-in-unity">Rendering
+Transparent WebM Video Textures in Unity</h1>
+<p>Rendering transparent WebM video textures in game engines like Unity
+involves decoding multi-channel video streams, routing the output to
+render textures, and applying transparent shaders within the rendering
+pipeline. This article explains how Unity decodes VP8 and VP9 alpha
+data, maps it to real-time materials, and handles blending to achieve
+seamless video transparency.</p>
+<h3 id="vp8vp9-alpha-channel-encoding">VP8/VP9 Alpha Channel
+Encoding</h3>
+<p>WebM files achieve transparency using the VP8 or VP9 video codecs.
+Unlike standard MP4 (H.264) files, which typically only encode RGB color
+channels, the WebM container specification allows for an auxiliary alpha
+channel.</p>
+<p>During encoding, the video's transparency mask is either stored as a
+dedicated alpha bitstream alongside the primary YUV color stream or
+encoded via specific 32-bit color configurations. Unity’s underlying
+video decoding backend reads this auxiliary stream simultaneously with
+the primary video frame.</p>
+<h3 id="video-player-and-rendertexture-setup">Video Player and
+RenderTexture Setup</h3>
+<p>Unity utilizes its native <code>VideoPlayer</code> component to
+decode WebM video files at runtime. The workflow involves the following
+steps:</p>
+<ol type="1">
+<li><strong>Decoding:</strong> Unity delegates decoding to native OS
+media frameworks or embedded software decoders (such as FFmpeg/libvpx),
+extracting both the color and alpha buffers for each frame.</li>
+<li><strong>Output Target:</strong> The decoded frames are written
+directly to a <code>RenderTexture</code> or injected directly into a
+material property (such as <code>_MainTex</code>).</li>
+<li><strong>Texture Format:</strong> The target texture must support an
+alpha channel, typically using an RGBA format (such as
+<code>RGBA32</code> or <code>ARGB32</code>) to prevent clipping or
+discarding the decoded transparency data.</li>
+</ol>
+<h3 id="shader-integration-and-alpha-blending">Shader Integration and
+Alpha Blending</h3>
+<p>Once the video frame is mapped to a material, Unity’s graphics
+pipeline uses shaders to correctly blend the transparent pixels with the
+background scene geometry.</p>
+<ul>
+<li><strong>Render Queue:</strong> The material’s render queue is set to
+<code>Transparent</code> (Queue 3000), ensuring the geometry renders
+after all opaque objects are drawn.</li>
+<li><strong>Blending Operations:</strong> The shader uses standard alpha
+blending operations, commonly defined as:
+<pre class="shaderlab"><code>Blend SrcAlpha OneMinusSrcAlpha
+ZWrite Off</code></pre>
+This calculates the final pixel color by multiplying the incoming video
+pixel color by its alpha value and adding it to the background pixel
+multiplied by the inverse of the alpha value.</li>
+<li><strong>Alpha Clipping vs. Smooth Blending:</strong> Shaders can be
+configured to perform alpha testing (cutoff) for sharp edges or full
+alpha blending for smooth transitions, antialiasing, and
+semi-transparent visual effects like smoke or UI overlays.</li>
+</ul>
+<h3 id="platform-support-and-performance">Platform Support and
+Performance</h3>
+<p>Performance and support for transparent WebM textures depend heavily
+on target hardware and platform-specific video backends:</p>
+<ul>
+<li><strong>WebGL and Desktop:</strong> Platforms like Windows, macOS,
+and WebGL natively handle VP8/VP9 WebM files with alpha channels
+efficiently via software or browser decoders.</li>
+<li><strong>Mobile Platforms:</strong> iOS and some Android devices lack
+native hardware decoding for VP8/VP9 WebM files, which forces engines to
+fall back on CPU-based software decoding. In mobile environments where
+WebM causes performance bottlenecks, developers often split the video
+into a side-by-side RGB + Alpha layout within a standard H.264/MP4
+container and recombine them using a custom shader.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

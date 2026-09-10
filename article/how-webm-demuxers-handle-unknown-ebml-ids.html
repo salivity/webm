@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Demuxers Handle Unknown EBML IDs - webm</title>
+    <meta name="description" content="This article explains how WebM demuxers process unrecognized or unexpected Extensible Binary Meta Language (EBML) Element IDs during stream parsing. Because WebM is built on EBML—a binary format similar to XML—it uses a structured Type-Length-Value (">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-webm-demuxers-handle-unknown-ebml-ids">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Demuxers Handle Unknown EBML IDs - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-webm-demuxers-handle-unknown-ebml-ids" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how WebM demuxers process unrecognized or unexpected Extensible Binary Meta Language (EBML) Element IDs during stream parsing. Because WebM is built on EBML—a binary format similar to XML—it uses a structured Type-Length-Value (" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-webm-demuxers-handle-unknown-ebml-ids">How WebM Demuxers
+Handle Unknown EBML IDs</h1>
+<p>This article explains how WebM demuxers process unrecognized or
+unexpected Extensible Binary Meta Language (EBML) Element IDs during
+stream parsing. Because WebM is built on EBML—a binary format similar to
+XML—it uses a structured Type-Length-Value (TLV) format that allows
+parsers to maintain playback stability, gracefully skip unsupported
+data, and preserve forward compatibility across different specification
+versions.</p>
+<h3 id="the-role-of-the-ebml-data-structure">The Role of the EBML Data
+Structure</h3>
+<p>Every EBML element in a WebM file is structured with three primary
+components:</p>
+<ol type="1">
+<li><strong>Element ID:</strong> A Variable-Length Integer (VINT) that
+identifies the element type.</li>
+<li><strong>Element Data Size:</strong> A VINT that explicitly declares
+the byte length of the element's payload.</li>
+<li><strong>Element Data:</strong> The actual binary payload or nested
+child elements.</li>
+</ol>
+<p>Because the data size is always declared immediately after the ID, a
+demuxer does not need to understand what an element contains to safely
+navigate past it.</p>
+<h3 id="the-skipping-mechanism">The Skipping Mechanism</h3>
+<p>When a WebM demuxer encounters an EBML ID that is not defined in its
+internal schema or appears in an unexpected hierarchy, it executes the
+following steps:</p>
+<ol type="1">
+<li><strong>ID Evaluation:</strong> The demuxer reads the
+Variable-Length Integer for the Element ID and checks it against the
+list of known WebM EBML IDs (such as Segment, Track, Cluster, or Block
+elements).</li>
+<li><strong>Size Extraction:</strong> Upon finding no match, the parser
+reads the subsequent VINT to determine the exact byte length of the
+unknown element's data payload.</li>
+<li><strong>Forward Seeking:</strong> The demuxer advances its read
+pointer (skips) by the number of bytes indicated by the size field. If
+the stream is being read from a non-seekable source (such as live
+streaming over a network), the demuxer simply consumes and discards
+those bytes.</li>
+<li><strong>Resuming Normal Parsing:</strong> Once the payload is
+bypassed, the demuxer lands precisely at the start of the next sibling
+Element ID and resumes standard parsing.</li>
+</ol>
+<h3 id="handling-undefined-or-unknown-sizes">Handling Undefined or
+Unknown Sizes</h3>
+<p>In standard WebM files, child elements almost always have a definite
+size. However, if a demuxer encounters an unknown master element with an
+<em>unknown data size</em> (signified by an all-ones VINT payload), it
+cannot calculate an exact offset. In this rare scenario, the demuxer
+must either search sequentially through the byte stream for valid, known
+parent-level EBML IDs to resynchronize or terminate parsing if the
+container boundaries cannot be reliably determined.</p>
+<h3 id="strictness-and-error-handling">Strictness and Error
+Handling</h3>
+<p>Demuxers handle unexpected IDs differently depending on their
+implementation and operational mode:</p>
+<ul>
+<li><strong>Permissive Mode (Default):</strong> Standard media players
+(like FFmpeg, Chromium, or VLC) treat unknown elements as non-fatal.
+They silently skip the data or log a low-priority debug warning to
+ensure uninterrupted media playback.</li>
+<li><strong>Strict Validation Mode:</strong> Conformance tools or
+analyzers may treat unknown or misplaced EBML IDs as specification
+violations, generating warnings or aborting parsing to report file
+corruption.</li>
+</ul>
+<h3 id="forward-and-backward-compatibility">Forward and Backward
+Compatibility</h3>
+<p>This parsing behavior ensures robust forward compatibility for the
+WebM container. New metadata, private tags, or future specification
+extensions can be introduced without breaking older demuxers, as
+existing software will skip the new IDs and continue processing critical
+audio and video clusters.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

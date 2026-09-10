@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewrite WebM Timestamps to Fix Audio Sync - webm</title>
+    <meta name="description" content="Audio desynchronization in WebM containers typically occurs when presentation timestamps (PTS) within EBML Clusters become corrupt, discontinuous, or drifted over time. Because WebM is a restricted subset of the Matroska (MKV) format, standard media play">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/rewrite-webm-timestamps-to-fix-audio-sync">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rewrite WebM Timestamps to Fix Audio Sync - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/rewrite-webm-timestamps-to-fix-audio-sync" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Audio desynchronization in WebM containers typically occurs when presentation timestamps (PTS) within EBML Clusters become corrupt, discontinuous, or drifted over time. Because WebM is a restricted subset of the Matroska (MKV) format, standard media play" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="rewrite-webm-timestamps-to-fix-audio-sync">Rewrite WebM
+Timestamps to Fix Audio Sync</h1>
+<p>Audio desynchronization in WebM containers typically occurs when
+presentation timestamps (PTS) within EBML Clusters become corrupt,
+discontinuous, or drifted over time. Because WebM is a restricted subset
+of the Matroska (MKV) format, standard media players rely on these
+cluster-level timestamps to align the VP8/VP9/AV1 video streams with
+Opus or Vorbis audio tracks. This article outlines the primary
+command-line utilities capable of parsing, regenerating, and rewriting
+WebM cluster timestamps to fix audio sync issues without requiring
+quality-degrading re-encodings.</p>
+<h2 id="1-mkvtoolnix-mkvmerge">1. MKVToolNix
+(<code>mkvmerge</code>)</h2>
+<p>Because WebM uses the EBML container structure identical to Matroska,
+the <code>mkvmerge</code> utility from the open-source MKVToolNix suite
+is one of the most reliable tools for rewriting cluster timestamps. By
+default, remuxing an existing WebM through <code>mkvmerge</code> parses
+every block and automatically recalculates continuous, monotonic cluster
+timecodes.</p>
+<h3 id="automatic-timestamp-regeneration">Automatic Timestamp
+Regeneration</h3>
+<p>To recreate a clean container layout and repair broken cluster
+timing:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> repaired.webm broken.webm</span></code></pre></div>
+<h3 id="correcting-constant-audio-delay">Correcting Constant Audio
+Delay</h3>
+<p>If the audio is offset by a fixed amount throughout the video, use
+the <code>--sync</code> parameter. The syntax is
+<code>--sync &lt;track_id&gt;:&lt;delay_in_ms&gt;</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First, identify the audio track ID</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-i</span> broken.webm</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Delay audio track 1 by 300 milliseconds</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> in_sync.webm <span class="at">--sync</span> 1:300 broken.webm</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Shift audio track 1 forward (negative delay) by 250 milliseconds</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> in_sync.webm <span class="at">--sync</span> 1:-250 broken.webm</span></code></pre></div>
+<h3 id="correcting-progressive-drift-linear-stretch">Correcting
+Progressive Drift (Linear Stretch)</h3>
+<p>If the audio becomes progressively more desynchronized toward the end
+of the file, you can apply a linear stretch factor alongside an
+offset:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Form: --sync &lt;track_id&gt;:&lt;offset&gt;,&lt;factor&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> fixed_drift.webm <span class="at">--sync</span> 1:0,1001/1000 broken.webm</span></code></pre></div>
+<hr />
+<h2 id="2-ffmpeg">2. FFmpeg</h2>
+<p>FFmpeg provides granular control over packet-level presentation
+timestamps and container-level muxing flags. It can rewrite timestamps
+through stream copying (preserving audio and video quality) or
+regenerate the entire presentation timeline from scratch.</p>
+<h3 id="regenerating-missing-or-corrupt-pts">Regenerating Missing or
+Corrupt PTS</h3>
+<p>If cluster timestamps are non-monotonic, missing, or corrupt, force
+FFmpeg to regenerate them using the <code>genpts</code> flag while
+stream copying:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-fflags</span> +genpts <span class="at">-i</span> broken.webm <span class="at">-c</span> copy repaired.webm</span></code></pre></div>
+<h3 id="adjusting-track-timestamps-with--itsoffset">Adjusting Track
+Timestamps with <code>-itsoffset</code></h3>
+<p>To resolve a fixed delay by altering the container-level cluster
+offsets without re-encoding:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Delay the audio stream by 0.5 seconds relative to the video</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> broken.webm <span class="at">-itsoffset</span> 0.5 <span class="at">-i</span> broken.webm <span class="at">-map</span> 0:v <span class="at">-map</span> 1:a <span class="at">-c</span> copy fixed.webm</span></code></pre></div>
+<h3 id="resetting-pts-to-zero">Resetting PTS to Zero</h3>
+<p>If desync is caused by a negative or shifted starting timestamp in
+one of the streams, you can avoid re-encoding the video while
+normalizing the audio start point using the <code>asetpts</code>
+filter:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> broken.webm <span class="at">-c:v</span> copy <span class="at">-af</span> <span class="st">&quot;asetpts=PTS-STARTPTS&quot;</span> fixed.webm</span></code></pre></div>
+<hr />
+<h2 id="3-libwebm-sample_muxer">3. Libwebm
+(<code>sample_muxer</code>)</h2>
+<p>For environments where full multimedia frameworks like FFmpeg or
+MKVToolNix cannot be installed, the WebM Project provides
+<strong>libwebm</strong>, a lightweight, reference C++ library for
+managing WebM containers.</p>
+<p>The compiled sample utility <code>sample_muxer</code> reads low-level
+raw elementary streams and produces a clean WebM container with strictly
+compliant cluster timestamps:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-multiplex elementary streams into valid clusters</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">sample_muxer</span> <span class="at">-v</span> input_video.vp9 <span class="at">-a</span> input_audio.opus <span class="at">-output</span> fixed.webm</span></code></pre></div>
+<p>This utility ensures clusters start strictly on keyframes and
+enforces monotonic timecode progression across all internal WebM
+cues.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Compresses Static Backgrounds with Altref - webm</title>
+    <meta name="description" content="This article explains how the WebM container—specifically through the VP8 and VP9 video codecs—uses the alternate reference (altref) frame mechanism to efficiently compress static camera backgrounds. By constructing an invisible, high-quality referen">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-webm-compresses-static-backgrounds-with-altref">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Compresses Static Backgrounds with Altref - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-webm-compresses-static-backgrounds-with-altref" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how the WebM container—specifically through the VP8 and VP9 video codecs—uses the alternate reference (altref) frame mechanism to efficiently compress static camera backgrounds. By constructing an invisible, high-quality referen" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-webm-compresses-static-backgrounds-with-altref">How WebM
+Compresses Static Backgrounds with Altref</h1>
+<p>This article explains how the WebM container—specifically through the
+VP8 and VP9 video codecs—uses the alternate reference (altref) frame
+mechanism to efficiently compress static camera backgrounds. By
+constructing an invisible, high-quality reference frame via multi-frame
+temporal filtering, the encoder creates an optimized baseline of the
+scene. Subsequent frames then reference this baseline using inter-frame
+motion compensation, drastically reducing file size while eliminating
+background visual noise.</p>
+<h2
+id="understanding-the-alternate-reference-altref-frame">Understanding
+the Alternate Reference (altref) Frame</h2>
+<p>Traditional video codecs rely primarily on past displayed frames
+(P-frames) or past and future displayed frames (B-frames) for
+inter-prediction. WebM codecs (VP8 and VP9) introduce the concept of the
+alternate reference frame, often abbreviated as an altref frame.</p>
+<p>An altref frame is a synthetic frame coded into the bitstream that is
+loaded into the decoder’s reference buffer but is marked not to be
+displayed. Because it is never rendered directly on the screen, the
+encoder has full freedom to alter its contents specifically to serve as
+a superior prediction source for future frames.</p>
+<h2 id="multi-frame-temporal-filtering">Multi-Frame Temporal
+Filtering</h2>
+<p>When a camera remains static (such as in a surveillance feed, a video
+conference, or a tripod-mounted shot), the physical background does not
+change. However, digital image sensors constantly introduce subtle
+noise, luminance fluctuations, and grain across successive frames.
+Standard encoders often waste significant bitrate attempting to encode
+these fluctuating noise artifacts.</p>
+<p>WebM addresses this by looking ahead into a group of frames and
+applying temporal filtering:</p>
+<ol type="1">
+<li><strong>Lookahead Analysis:</strong> The encoder examines a sequence
+of upcoming frames where the camera remains fixed.</li>
+<li><strong>Weighted Averaging:</strong> The encoder calculates a
+temporal average of the pixel values across these frames. Moving
+foreground objects are segmented out, while stationary background pixels
+are blended.</li>
+<li><strong>Noise Elimination:</strong> Averaging the static background
+over time cancels out random high-frequency sensor noise, yielding a
+sharp, clean, and stable representation of the stationary
+environment.</li>
+</ol>
+<p>This clean composite background is encoded with high fidelity as the
+non-displayed altref frame.</p>
+<h2 id="inter-frame-prediction-against-the-altref-frame">Inter-Frame
+Prediction Against the Altref Frame</h2>
+<p>Once the altref frame is established in the decoder's buffer,
+standard displayable frames (known as inter-frames) are processed.</p>
+<p>For the static background portions of the scene, the encoder performs
+motion estimation targeting the altref frame:</p>
+<ul>
+<li><strong>Zero Motion Vectors:</strong> Because the background in the
+current frame aligns with the background in the altref frame, the
+derived motion vectors are effectively zero.</li>
+<li><strong>Minimal Residual Data:</strong> Because the altref frame
+represents a noise-free version of the exact same physical space, the
+prediction error (residual) between the current frame and the altref
+frame is extremely small. The transform coefficients for these
+background blocks often quantize directly to zero.</li>
+<li><strong>Foreground Isolation:</strong> The encoder only needs to
+allocate bits to moving foreground subjects (such as a person walking
+through the scene or speaking on camera), leaving the background
+practically "free" in terms of bitrate.</li>
+</ul>
+<h2 id="bitrate-savings-and-visual-quality-benefits">Bitrate Savings and
+Visual Quality Benefits</h2>
+<p>By relying on an invisible, temporally filtered altref frame, WebM
+achieves two major benefits for static camera footage:</p>
+<ul>
+<li><strong>Elimination of Background "Breathing":</strong> In
+conventional encoding, static backgrounds often exhibit pulsing or
+crawling artifacts as keyframes refresh and inter-frames drift. Altref
+frames provide an unchanging, clean baseline that keeps static areas
+rock-steady.</li>
+<li><strong>Bitrate Allocation Efficiency:</strong> The bulk of the
+bitrate can be redirected toward dynamic foreground movement. The
+encoder avoids re-encoding identical, noisy background pixels across
+dozens of frames, achieving high perceptual quality at significantly
+lower bitrates.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

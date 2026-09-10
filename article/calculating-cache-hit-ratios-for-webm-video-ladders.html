@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculating Cache Hit Ratios for WebM Video Ladders - webm</title>
+    <meta name="description" content="Video-on-demand (VOD) platforms calculate caching hit ratios for multi-bitrate WebM ladders by evaluating segment-level delivery metrics across distinct encoding profiles rather than treating a video title as a single entity. Because adaptive bitrate str">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/calculating-cache-hit-ratios-for-webm-video-ladders">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Calculating Cache Hit Ratios for WebM Video Ladders - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/calculating-cache-hit-ratios-for-webm-video-ladders" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Video-on-demand (VOD) platforms calculate caching hit ratios for multi-bitrate WebM ladders by evaluating segment-level delivery metrics across distinct encoding profiles rather than treating a video title as a single entity. Because adaptive bitrate str" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="calculating-cache-hit-ratios-for-webm-video-ladders">Calculating
+Cache Hit Ratios for WebM Video Ladders</h1>
+<p>Video-on-demand (VOD) platforms calculate caching hit ratios for
+multi-bitrate WebM ladders by evaluating segment-level delivery metrics
+across distinct encoding profiles rather than treating a video title as
+a single entity. Because adaptive bitrate streaming divides WebM streams
+into hundreds of short chunks across varying resolutions and bitrates,
+Content Delivery Networks (CDNs) track both request-based and
+byte-weighted cache events at the edge. This article breaks down the
+mathematical formulations, data collection methods, and adaptive
+streaming dynamics platforms use to determine these metrics
+accurately.</p>
+<h3 id="the-structure-of-multi-bitrate-webm-streams">The Structure of
+Multi-Bitrate WebM Streams</h3>
+<p>In modern VOD pipelines, multi-bitrate WebM ladders are deployed via
+Dynamic Adaptive Streaming over HTTP (DASH). The source video is encoded
+into a ladder of discrete renditions—ranging from low-resolution (e.g.,
+360p at 400 kbps) to high-resolution (e.g., 4K at 12 Mbps)—using codecs
+such as VP9 or AV1, alongside Opus audio.</p>
+<p>Each rendition is partitioned into discrete chunk files (typically 2
+to 6 seconds in duration) or indexed via byte ranges within a single
+initialization-segmented WebM container. Because the client player
+dynamically shifts between these profiles based on available network
+bandwidth, a single view of a video rarely pulls from only one
+rendition. Consequently, cache evaluation must operate at the chunk or
+byte level rather than the session level.</p>
+<h3 id="request-hit-ratio-vs-byte-hit-ratio">Request Hit Ratio vs. Byte
+Hit Ratio</h3>
+<p>CDNs and VOD platforms calculate two distinct cache hit ratios (CHR)
+to assess performance:</p>
+<h4 id="1-request-cache-hit-ratio-r-chr">1. Request Cache Hit Ratio
+(R-CHR)</h4>
+<p>The Request Cache Hit Ratio measures the percentage of segment
+requests served directly from the CDN edge cache without querying the
+origin storage:</p>
+<p><span class="math display">\[\text{R-CHR} = \left( \frac{\text{Total
+Cache Hits}}{\text{Total Cache Hits} + \text{Total Cache Misses}}
+\right) \times 100\]</span></p>
+<p>While simple, R-CHR can produce misleading optimizations. For
+example, a 360p segment and a 4K segment both count as a single request,
+but the 4K segment consumes significantly more network resources on a
+cache miss.</p>
+<h4 id="2-byte-cache-hit-ratio-b-chr">2. Byte Cache Hit Ratio
+(B-CHR)</h4>
+<p>The Byte Cache Hit Ratio weights the calculation based on the payload
+size of each segment, providing an accurate reflection of bandwidth
+offload:</p>
+<p><span class="math display">\[\text{B-CHR} = \left( \frac{\text{Bytes
+Served from Cache}}{\text{Total Bytes Served from Cache} + \text{Total
+Bytes Fetched from Origin}} \right) \times 100\]</span></p>
+<p>In multi-bitrate WebM architectures, B-CHR is the primary financial
+and operational metric because egress costs and origin load scale
+directly with byte volume.</p>
+<h3 id="per-rendition-calculation-and-aggregation">Per-Rendition
+Calculation and Aggregation</h3>
+<p>VOD edge servers log every transaction with metadata that includes
+the uniform resource identifier (URI), HTTP response status, cache state
+(e.g., <code>HIT</code>, <code>MISS</code>, <code>REVALIDATED</code>),
+bytes transferred, and upstream response time. Platforms extract ladder
+parameters directly from the request URI structure (e.g.,
+<code>/video_id/webm_1080p_4500k/segment_0042.webm</code>).</p>
+<p>To evaluate performance across the ladder, platforms aggregate
+metrics across two dimensions:</p>
+<ol type="1">
+<li><strong>Per-Rendition Hit Ratio:</strong> Evaluates the hit ratio
+for specific rungs of the ladder. Lower renditions often have higher hit
+ratios during the initial buffer phase (the startup segment), while
+middle renditions (e.g., 720p or 1080p) usually capture the majority of
+steady-state playback requests.</li>
+<li><strong>Global Asset Hit Ratio:</strong> Aggregates all segments
+across all renditions for a specific piece of content:</li>
+</ol>
+<p><span class="math display">\[\text{Global B-CHR} =
+\frac{\sum_{i=1}^{n} \text{Cache Bytes Served}(R_i)}{\sum_{i=1}^{n}
+\text{Total Bytes Delivered}(R_i)} \times 100\]</span></p>
+<p><em>Where <span class="math inline">\(R_i\)</span> represents each
+individual rendition in the WebM ladder, from <span
+class="math inline">\(1\)</span> to <span
+class="math inline">\(n\)</span>.</em></p>
+<h3 id="impact-of-abr-dynamics-on-cache-hit-rates">Impact of ABR
+Dynamics on Cache Hit Rates</h3>
+<p>Calculating cache efficiency for multi-bitrate WebM requires
+platforms to account for three client-side behaviors:</p>
+<ul>
+<li><strong>Initial Playback Convergence:</strong> Most Adaptive Bitrate
+(ABR) algorithms request the lowest or a pre-configured mid-tier segment
+first to minimize Time to First Frame (TTFF). These initial segments
+generate disproportionately high hit ratios because nearly all viewers
+request the same introductory chunks.</li>
+<li><strong>Ladder Dispersion:</strong> When a video has too many rungs
+(e.g., 12 variants instead of 5 or 6), viewer requests fragment across
+slightly different bitrates. This fragmentation dilutes edge cache
+density, causing cache churn and driving down both R-CHR and B-CHR.</li>
+<li><strong>Audio Track Independence:</strong> WebM ladders typically
+decouple audio (Opus) from video renditions. Because audio is delivered
+as a single stream across all video renditions, its hit ratio is
+consistently higher than any individual video track, which platforms
+often isolate from video-only CHR calculations to avoid skewed
+data.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

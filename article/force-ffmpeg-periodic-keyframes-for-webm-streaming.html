@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force FFmpeg Periodic Keyframes for WebM Streaming - webm</title>
+    <meta name="description" content="This article explains how to configure FFmpeg command-line flags to force periodic keyframes in WebM video streams. Setting regular keyframe intervals (Group of Pictures or GOP size) is essential for smooth WebM playback, enabling predictable segment bou">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/force-ffmpeg-periodic-keyframes-for-webm-streaming">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Force FFmpeg Periodic Keyframes for WebM Streaming - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/force-ffmpeg-periodic-keyframes-for-webm-streaming" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how to configure FFmpeg command-line flags to force periodic keyframes in WebM video streams. Setting regular keyframe intervals (Group of Pictures or GOP size) is essential for smooth WebM playback, enabling predictable segment bou" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="force-ffmpeg-periodic-keyframes-for-webm-streaming">Force FFmpeg
+Periodic Keyframes for WebM Streaming</h1>
+<p>This article explains how to configure FFmpeg command-line flags to
+force periodic keyframes in WebM video streams. Setting regular keyframe
+intervals (Group of Pictures or GOP size) is essential for smooth WebM
+playback, enabling predictable segment boundaries for adaptive streaming
+protocols like DASH, faster seeking, and consistent buffering
+behavior.</p>
+<h3 id="essential-flags-for-periodic-keyframes">Essential Flags for
+Periodic Keyframes</h3>
+<p>To enforce regular keyframes in WebM files encoded with
+<code>libvpx</code> or <code>libvpx-vp9</code>, use a combination of
+standard GOP flags and forced keyframe expressions.</p>
+<h4 id="1-time-based-keyframe-insertion--force_key_frames">1. Time-Based
+Keyframe Insertion: <code>-force_key_frames</code></h4>
+<p>The most reliable method for streaming is forcing keyframes at exact
+time intervals, regardless of the source video's frame rate:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">-force_key_frames</span> <span class="st">&quot;expr:gte(t,n_forced*2)&quot;</span></span></code></pre></div>
+<ul>
+<li><strong><code>t</code></strong>: Current presentation timestamp in
+seconds.</li>
+<li><strong><code>n_forced</code></strong>: The number of forced
+keyframes generated so far.</li>
+<li><strong><code>2</code></strong>: Forces an intra-frame (keyframe)
+every 2 seconds. Adjust this integer to your desired segment
+duration.</li>
+</ul>
+<h4 id="2-frame-based-keyframe-control--g-and--keyint_min">2.
+Frame-Based Keyframe Control: <code>-g</code> and
+<code>-keyint_min</code></h4>
+<p>You can also force keyframes by locking the GOP size to a specific
+number of frames:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">-g</span> 60 <span class="at">-keyint_min</span> 60</span></code></pre></div>
+<ul>
+<li><strong><code>-g &lt;frames&gt;</code></strong>: Sets the maximum
+distance between keyframes. For example, if your video runs at 30 fps,
+setting <code>-g 60</code> targets a keyframe every 2 seconds.</li>
+<li><strong><code>-keyint_min &lt;frames&gt;</code></strong>: Sets the
+minimum distance between keyframes. Setting <code>-keyint_min</code>
+equal to <code>-g</code> prevents the encoder from inserting extra
+keyframes during sudden scene changes, maintaining a strictly regular
+interval.</li>
+</ul>
+<h4 id="3-scene-change-detection--sc_threshold-0">3. Scene Change
+Detection: <code>-sc_threshold 0</code></h4>
+<p>By default, VP8 and VP9 encoders insert keyframes when a scene change
+is detected. To maintain a purely periodic interval and prevent
+irregular keyframe distribution, disable dynamic scene detection:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">-sc_threshold</span> 0</span></code></pre></div>
+<hr />
+<h3 id="complete-command-examples">Complete Command Examples</h3>
+<h4
+id="standard-periodic-keyframes-using-time-intervals-recommended">Standard
+Periodic Keyframes Using Time Intervals (Recommended)</h4>
+<p>This command transcodes an input file to a WebM (VP9/Opus) stream
+with a guaranteed keyframe every 2 seconds:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 2M <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-force_key_frames</span> <span class="st">&quot;expr:gte(t,n_forced*2)&quot;</span> <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  output.webm</span></code></pre></div>
+<h4
+id="fixed-frame-count-interval-for-fixed-frame-rate-30-fps-source">Fixed
+Frame-Count Interval for Fixed Frame Rate (30 FPS Source)</h4>
+<p>This command locks the GOP to exactly 60 frames (a keyframe every 2
+seconds at 30 fps) while disabling scene change overrides:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="dt">\</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 2M <span class="dt">\</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-g</span> 60 <span class="at">-keyint_min</span> 60 <span class="at">-sc_threshold</span> 0 <span class="dt">\</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k <span class="dt">\</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  output.webm</span></code></pre></div>
+<h3 id="verification">Verification</h3>
+<p>To verify that keyframes appear at the intended intervals, run
+<code>ffprobe</code> to inspect frame types and timestamps:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> <span class="at">-select_streams</span> v <span class="at">-show_frames</span> <span class="dt">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-show_entries</span> frame=pkt_pts_time,pict_type <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  output.webm <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-B</span> 1 <span class="st">&quot;pict_type=I&quot;</span></span></code></pre></div>
+<p>This outputs only the intra-frames (<code>pict_type=I</code>) and
+their timestamps (<code>pkt_pts_time</code>), allowing you to confirm
+that the keyframes are placed consistently.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

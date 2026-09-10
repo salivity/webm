@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prevent Network Congestion in WebM Live Streaming - webm</title>
+    <meta name="description" content="High-concurrency WebM live streaming demands massive server throughput and low-latency delivery, often pushing network interfaces and operating system network stacks to their limits. When thousands of viewers simultaneously request high-bitrate VP8/VP9 o">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/prevent-network-congestion-in-webm-live-streaming">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Prevent Network Congestion in WebM Live Streaming - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/prevent-network-congestion-in-webm-live-streaming" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="High-concurrency WebM live streaming demands massive server throughput and low-latency delivery, often pushing network interfaces and operating system network stacks to their limits. When thousands of viewers simultaneously request high-bitrate VP8/VP9 o" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="prevent-network-congestion-in-webm-live-streaming">Prevent
+Network Congestion in WebM Live Streaming</h1>
+<p>High-concurrency WebM live streaming demands massive server
+throughput and low-latency delivery, often pushing network interfaces
+and operating system network stacks to their limits. When thousands of
+viewers simultaneously request high-bitrate VP8/VP9 or AV1 video streams
+wrapped in WebM containers, default server settings often lead to packet
+drops, bufferbloat, and connection throttling. This guide breaks down
+the critical server configurations, kernel parameters, and network layer
+optimizations required to prevent network congestion and sustain
+flawless WebM streaming under peak traffic.</p>
+<h2 id="deploy-bbr-congestion-control">Deploy BBR Congestion
+Control</h2>
+<p>Default Linux TCP stacks typically use the CUBIC congestion control
+algorithm, which interprets packet loss as immediate network congestion
+and drastically reduces transmission rates. In WebM streaming, this
+causes visible buffering and degradation.</p>
+<p>Switching to Google’s BBR (Bottleneck Bandwidth and RTT) algorithm
+stabilizes video delivery. BBR models the network pipe dynamically,
+maximizing throughput based on measured delivery rates rather than
+packet loss:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable BBR in /etc/sysctl.conf</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">net.core.default_qdisc</span> = fq</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">net.ipv4.tcp_congestion_control</span> = bbr</span></code></pre></div>
+<p>The Fair Queuing (<code>fq</code>) packet scheduler works in tandem
+with BBR to pace packets smoothly, eliminating the packet bursts that
+cause physical switch buffers to overflow.</p>
+<h2 id="tune-linux-kernel-network-buffers">Tune Linux Kernel Network
+Buffers</h2>
+<p>During high-concurrency broadcasts, socket memory limits frequently
+bottleneck data transfer before the physical interface reaches capacity.
+Increase the maximum read and write socket buffer sizes to handle
+high-bandwidth WebM data streams:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Increase system-wide socket memory limits</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">net.core.rmem_max</span> = 67108864</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">net.core.wmem_max</span> = 67108864</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">net.core.rmem_default</span> = 33554432</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">net.core.wmem_default</span> = 33554432</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TCP autotuning min, default, and max buffer limits (in bytes)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">net.ipv4.tcp_rmem</span> = 4096 87380 67108864</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="ex">net.ipv4.tcp_wmem</span> = 4096 65536 67108864</span></code></pre></div>
+<p>These parameters ensure that the kernel allocates enough space for
+unacknowledged WebM video packets without prematurely throttling data
+delivery to high-latency connections.</p>
+<h2 id="enforce-tcp-pacing-with-tcp_notsent_lowat">Enforce TCP Pacing
+with <code>tcp_notsent_lowat</code></h2>
+<p>When streaming chunks of WebM via HTTP chunked transfer encoding,
+write buffers can accumulate too much unsent data. This bloats
+round-trip times and exacerbates bufferbloat.</p>
+<p>Setting <code>tcp_notsent_lowat</code> instructs the kernel to only
+wake up the streaming server process when the unsent data in the write
+queue drops below a defined threshold:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">net.ipv4.tcp_notsent_lowat</span> = 16384</span></code></pre></div>
+<p>Keeping this buffer small prevents excessive queue buildup at the
+socket layer, reducing latency spikes during concurrent viewer join
+events.</p>
+<h2 id="scale-socket-connection-queues-and-file-descriptors">Scale
+Socket Connection Queues and File Descriptors</h2>
+<p>Surges in concurrent viewers stress connection handshakes. To avoid
+connection drops before streaming begins, widen the connection
+queues:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Increase backlog for pending connections</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">net.core.somaxconn</span> = 65535</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">net.ipv4.tcp_max_syn_backlog</span> = 65535</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Increase maximum file descriptors</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="ex">fs.file-max</span> = 2097152</span></code></pre></div>
+<p>In addition to kernel settings, ensure user-space streaming services
+(like Nginx, Node.js, or custom WebRTC gateways) have increased limits
+in <code>/etc/security/limits.conf</code>:</p>
+<pre class="text"><code>* soft nofile 1048576
+* hard nofile 1048576</code></pre>
+<h2 id="configure-web-server-delivery-nginx--edge-proxies">Configure Web
+Server Delivery (Nginx / Edge Proxies)</h2>
+<p>WebM video delivered over HTTP requires optimized server-side
+buffering rules. If the reverse proxy attempts to buffer dynamic WebM
+streams, memory exhaustion and traffic congestion occur.</p>
+<p>For Nginx-based media servers:</p>
+<ul>
+<li><strong>Disable Proxy Buffering:</strong> Prevent the proxy from
+absorbing the stream into temporary memory:
+<pre class="nginx"><code>proxy_buffering off;</code></pre></li>
+<li><strong>Optimize Sendfile and TCP Options:</strong> Offload data
+copying directly to the kernel:
+<pre class="nginx"><code>sendfile on;
+tcp_nopush on;
+tcp_nodelay on;</code></pre>
+<code>tcp_nopush</code> packages WebM headers and video frames into full
+packets before transmission, while <code>tcp_nodelay</code> bypasses
+Nagle’s algorithm to ensure immediate delivery of live media
+segments.</li>
+</ul>
+<h2 id="enable-network-interface-card-nic-offloading">Enable Network
+Interface Card (NIC) Offloading</h2>
+<p>Network hardware configuration prevents CPU saturation under heavy
+network loads:</p>
+<ul>
+<li><strong>Receive Side Scaling (RSS):</strong> Distributes incoming
+and outgoing network processing across multiple CPU cores to avoid
+single-core CPU pinning.</li>
+<li><strong>Generic Segmentation Offload (GSO) &amp; TCP Segmentation
+Offload (TSO):</strong> Ensure GSO and TSO are enabled via
+<code>ethtool</code> so the network interface card handles packet
+packetization rather than the host CPU:
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ethtool</span> <span class="at">-K</span> eth0 tso on gso on</span></code></pre></div></li>
+</ul>
+<p>Combining kernel memory expansion, BBR pacing, and non-blocking proxy
+delivery creates an optimal infrastructure capable of handling
+high-concurrency WebM live streams without saturating internal queues or
+degrading viewer playback.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

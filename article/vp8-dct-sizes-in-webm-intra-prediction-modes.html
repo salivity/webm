@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP8 DCT Sizes in WebM Intra-Prediction Modes - webm</title>
+    <meta name="description" content="The WebM VP8 video codec utilizes a fixed 4x4 Discrete Cosine Transform (DCT) size across all intra-prediction modes. Unlike more complex or modern codecs that dynamically vary transform block dimensions between 4x4, 8x8, or larger sizes, VP8 standardize">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp8-dct-sizes-in-webm-intra-prediction-modes">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP8 DCT Sizes in WebM Intra-Prediction Modes - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp8-dct-sizes-in-webm-intra-prediction-modes" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM VP8 video codec utilizes a fixed 4x4 Discrete Cosine Transform (DCT) size across all intra-prediction modes. Unlike more complex or modern codecs that dynamically vary transform block dimensions between 4x4, 8x8, or larger sizes, VP8 standardize" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="vp8-dct-sizes-in-webm-intra-prediction-modes">VP8 DCT Sizes in
+WebM Intra-Prediction Modes</h1>
+<p>The WebM VP8 video codec utilizes a fixed 4x4 Discrete Cosine
+Transform (DCT) size across all intra-prediction modes. Unlike more
+complex or modern codecs that dynamically vary transform block
+dimensions between 4x4, 8x8, or larger sizes, VP8 standardizes its
+primary frequency transform on a 4x4 grid. This article details how this
+4x4 DCT architecture operates across VP8 intra-prediction block types
+and how secondary transforms handle low-frequency data.</p>
+<h3 id="core-transform-architecture-the-4x4-dct">Core Transform
+Architecture: The 4x4 DCT</h3>
+<p>Regardless of whether an intra-predicted block is evaluated at the
+sub-block level or the full macroblock level, VP8 divides the prediction
+residual into uniform 4x4 blocks before applying frequency
+transformation. The primary transform implemented is a 4x4 integer
+approximation of the type-II Discrete Cosine Transform.</p>
+<p>VP8 supports two primary luma intra-prediction configurations and one
+chroma configuration:</p>
+<ul>
+<li><strong>4x4 Luma Intra-Prediction (Sub-blocks):</strong> The 16x16
+luma macroblock is broken into sixteen individual 4x4 sub-blocks. Each
+sub-block selects one of 10 intra-prediction directions. The residual
+difference for each 4x4 sub-block is directly transformed using a single
+4x4 DCT.</li>
+<li><strong>16x16 Luma Intra-Prediction (Full Macroblock):</strong> The
+macroblock predicts the entire 16x16 area as a whole using one of four
+directional modes (DC, Vertical, Horizontal, or TrueMotion). The
+resulting 16x16 residual is segmented into sixteen 4x4 blocks, each
+undergoing a 4x4 DCT.</li>
+<li><strong>8x8 Chroma Intra-Prediction:</strong> Chrominance channels
+(U and V) operate on 8x8 blocks, utilizing one of four prediction modes.
+Each 8x8 chroma block is segmented into four 4x4 blocks, each
+transformed using the 4x4 DCT.</li>
+</ul>
+<h3 id="secondary-transforms-walsh-hadamard-transform-wht">Secondary
+Transforms: Walsh-Hadamard Transform (WHT)</h3>
+<p>While the DCT size itself never deviates from 4x4, VP8 applies a
+secondary transform to capture low-frequency energy across larger areas
+when using full-macroblock intra-prediction:</p>
+<ul>
+<li><strong>Luma DC Transform:</strong> When 16x16 intra-prediction is
+active, the DC coefficients from each of the sixteen 4x4 DCT blocks are
+collected into a separate 4x4 matrix. This matrix is transformed using a
+4x4 Walsh-Hadamard Transform (WHT).</li>
+<li><strong>Chroma DC Transform:</strong> For the 8x8 chroma blocks, the
+DC coefficients from the four 4x4 DCT blocks are gathered into a 2x2
+matrix and transformed using a 2x2 WHT.</li>
+</ul>
+<h3 id="summary">Summary</h3>
+<p>VP8 restricts its DCT operations strictly to a <strong>4x4</strong>
+size for all intra-prediction residual coding. Coarser spatial
+correlations in 16x16 luma and 8x8 chroma modes are not handled by
+larger DCTs, but instead through secondary Walsh-Hadamard transforms
+performed on the DC coefficients of the base 4x4 DCT blocks.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

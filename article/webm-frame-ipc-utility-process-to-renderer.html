@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Frame IPC: Utility Process to Renderer - webm</title>
+    <meta name="description" content="Modern web browsers decouple media parsing and decoding from the renderer process using isolated utility and GPU processes to enhance security and stability. When decoding WebM containers (typically housing VP8, VP9, or AV1 video streams), browsers avoid">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-frame-ipc-utility-process-to-renderer">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Frame IPC: Utility Process to Renderer - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-frame-ipc-utility-process-to-renderer" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern web browsers decouple media parsing and decoding from the renderer process using isolated utility and GPU processes to enhance security and stability. When decoding WebM containers (typically housing VP8, VP9, or AV1 video streams), browsers avoid" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-frame-ipc-utility-process-to-renderer">WebM Frame IPC:
+Utility Process to Renderer</h1>
+<p>Modern web browsers decouple media parsing and decoding from the
+renderer process using isolated utility and GPU processes to enhance
+security and stability. When decoding WebM containers (typically housing
+VP8, VP9, or AV1 video streams), browsers avoid the performance overhead
+of copying raw pixel data across process boundaries. Instead, they rely
+on Chromium’s Mojo IPC framework combined with low-level shared memory
+regions or hardware-backed texture handles to stream frames directly
+into the renderer's rendering pipeline.</p>
+<h3 id="the-control-plane-mojo-interfaces">The Control Plane: Mojo
+Interfaces</h3>
+<p>The transfer of video frame metadata and control signals is managed
+by Mojo, Chromium’s lightweight cross-platform IPC system.</p>
+<p>The utility or GPU process hosting the decoder implements the
+<code>media.mojom.VideoDecoder</code> interface, while the renderer
+implements <code>media.mojom.VideoDecoderClient</code>. When a WebM
+frame is parsed and decoded, the utility process does not serialize the
+entire frame over the Mojo message pipe. Instead, it dispatches the
+<code>OnVideoFrameReady</code> Mojo message. This method transmits a
+serialized <code>media::VideoFrame</code> metadata object containing
+crucial timing, dimensions, color space, and pixel format data, along
+with a handle referencing the underlying image storage.</p>
+<h3 id="software-decoded-frames-shared-memory-buffers">Software-Decoded
+Frames: Shared Memory Buffers</h3>
+<p>When WebM video is decoded via software (for example, using
+<code>libvpx</code> for VP8/VP9 or <code>libdav1d</code> for AV1), pixel
+data resides in system RAM. Copying millions of raw YUV bytes per frame
+over standard IPC pipes would exhaust CPU resources and memory
+bandwidth.</p>
+<p>To solve this, the utility process allocates shared memory regions
+using <code>base::ReadOnlySharedMemoryRegion</code> (or
+<code>mojo::ScopedSharedBufferHandle</code>).</p>
+<ol type="1">
+<li>The utility process writes the decoded YUV planes directly into a
+writable shared memory mapping.</li>
+<li>The mapping is converted into a read-only region handle.</li>
+<li>The IPC handle for this shared memory region is transferred via Mojo
+within the <code>OnVideoFrameReady</code> call to the renderer.</li>
+<li>The renderer maps this memory read-only to read the pixel buffers
+directly, avoiding any intermediate memory copies.</li>
+</ol>
+<h3
+id="hardware-accelerated-frames-gpu-mailboxes-and-shared-images">Hardware-Accelerated
+Frames: GPU Mailboxes and Shared Images</h3>
+<p>When hardware acceleration is active, the utility or GPU process
+decodes frames directly to video memory (VRAM) via APIs such as DirectX
+(D3D11/D3D12), VA-API, NVDEC, or VideoToolbox. The raw video frame never
+leaves the GPU.</p>
+<p>In this scenario, Chromium uses the <strong>Shared Image</strong>
+system:</p>
+<ol type="1">
+<li>The decoder writes to a hardware surface (such as a DXGI surface or
+EGLImage).</li>
+<li>The GPU/utility process registers this surface with the
+<code>SharedImageManager</code> and produces a <code>gpu::Mailbox</code>
+token.</li>
+<li>The utility process sends this lightweight 16-byte
+<code>gpu::Mailbox</code> name along with a <code>gpu::SyncToken</code>
+to the renderer over Mojo.</li>
+<li>The renderer consumes the <code>gpu::Mailbox</code> as a texture
+reference, allowing the browser’s compositor (<code>viz</code>) to
+sample the decoded frame directly during composite rendering without CPU
+involvement.</li>
+</ol>
+<h3 id="flow-control-and-buffer-recycling">Flow Control and Buffer
+Recycling</h3>
+<p>To prevent memory leaks and buffer starvation, frame transfer
+requires bi-directional synchronization. The renderer retains the shared
+memory handle or texture mailbox only while the frame is actively
+referenced (either queued for display or displayed on a
+<code>&lt;video&gt;</code> tag or <code>&lt;canvas&gt;</code>). Once the
+frame is presented or discarded, the renderer sends an acknowledgment or
+releases the resource reference back through the Mojo pipe, permitting
+the utility process to recycle the buffer for subsequent WebM
+packets.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

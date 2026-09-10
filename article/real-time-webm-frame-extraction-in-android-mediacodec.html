@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time WebM Frame Extraction in Android MediaCodec - webm</title>
+    <meta name="description" content="Extracting WebM video frames in real time using Android's MediaCodec API requires an architecture that balances stream demuxing, hardware-accelerated decoding, and low-latency frame dispatch without introducing thread blocking or garbage collection pause">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/real-time-webm-frame-extraction-in-android-mediacodec">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Real-Time WebM Frame Extraction in Android MediaCodec - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/real-time-webm-frame-extraction-in-android-mediacodec" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Extracting WebM video frames in real time using Android's MediaCodec API requires an architecture that balances stream demuxing, hardware-accelerated decoding, and low-latency frame dispatch without introducing thread blocking or garbage collection pause" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="real-time-webm-frame-extraction-in-android-mediacodec">Real-Time
+WebM Frame Extraction in Android MediaCodec</h1>
+<p>Extracting WebM video frames in real time using Android's
+<code>MediaCodec</code> API requires an architecture that balances
+stream demuxing, hardware-accelerated decoding, and low-latency frame
+dispatch without introducing thread blocking or garbage collection
+pauses. WebM containers—typically packing VP8, VP9, or AV1 video
+streams—demand continuous, non-blocking feeds into native decoder inputs
+while simultaneously rendering or offloading decoded frames to
+processing pipelines. Implementing established architectural design
+patterns ensures that decoding pipelines maintain target framerates,
+minimize latency, and handle resource lifecycles reliably.</p>
+<h3 id="the-asynchronous-event-driven-pattern-reactor">The Asynchronous
+Event-Driven Pattern (Reactor)</h3>
+<p>Android's <code>MediaCodec</code> operates most efficiently in
+asynchronous mode using <code>MediaCodec.Callback</code>. The Reactor
+pattern underpins this mechanism by allowing a single event loop to
+handle notifications when an input buffer is ready for data or an output
+buffer contains decoded samples.</p>
+<p>Instead of busy-waiting or running blocking
+<code>dequeueInputBuffer</code> loops, the decoder registers
+callbacks:</p>
+<ul>
+<li><code>onInputBufferAvailable</code>: Fires when the hardware decoder
+has an empty slot. The application reads the next compressed packet from
+the WebM source and submits it immediately.</li>
+<li><code>onOutputBufferAvailable</code>: Fires when a frame is fully
+decoded. The application can direct the frame to a <code>Surface</code>
+or extract its raw YUV/RGB data.</li>
+</ul>
+<p>This pattern eliminates polling overhead, decreases CPU utilization,
+and prevents frame drops caused by synchronization bottlenecks.</p>
+<h3 id="the-producer-consumer-pipeline-pattern">The Producer-Consumer
+Pipeline Pattern</h3>
+<p>Real-time processing requires clear isolation between container
+demuxing, codec processing, and downstream frame rendering. The
+Producer-Consumer pattern separates these concerns across dedicated
+threads connected by thread-safe, bounded queues:</p>
+<ol type="1">
+<li><strong>Demuxing Stage (Producer):</strong> A dedicated thread reads
+Matroska/WebM blocks (using <code>MediaExtractor</code> or a lightweight
+native demuxer like <code>libwebm</code>) and produces raw, compressed
+packets.</li>
+<li><strong>Decoding Stage (Transformer):</strong>
+<code>MediaCodec</code> consumes the compressed packets, applies
+hardware decompression, and produces raw video output buffers.</li>
+<li><strong>Extraction/Consumption Stage (Consumer):</strong> An image
+consumer (such as an <code>ImageReader</code> or OpenGL ES shader
+pipeline) processes the decoded frames for computer vision, rendering,
+or network streaming.</li>
+</ol>
+<p>Using bounded blocking queues between these stages introduces
+backpressure. If downstream extraction slows down, the demuxer pauses
+reading rather than overflowing memory with uncompressed or queued
+frames.</p>
+<h3 id="the-object-pool-pattern">The Object Pool Pattern</h3>
+<p>Real-time frame extraction is prone to performance degradation from
+the Android Garbage Collector (GC). Instantiating byte buffers, metadata
+objects, or frame wrappers at 30 or 60 frames per second triggers GC
+pauses that cause visible stutter and dropped frames.</p>
+<p>The Object Pool pattern mitigates this by pre-allocating reusable
+containers:</p>
+<ul>
+<li><strong>Buffer Recycling:</strong> Pre-allocate frame payload
+wrappers and byte arrays during initialization.</li>
+<li><strong>Output Buffers:</strong> When not rendering directly to a
+hardware <code>Surface</code>, wrap incoming YUV planes in pooled
+structures, returning them to the pool immediately after downstream
+consumption finishes.</li>
+</ul>
+<h3 id="the-surface-to-imagereader-bridge-pattern">The
+Surface-to-ImageReader Bridge Pattern</h3>
+<p>Directly accessing raw YUV bytes from <code>MediaCodec</code> output
+buffers via CPU memory copies introduces high latency. The standard
+architectural solution applies the Bridge pattern by coupling
+<code>MediaCodec</code> to an output <code>Surface</code> backed by an
+<code>ImageReader</code> or an OpenGL <code>SurfaceTexture</code>.</p>
+<ul>
+<li>The decoder is configured to render directly to a
+<code>Surface</code> obtained from
+<code>ImageReader.newInstance(..., ImageFormat.YUV_420_888, maxImages)</code>.</li>
+<li>When <code>MediaCodec.releaseOutputBuffer(index, true)</code> is
+called, the hardware compositor renders the frame directly to GPU
+memory.</li>
+<li>An <code>ImageReader.OnImageAvailableListener</code> receives the
+frame asynchronously, allowing zero-copy or hardware-accelerated access
+to the underlying graphic buffer.</li>
+</ul>
+<h3 id="the-state-pattern-for-codec-lifecycle-management">The State
+Pattern for Codec Lifecycle Management</h3>
+<p><code>MediaCodec</code> adheres to a strict internal state machine
+(Uninitialized, Configured, Executing, Flushed, End-of-Stream, Error).
+Implementing the State pattern isolates the transitions and error
+handling logic.</p>
+<p>Encapsulating state behavior prevents common real-time failures, such
+as attempting to queue data during a format change, seeking within the
+WebM stream without flushing the codec, or improper tear-down during
+sudden stream interruptions. Each state object defines valid actions for
+feeding data, flushing, or reconfiguring parameters dynamically without
+destabilizing the pipeline.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

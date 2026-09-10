@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Video Error Events for WebM Decoding Failures - webm</title>
+    <meta name="description" content="When an HTML5 <video> element fails to decode a WebM file, it triggers a standardized DOM error event and populates the media element's error property with a MediaError object. This guide covers the specific event emitted during a WebM decoding breakdown">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/html5-video-error-events-for-webm-decoding-failures">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="HTML5 Video Error Events for WebM Decoding Failures - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/html5-video-error-events-for-webm-decoding-failures" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When an HTML5 <video> element fails to decode a WebM file, it triggers a standardized DOM error event and populates the media element's error property with a MediaError object. This guide covers the specific event emitted during a WebM decoding breakdown" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="html5-video-error-events-for-webm-decoding-failures">HTML5 Video
+Error Events for WebM Decoding Failures</h1>
+<p>When an HTML5 <code>&lt;video&gt;</code> element fails to decode a
+WebM file, it triggers a standardized DOM <code>error</code> event and
+populates the media element's <code>error</code> property with a
+<code>MediaError</code> object. This guide covers the specific event
+emitted during a WebM decoding breakdown, the exact error codes
+assigned, how source tags alter event routing, and how to capture these
+failures programmatically.</p>
+<h3 id="the-primary-decode-error-event">The Primary Decode Error
+Event</h3>
+<p>When a WebM file is corrupted, truncated, or contains bitstream
+errors that the browser's media pipeline cannot process, the
+<code>&lt;video&gt;</code> element fires a single <code>error</code>
+event.</p>
+<p>Simultaneously, the element assigns a <code>MediaError</code> object
+to the <code>video.error</code> property. For decoding failures, the
+<code>code</code> attribute of this object will always be:</p>
+<ul>
+<li><strong><code>MediaError.MEDIA_ERR_DECODE</code> (Numeric value:
+<code>3</code>)</strong></li>
+</ul>
+<p>This indicates that the browser recognized the WebM container format
+(Matroska-based) and initially validated the media resource, but
+encountered an unrecoverable error while decoding the underlying audio
+(Opus/Vorbis) or video (VP8, VP9, AV1) streams.</p>
+<h3 id="secondary-and-preceding-events">Secondary and Preceding
+Events</h3>
+<p>Before or alongside the <code>error</code> event, the browser
+pipeline may dispatch other state-change events depending on where the
+decode failure occurs during playback:</p>
+<ul>
+<li><strong><code>waiting</code> / <code>stalled</code>:</strong> Fired
+if decoding halts mid-stream because the decoder is unable to parse
+subsequent frames.</li>
+<li><strong><code>abort</code>:</strong> Fired if the media playback
+engine terminates decoding abruptly.</li>
+<li><strong><code>emptied</code>:</strong> Fired when the media buffer
+is cleared following the fatal error state.</li>
+</ul>
+<h3 id="direct-video-source-vs-child-source-elements">Direct Video
+Source vs. Child <code>&lt;source&gt;</code> Elements</h3>
+<p>The target of the <code>error</code> event depends on how the WebM
+resource is declared in HTML:</p>
+<ol type="1">
+<li><strong>Direct <code>src</code> attribute
+(<code>&lt;video src="video.webm"&gt;</code>):</strong> The
+<code>error</code> event fires directly on the
+<code>&lt;video&gt;</code> element. The <code>video.error.code</code> is
+accessible and will return <code>3</code>
+(<code>MEDIA_ERR_DECODE</code>).</li>
+<li><strong>Child <code>&lt;source&gt;</code> elements
+(<code>&lt;source src="video.webm" type="video/webm"&gt;</code>):</strong>
+If decoding or loading fails at the source level, the <code>error</code>
+event fires on the individual <code>&lt;source&gt;</code> tag instead of
+the parent <code>&lt;video&gt;</code>. If all fallback sources fail, the
+<code>&lt;video&gt;</code> element then fires an <code>error</code>
+event with <code>MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED</code> (code
+<code>4</code>).</li>
+</ol>
+<h3 id="handling-webm-decode-errors-in-javascript">Handling WebM Decode
+Errors in JavaScript</h3>
+<p>To detect and handle a WebM decoding failure, attach an event
+listener to the video element and evaluate <code>video.error</code>:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> video <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">querySelector</span>(<span class="st">&#39;video&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;error&#39;</span><span class="op">,</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> mediaError <span class="op">=</span> video<span class="op">.</span><span class="at">error</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (mediaError) {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">switch</span> (mediaError<span class="op">.</span><span class="at">code</span>) {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">case</span> <span class="bu">MediaError</span><span class="op">.</span><span class="at">MEDIA_ERR_DECODE</span><span class="op">:</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;WebM decode failed: Corrupted bitstream or unsupported codec profile.&#39;</span><span class="op">,</span> mediaError<span class="op">.</span><span class="at">message</span>)<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>      <span class="cf">case</span> <span class="bu">MediaError</span><span class="op">.</span><span class="at">MEDIA_ERR_SRC_NOT_SUPPORTED</span><span class="op">:</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;WebM format or codec is not supported by this browser.&#39;</span><span class="op">,</span> mediaError<span class="op">.</span><span class="at">message</span>)<span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>      <span class="cf">case</span> <span class="bu">MediaError</span><span class="op">.</span><span class="at">MEDIA_ERR_NETWORK</span><span class="op">:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;Network error interrupted WebM download.&#39;</span><span class="op">,</span> mediaError<span class="op">.</span><span class="at">message</span>)<span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>      <span class="cf">case</span> <span class="bu">MediaError</span><span class="op">.</span><span class="at">MEDIA_ERR_ABORTED</span><span class="op">:</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;Playback aborted by user or script.&#39;</span><span class="op">,</span> mediaError<span class="op">.</span><span class="at">message</span>)<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>      <span class="cf">default</span><span class="op">:</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;An unknown media error occurred.&#39;</span><span class="op">,</span> mediaError<span class="op">.</span><span class="at">message</span>)<span class="op">;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>The <code>mediaError.message</code> property provides detailed,
+browser-specific diagnostic strings explaining the exact reason the WebM
+decoder crashed, such as an invalid cluster header, missing keyframe
+index, or malformed VP9 packet.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

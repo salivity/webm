@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM MSE: How Media Segments Signal Timestamp Offsets - webm</title>
+    <meta name="description" content="This article explores how WebM media segments communicate timestamp offsets within Media Source Extensions (MSE) implementations. In WebM-based MSE streaming, presentation timing relies on a combination of container-level metadata defined in Matroska/EBM">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-mse-how-media-segments-signal-timestamp-offsets">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM MSE: How Media Segments Signal Timestamp Offsets - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-mse-how-media-segments-signal-timestamp-offsets" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores how WebM media segments communicate timestamp offsets within Media Source Extensions (MSE) implementations. In WebM-based MSE streaming, presentation timing relies on a combination of container-level metadata defined in Matroska/EBM" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-mse-how-media-segments-signal-timestamp-offsets">WebM MSE:
+How Media Segments Signal Timestamp Offsets</h1>
+<p>This article explores how WebM media segments communicate timestamp
+offsets within Media Source Extensions (MSE) implementations. In
+WebM-based MSE streaming, presentation timing relies on a combination of
+container-level metadata defined in Matroska/EBML structures—such as
+<code>TimecodeScale</code>, <code>Cluster</code> base timecodes, and
+relative block offsets—working in tandem with the browser's
+<code>SourceBuffer</code> timestamp management properties. Understanding
+this interaction clarifies how MSE parsers decode, align, and seamlessly
+append segmented audio and video streams.</p>
+<hr />
+<h3 id="the-matroskaebml-timing-hierarchy">The Matroska/EBML Timing
+Hierarchy</h3>
+<p>WebM is a subset of the Matroska (MKV) container format, which
+utilizes Extensible Binary Meta Language (EBML). Timing information in
+WebM is structured hierarchically across initialization segments and
+media segments.</p>
+<ol type="1">
+<li><p><strong>Initialization Segment (<code>Info</code> and
+<code>TimecodeScale</code>):</strong><br />
+The initialization segment contains the <code>Segment Information</code>
+(<code>Info</code>) element, which defines the global
+<code>TimecodeScale</code> (nanoseconds per timecode tick). By default,
+this value is 1,000,000 nanoseconds (1 millisecond). All subsequent
+timecode values in media segments are multiplied by this scale to
+convert them into absolute time.</p></li>
+<li><p><strong>Media Segment Level (<code>Cluster</code>
+Timecode):</strong><br />
+A WebM media segment consists of one or more <code>Cluster</code>
+elements. Each <code>Cluster</code> contains an absolute
+<code>Timecode</code> (or <code>Timestamp</code> in newer EBML
+specifications) element. This value serves as the base presentation time
+for all media samples contained within that cluster.</p></li>
+<li><p><strong>Sample Level (<code>SimpleBlock</code> and
+<code>BlockGroup</code> Offsets):</strong><br />
+Individual audio and video frames are stored within
+<code>SimpleBlock</code> or <code>BlockGroup</code> elements inside the
+cluster. Instead of storing absolute timestamps, each block stores a
+signed 16-bit integer representing a relative time offset from the
+parent <code>Cluster</code> timecode.</p></li>
+</ol>
+<p>The resulting stream presentation timestamp (PTS) within the
+container is calculated as: <span class="math display">\[\text{Container
+PTS} = (\text{Cluster Timecode} + \text{Block Timecode Offset}) \times
+\text{TimecodeScale}\]</span></p>
+<hr />
+<h3 id="how-the-mse-sourcebuffer-applies-timestamp-offsets">How the MSE
+SourceBuffer Applies Timestamp Offsets</h3>
+<p>When WebM media segments are appended to an MSE
+<code>SourceBuffer</code>, the browser's demuxer reads the container
+timestamps and maps them to the media timeline according to the
+<code>SourceBuffer</code> configuration.</p>
+<h4 id="1-the-timestampoffset-property">1. The
+<code>timestampOffset</code> Property</h4>
+<p>The <code>SourceBuffer.timestampOffset</code> attribute in the
+JavaScript MSE API allows developers to adjust the presentation timeline
+manually. When a segment is appended, the browser applies this offset to
+the timestamps parsed from the WebM container:</p>
+<p><span class="math display">\[\text{Final Presentation Time} =
+\text{Container PTS} + \text{SourceBuffer.timestampOffset}\]</span></p>
+<p>This mechanism allows separate WebM media segments—which may
+internally start at time <code>0</code> or contain discontinuous cluster
+timecodes—to be placed contiguously on the playback timeline.</p>
+<h4 id="2-append-modes-segments-vs-sequence">2. Append Modes:
+<code>segments</code> vs. <code>sequence</code></h4>
+<p>The MSE pipeline handles container timestamps differently depending
+on <code>SourceBuffer.mode</code>:</p>
+<ul>
+<li><p><strong><code>segments</code> Mode (Default):</strong><br />
+The browser uses the WebM <code>Cluster</code> timecodes directly,
+adjusted by <code>timestampOffset</code>. Media segments with specific
+internal timecodes are placed at those exact positions on the timeline.
+If the segment timestamps do not align with previously appended data,
+gaps or overlaps may occur.</p></li>
+<li><p><strong><code>sequence</code> Mode:</strong><br />
+The browser disregards the absolute values of the internal
+<code>Cluster</code> timecodes for timeline positioning. Instead, it
+automatically updates <code>timestampOffset</code> to match the end
+timestamp of the previously appended segment. The WebM cluster
+timestamps are only used to preserve the relative duration and pacing of
+frames within that specific segment.</p></li>
+</ul>
+<hr />
+<h3 id="summary-of-the-offset-communication-flow">Summary of the Offset
+Communication Flow</h3>
+<ol type="1">
+<li>The <strong>Initialization Segment</strong> sets the time unit
+resolution via <code>TimecodeScale</code>.</li>
+<li>Each <strong>Media Segment (<code>Cluster</code>)</strong> declares
+a base timestamp via its internal <code>Timecode</code> element.</li>
+<li>Individual <strong>Blocks</strong> provide relative sub-offsets to
+determine specific frame presentation times.</li>
+<li>The <strong>MSE Implementation</strong> extracts these container
+timestamps and applies the <code>SourceBuffer.timestampOffset</code> to
+position the decoded frames on the playback timeline.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

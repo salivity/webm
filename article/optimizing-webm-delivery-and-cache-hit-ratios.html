@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizing WebM Delivery and Cache Hit Ratios - webm</title>
+    <meta name="description" content="Delivering static WebM video assets at scale requires tailored backend optimization strategies to ensure minimal latency, seamless media playback, and maximum cache efficiency. This article details the core backend patterns required to maintain high cach">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/optimizing-webm-delivery-and-cache-hit-ratios">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Optimizing WebM Delivery and Cache Hit Ratios - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/optimizing-webm-delivery-and-cache-hit-ratios" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Delivering static WebM video assets at scale requires tailored backend optimization strategies to ensure minimal latency, seamless media playback, and maximum cache efficiency. This article details the core backend patterns required to maintain high cach" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="optimizing-webm-delivery-and-cache-hit-ratios">Optimizing WebM
+Delivery and Cache Hit Ratios</h1>
+<p>Delivering static WebM video assets at scale requires tailored
+backend optimization strategies to ensure minimal latency, seamless
+media playback, and maximum cache efficiency. This article details the
+core backend patterns required to maintain high cache hit ratios and
+accelerate the delivery of static WebM files, covering optimal HTTP
+header configurations, byte-range handling, origin shielding, and cache
+key normalization.</p>
+<h3 id="implement-long-lived-caching-with-content-hashing">Implement
+Long-Lived Caching with Content Hashing</h3>
+<p>WebM assets are pre-compressed and rarely change once generated. To
+maximize the cache hit ratio (CHR) across intermediate proxies, CDNs,
+and browsers, adopt a cache-busting strategy via unique content hashes
+in filenames (e.g., <code>hero-video.a8f9b2.webm</code>).</p>
+<p>Once unique URIs are used, configure your web server (such as NGINX
+or Apache) or cloud storage bucket to emit immutable caching
+headers:</p>
+<pre class="http"><code>Cache-Control: public, max-age=31536000, immutable
+ETag: &quot;a8f9b2...&quot;</code></pre>
+<p>The <code>immutable</code> directive instructs modern browsers not to
+send conditional validation requests (such as
+<code>If-None-Match</code>) when a user reloads the page, fully
+offloading edge and origin servers.</p>
+<h3 id="enable-robust-http-byte-range-requests">Enable Robust HTTP
+Byte-Range Requests</h3>
+<p>Browsers do not download entire WebM video files at once; they stream
+them incrementally using HTTP range requests
+(<code>Range: bytes=x-y</code>). If your backend does not handle partial
+content properly, the browser will either stall or repeatedly download
+the full asset.</p>
+<p>Ensure your origin server supports the
+<code>Accept-Ranges: bytes</code> header and correctly returns
+<code>206 Partial Content</code> responses. At the CDN layer, activate
+<strong>Byte-Range Caching</strong> or <strong>Slice Caching</strong>.
+This pattern allows the edge to fetch and store specific byte ranges
+(e.g., 1 MB blocks) from the origin and assemble them into full cache
+objects, preventing cache misses from triggering redundant full-file
+transfers.</p>
+<h3 id="deploy-origin-shielding-and-tiered-caching">Deploy Origin
+Shielding and Tiered Caching</h3>
+<p>When multiple edge points of presence (PoPs) handle video streaming
+requests, each PoP might independently fetch media chunks from your
+origin server, resulting in cache stampedes.</p>
+<p>Implement <strong>Origin Shielding</strong> (also known as Tiered
+Caching). This pattern designates a regional intermediate cache tier
+between the edge locations and the origin storage. If an edge PoP
+experiences a cache miss for a WebM chunk, it queries the origin shield.
+The shield serves the chunk from its centralized cache, keeping origin
+traffic minimal and boosting overall cache hit ratios.</p>
+<h3 id="normalize-urls-and-sanitize-cache-keys">Normalize URLs and
+Sanitize Cache Keys</h3>
+<p>Cache fragmentation is one of the primary drivers of low cache hit
+ratios. Minor variances in request URLs can cause edge nodes to treat
+requests for the identical WebM file as distinct assets.</p>
+<p>Configure your CDN and edge proxies to:</p>
+<ul>
+<li><strong>Strip Non-Essential Query Parameters:</strong> Remove
+marketing, tracking (e.g., <code>utm_*</code>), and cache-busting query
+strings before evaluating the cache key.</li>
+<li><strong>Case Normalization:</strong> Standardize URI paths to
+lowercase.</li>
+<li><strong>Ignore Cookie and Authorization Headers:</strong> Explicitly
+configure cache rules to ignore <code>Cookie</code> headers for static
+<code>.webm</code> paths so responses remain globally shareable.</li>
+</ul>
+<h3 id="prevent-redundant-server-side-compression">Prevent Redundant
+Server-Side Compression</h3>
+<p>WebM containers encapsulate video streams encoded with codecs like
+VP8, VP9, or AV1, which are already heavily compressed.</p>
+<p>Ensure your backend disables dynamic compression algorithms like
+Gzip, Deflate, or Brotli for <code>video/webm</code> MIME types.
+Compressing already optimized media wastes CPU cycles on the origin,
+increases time-to-first-byte (TTFB), and can inadvertently mutate cache
+headers, leading to cache fragmentation across downstream nodes.</p>
+<h3 id="configure-cache-locks-and-background-revalidation">Configure
+Cache Locks and Background Revalidation</h3>
+<p>When static assets are requested concurrently by thousands of clients
+during traffic spikes, an unprimed cache can trigger multiple
+simultaneous backend requests for the same video file.</p>
+<p>Implement <strong>Cache Locking</strong> (such as NGINX's
+<code>proxy_cache_use_stale updating</code> and
+<code>proxy_cache_lock</code>). This ensures that only the first request
+is passed to the origin storage while subsequent requests wait for the
+cache to populate, eliminating thundering herd problems. Combine this
+with automated pre-warming pipelines during asset deployment to ensure
+files exist in edge caches before reaching end users.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

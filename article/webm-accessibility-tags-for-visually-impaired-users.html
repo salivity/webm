@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Accessibility Tags for Visually Impaired Users - webm</title>
+    <meta name="description" content="In the WebM container specification, accessibility tracks for visually impaired users—commonly known as audio descriptions—are designated at the container level using the FlagVisualImpaired element nested within a TrackEntry. When WebM video is distr">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-accessibility-tags-for-visually-impaired-users">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Accessibility Tags for Visually Impaired Users - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-accessibility-tags-for-visually-impaired-users" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In the WebM container specification, accessibility tracks for visually impaired users—commonly known as audio descriptions—are designated at the container level using the FlagVisualImpaired element nested within a TrackEntry. When WebM video is distr" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-accessibility-tags-for-visually-impaired-users">WebM
+Accessibility Tags for Visually Impaired Users</h1>
+<p>In the WebM container specification, accessibility tracks for
+visually impaired users—commonly known as audio descriptions—are
+designated at the container level using the
+<code>FlagVisualImpaired</code> element nested within a
+<code>TrackEntry</code>. When WebM video is distributed across modern
+web platforms, this internal metadata works alongside the HTML5
+<code>&lt;track kind="descriptions"&gt;</code> element to signal,
+select, and play narrated descriptions of visual content. This guide
+outlines the specific container tags, elements, and implementation
+details required to identify and deliver accessible audio descriptions
+in WebM files.</p>
+<h2 id="the-webm-flagvisualimpaired-container-element">The WebM
+<code>FlagVisualImpaired</code> Container Element</h2>
+<p>WebM is a restricted subset of the Matroska (EBML) multimedia
+container format. In Matroska and WebM container architecture, every
+audio, video, or subtitle stream is defined within a
+<code>TrackEntry</code> master element located inside the global
+<code>Tracks</code> container.</p>
+<p>To designate an audio stream as an accessibility track for
+individuals with visual impairments, the container utilizes:</p>
+<ul>
+<li><strong>Element Name:</strong> <code>FlagVisualImpaired</code></li>
+<li><strong>EBML ID:</strong> <code>0x55AA</code></li>
+<li><strong>Element Type:</strong> Unsigned Integer (Boolean)</li>
+<li><strong>Value:</strong> Set to <code>1</code> (True) to mark the
+track as intended for visually impaired users; set to <code>0</code>
+(False) for standard tracks.</li>
+</ul>
+<p>When a media player parses the WebM header, detecting
+<code>FlagVisualImpaired</code> set to <code>1</code> informs the
+playback engine that the stream contains narrated descriptions of
+on-screen visual elements (actions, facial expressions, scene changes)
+timed to fit between natural dialogue pauses.</p>
+<h2 id="complementary-trackentry-elements">Complementary
+<code>TrackEntry</code> Elements</h2>
+<p>The <code>FlagVisualImpaired</code> flag does not work in isolation.
+To function correctly, it must be paired with standard identifying
+metadata inside the same <code>TrackEntry</code>:</p>
+<ul>
+<li><strong><code>TrackType</code> (<code>0x83</code>):</strong> Must be
+set to <code>2</code> (Audio).</li>
+<li>**<code>Language</code> (<code>0x22B59C</code>) or
+<code>LanguageBCP47</code> (<code>0x22B59D</code>): Identifies the
+language of the description stream (e.g., <code>eng</code> or
+<code>en-US</code>), allowing players to automatically match the user's
+preferred accessibility language.</li>
+<li><strong><code>Name</code> (<code>0x536E</code>):</strong> A UTF-8
+string, such as "Audio Description" or "English Descriptive Audio,"
+displayed in the user interface during track selection.</li>
+<li><strong><code>FlagDefault</code> (<code>0x88</code>):</strong>
+Typically set to <code>0</code> (False) on audio description tracks so
+that standard users do not hear the descriptions by default, unless the
+file is an accessibility-first distribution.</li>
+</ul>
+<h2 id="html5-integration-the-track-container-tag">HTML5 Integration:
+The <code>&lt;track&gt;</code> Container Tag</h2>
+<p>When delivering WebM media over the web, browsers rely on the HTML5
+media framework to expose accessibility options directly to screen
+readers and user agent controls. The corresponding web container tag
+is:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">video</span><span class="ot"> controls</span><span class="dt">&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">source</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;video.webm&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&quot;video/webm&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">track</span><span class="ot"> kind</span><span class="op">=</span><span class="st">&quot;descriptions&quot;</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;descriptions.vtt&quot;</span><span class="ot"> srclang</span><span class="op">=</span><span class="st">&quot;en&quot;</span><span class="ot"> label</span><span class="op">=</span><span class="st">&quot;Audio Description&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">video</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>The attribute <code>kind="descriptions"</code> specifically
+designates text or synthesized speech descriptions of the video track
+for visually impaired users. When using pre-mixed secondary audio tracks
+embedded directly within the WebM container, modern media frameworks
+read the underlying <code>FlagVisualImpaired</code> tag to surface the
+stream in the browser's native audio track selection menu.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

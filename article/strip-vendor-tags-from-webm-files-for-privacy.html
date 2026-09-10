@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strip Vendor Tags from WebM Files for Privacy - webm</title>
+    <meta name="description" content="WebM video containers frequently store embedded metadata, such as encoder signatures, hardware profiles, creation timestamps, and custom vendor-specific tags that can compromise personal privacy. Sanitizing these files requires specialized software utili">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/strip-vendor-tags-from-webm-files-for-privacy">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Strip Vendor Tags from WebM Files for Privacy - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/strip-vendor-tags-from-webm-files-for-privacy" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM video containers frequently store embedded metadata, such as encoder signatures, hardware profiles, creation timestamps, and custom vendor-specific tags that can compromise personal privacy. Sanitizing these files requires specialized software utili" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="strip-vendor-tags-from-webm-files-for-privacy">Strip Vendor Tags
+from WebM Files for Privacy</h1>
+<p>WebM video containers frequently store embedded metadata, such as
+encoder signatures, hardware profiles, creation timestamps, and custom
+vendor-specific tags that can compromise personal privacy. Sanitizing
+these files requires specialized software utilities capable of reading
+and modifying the underlying Extensible Binary Meta Language (EBML)
+structure without re-encoding the media streams. This guide outlines the
+leading command-line and graphical tools available to completely strip
+identifying metadata and custom vendor tags from WebM files.</p>
+<h2 id="1-ffmpeg">1. FFmpeg</h2>
+<p>FFmpeg is a versatile, open-source multimedia framework capable of
+stripping container metadata and vendor signatures while performing a
+stream copy, which avoids any loss of video or audio quality.</p>
+<p>To remove all global metadata, custom tags, and default encoder
+strings, use the <code>-map_metadata</code> flag along with the bitexact
+flag:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map_metadata</span> <span class="at">-1</span> <span class="at">-fflags</span> +bitexact <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<ul>
+<li><strong><code>-map_metadata -1</code></strong>: Removes all standard
+and custom metadata entries, including vendor-specific key-value
+pairs.</li>
+<li><strong><code>-fflags +bitexact</code></strong>: Prevents FFmpeg
+from writing its own vendor and encoder tags (such as the
+<code>Writing application</code> or <code>Writing library</code> tags)
+into the container header.</li>
+<li><strong><code>-c copy</code></strong>: Copies the audio and video
+streams directly without re-encoding, completing the operation in
+seconds.</li>
+</ul>
+<h2 id="2-mkvtoolnix-mkvpropedit">2. MKVToolNix (mkvpropedit)</h2>
+<p>Because WebM is a restricted subset of the Matroska (MKV) format,
+tools built for Matroska can directly manipulate WebM containers. The
+<code>mkvpropedit</code> utility from the MKVToolNix suite allows users
+to modify or delete metadata elements in place without needing to
+rewrite the entire file.</p>
+<p>To wipe embedded tags and identifying container elements using
+<code>mkvpropedit</code>, run:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvpropedit</span> input.webm <span class="at">--tags</span> all: <span class="at">--delete</span> title <span class="at">--edit</span> info <span class="at">--set</span> <span class="st">&quot;writing-application=&quot;</span> <span class="at">--set</span> <span class="st">&quot;muxing-application=&quot;</span></span></code></pre></div>
+<ul>
+<li><strong><code>--tags all:</code></strong>: Purges all tag elements
+(vendor tags, comments, artist info) across all tracks and the container
+itself.</li>
+<li><strong><code>--delete title</code></strong>: Removes the global
+title tag if present.</li>
+<li><strong><code>--edit info --set "..."</code></strong>: Overwrites
+the default muxing and writing software identification strings with
+empty values.</li>
+</ul>
+<h2 id="3-mat2-metadata-anonymisation-toolkit-v2">3. MAT2 (Metadata
+Anonymisation Toolkit v2)</h2>
+<p>MAT2 is a dedicated privacy utility developed specifically to
+sanitize files before publishing or sharing. Unlike general-purpose
+media editors, MAT2 focuses strictly on eliminating identifying digital
+footprints.</p>
+<ul>
+<li><strong>Usage</strong>: Available via both a command-line interface
+(<code>mat2</code>) and a graphical interface
+(<code>mat2-gui</code>).</li>
+<li><strong>Command</strong>:
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mat2</span> input.webm</span></code></pre></div></li>
+<li><strong>Functionality</strong>: MAT2 processes the file, strips
+non-essential metadata—including custom vendor parameters and recording
+dates—and outputs a clean copy named
+<code>input.cleaned.webm</code>.</li>
+</ul>
+<h2 id="4-exiftool">4. ExifTool</h2>
+<p>Phil Harvey's ExifTool is a widely used utility for reading, writing,
+and erasing metadata across dozens of media formats. While its write
+support for EBML/WebM structures is more basic than FFmpeg or
+MKVToolNix, it effectively clears common identifying tags.</p>
+<p>To strip all writable tags:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">exiftool</span> <span class="at">-all</span><span class="op">=</span> <span class="at">-overwrite_original</span> input.webm</span></code></pre></div>
+<ul>
+<li><strong><code>-all=</code></strong>: Directs the tool to clear all
+standard tags, user comments, and generic metadata properties.</li>
+<li><strong><code>-overwrite_original</code></strong>: Discards the
+backup file and updates the file directly.</li>
+</ul>
+<h2 id="summary-of-best-practices">Summary of Best Practices</h2>
+<p>For absolute anonymity, a combination of <strong>FFmpeg</strong>
+(using <code>-fflags +bitexact</code>) and <strong>MKVToolNix</strong>
+yields the cleanest result, ensuring that neither original vendor data
+nor the sanitizer's own software signature remains embedded inside the
+final WebM file.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

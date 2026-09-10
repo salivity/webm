@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Residual Quantization and Entropy Coding in WebM - webm</title>
+    <meta name="description" content="This article explains how video frames in the WebM container—primarily utilizing codecs such as VP8 and VP9—process prediction error residuals. It details the complete pipeline from transforming spatial residual differences into frequency coefficient">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/residual-quantization-and-entropy-coding-in-webm">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Residual Quantization and Entropy Coding in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/residual-quantization-and-entropy-coding-in-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how video frames in the WebM container—primarily utilizing codecs such as VP8 and VP9—process prediction error residuals. It details the complete pipeline from transforming spatial residual differences into frequency coefficient" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="residual-quantization-and-entropy-coding-in-webm">Residual
+Quantization and Entropy Coding in WebM</h1>
+<p>This article explains how video frames in the WebM
+container—primarily utilizing codecs such as VP8 and VP9—process
+prediction error residuals. It details the complete pipeline from
+transforming spatial residual differences into frequency coefficients,
+scaling and rounding those values through quantization, and finally
+packing them into the bitstream using context-adaptive arithmetic
+entropy coding.</p>
+<h3 id="1-residual-generation-and-forward-transformation">1. Residual
+Generation and Forward Transformation</h3>
+<p>When a WebM video frame is compressed, the encoder first predicts
+pixel blocks using spatial prediction (intra-frame) or temporal motion
+vectors (inter-frame). Subtracting this prediction from the actual
+source block produces the prediction error residual.</p>
+<p>To prepare the residual for efficient compression, the encoder
+applies a forward discrete transform to convert the spatial residual
+values into frequency domain coefficients:</p>
+<ul>
+<li><strong>VP8:</strong> Uses a 4x4 Discrete Cosine Transform (DCT) for
+standard residual blocks and an additional Walsh-Hadamard Transform
+(WHT) on DC coefficients for intra-16x16 luminance and chrominance
+blocks.</li>
+<li><strong>VP9:</strong> Expands transform sizes up to 32x32 and
+introduces the Asymmetric Discrete Sine Transform (ADST) alongside the
+standard DCT to better represent boundary-adjacent intra prediction
+errors.</li>
+</ul>
+<p>This transformation concentrates the majority of the residual energy
+into a few low-frequency coefficients (top-left of the block), leaving
+high-frequency components near zero.</p>
+<h3 id="2-quantization-of-transform-coefficients">2. Quantization of
+Transform Coefficients</h3>
+<p>Quantization is the lossy stage of the process, reducing the
+precision of the transform coefficients to discard imperceptible visual
+data and maximize compression.</p>
+<ul>
+<li><strong>Quantization Index (<code>base_qindex</code>):</strong> The
+frame header specifies a base quantization index ranging from 0 to
+255.</li>
+<li><strong>De-quantization Factors:</strong> The codec converts this
+index into separate scaling factors for DC and AC coefficients across
+luminance and chrominance planes using lookup tables and delta
+offsets.</li>
+<li><strong>Division and Rounding:</strong> The forward transform
+coefficients are divided by these quantization step sizes and rounded to
+the nearest integer. Smaller coefficients (typically high-frequency
+noise and fine details) are rounded to zero, creating long runs of zero
+values that can be efficiently compressed.</li>
+</ul>
+<h3 id="3-coefficient-scanning-and-tokenization">3. Coefficient Scanning
+and Tokenization</h3>
+<p>After quantization, the 2D matrix of integer coefficients is
+converted into a 1D array using a predefined scan order:</p>
+<ul>
+<li><strong>Scan Patterns:</strong> VP8 uses a traditional zig-zag scan
+pattern, while VP9 selects between zig-zag, horizontal, and vertical
+scans depending on the intra-prediction mode. This ensures non-zero
+coefficients appear early in the array, followed by contiguous trailing
+zeros.</li>
+<li><strong>Tokenization:</strong> Coefficients are grouped into tokens
+representing categories such as zero values, small integer values (1 to
+4), value ranges, sign bits, and End-of-Block (EOB) markers that signal
+all subsequent coefficients in the block are zero.</li>
+</ul>
+<h3 id="4-entropy-coding">4. Entropy Coding</h3>
+<p>The tokenized coefficients are compressed losslessly using arithmetic
+entropy coding before being multiplexed into WebM SimpleBlock or Block
+structures.</p>
+<ul>
+<li><strong>VP8 (Boolean Arithmetic Coder):</strong> Uses a binary
+arithmetic coder. Each token is encoded using specific tree structures,
+where branch probabilities are determined by the block type, coefficient
+position (band), and whether the preceding neighbor blocks contained
+non-zero coefficients.</li>
+<li><strong>VP9 (Context-Adaptive Binary/Multi-Symbol Arithmetic
+Coder):</strong> Utilizes multi-dimensional probability contexts based
+on transform size, color plane, coefficient position, and neighbor block
+activity. VP9 dynamically tracks symbol counts and updates frame context
+probabilities, allowing the arithmetic coder to assign shorter bit
+representations to the most statistically probable residual values.</li>
+</ul>
+<p>The resulting binary output represents the compressed residual
+signal, packaged directly into the frame payload inside the WebM
+container.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

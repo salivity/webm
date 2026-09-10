@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcode HTML Video to WebM with CaptureStream - webm</title>
+    <meta name="description" content="This article explains how web developers can transcode HTML video elements into WebM format directly within the browser. By combining the HTMLMediaElement.captureStream() method with the MediaRecorder API, developers can capture real-time audio and video">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/transcode-html-video-to-webm-with-capturestream">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Transcode HTML Video to WebM with CaptureStream - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/transcode-html-video-to-webm-with-capturestream" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how web developers can transcode HTML video elements into WebM format directly within the browser. By combining the HTMLMediaElement.captureStream() method with the MediaRecorder API, developers can capture real-time audio and video" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="transcode-html-video-to-webm-with-capturestream">Transcode HTML
+Video to WebM with CaptureStream</h1>
+<p>This article explains how web developers can transcode HTML video
+elements into WebM format directly within the browser. By combining the
+<code>HTMLMediaElement.captureStream()</code> method with the
+<code>MediaRecorder</code> API, developers can capture real-time audio
+and video tracks from a playing media element and re-encode them into a
+standalone WebM file without needing server-side processing.</p>
+<h3 id="the-transcoding-workflow">The Transcoding Workflow</h3>
+<p>Transcoding on the client side relies on two primary browser APIs:
+<code>captureStream()</code> to pipe the media frames, and
+<code>MediaRecorder</code> to encode those frames into a specific
+container and codec.</p>
+<ol type="1">
+<li><strong>Stream Extraction:</strong> The
+<code>videoElement.captureStream()</code> method is called on an
+existing <code>&lt;video&gt;</code> element. This creates a
+<code>MediaStream</code> containing real-time video and audio tracks
+extracted directly from the element's current playback.</li>
+<li><strong>Recorder Setup:</strong> A <code>MediaRecorder</code>
+instance is initialized using the captured <code>MediaStream</code>. The
+developer specifies the target MIME type, typically
+<code>'video/webm'</code> or a more specific codec profile like
+<code>'video/webm; codecs=vp9,opus'</code>.</li>
+<li><strong>Data Collection:</strong> The recorder buffers encoded media
+slices as the video plays. An event listener on
+<code>dataavailable</code> stores these binary chunks in an array.</li>
+<li><strong>Export:</strong> When the video ends or recording is
+stopped, the <code>stop</code> event listener compiles the collected
+chunks into a single <code>Blob</code> of type
+<code>video/webm</code>.</li>
+</ol>
+<h3 id="implementation-example">Implementation Example</h3>
+<p>The following JavaScript demonstrates the complete process of
+capturing an existing video and producing a downloadable WebM file:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">transcodeVideoToWebM</span>(videoElement) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// 1. Capture the stream from the video element</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> stream <span class="op">=</span> videoElement<span class="op">.</span><span class="at">captureStream</span> <span class="op">?</span> videoElement<span class="op">.</span><span class="fu">captureStream</span>() <span class="op">:</span> videoElement<span class="op">.</span><span class="fu">mozCaptureStream</span>()<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="co">// 2. Configure recorder options</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> options <span class="op">=</span> { <span class="dt">mimeType</span><span class="op">:</span> <span class="st">&#39;video/webm; codecs=vp8,opus&#39;</span> }<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="op">!</span><span class="bu">MediaRecorder</span><span class="op">.</span><span class="fu">isTypeSupported</span>(options<span class="op">.</span><span class="at">mimeType</span>)) {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">Error</span>(<span class="vs">`</span><span class="sc">${</span>options<span class="op">.</span><span class="at">mimeType</span><span class="sc">}</span><span class="vs"> is not supported on this browser.`</span>)<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> options)<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> recordedChunks <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">// 3. Collect data chunks as they become available</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  mediaRecorder<span class="op">.</span><span class="at">ondataavailable</span> <span class="op">=</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="bu">event</span><span class="op">.</span><span class="at">data</span> <span class="op">&amp;&amp;</span> <span class="bu">event</span><span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">size</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>      recordedChunks<span class="op">.</span><span class="fu">push</span>(<span class="bu">event</span><span class="op">.</span><span class="at">data</span>)<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  }<span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">// 4. Return a promise that resolves when the recording stops</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="kw">new</span> <span class="bu">Promise</span>((resolve) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    mediaRecorder<span class="op">.</span><span class="at">onstop</span> <span class="op">=</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> webmBlob <span class="op">=</span> <span class="kw">new</span> <span class="bu">Blob</span>(recordedChunks<span class="op">,</span> { <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;video/webm&#39;</span> })<span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">resolve</span>(webmBlob)<span class="op">;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    }<span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Automatically stop when the source video ends</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    videoElement<span class="op">.</span><span class="at">onended</span> <span class="op">=</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>      mediaRecorder<span class="op">.</span><span class="fu">stop</span>()<span class="op">;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    }<span class="op">;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Start recording and initiate playback</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    mediaRecorder<span class="op">.</span><span class="fu">start</span>()<span class="op">;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    videoElement<span class="op">.</span><span class="fu">play</span>()<span class="op">;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="key-considerations">Key Considerations</h3>
+<ul>
+<li><strong>CORS Restrictions:</strong> The source video must comply
+with Cross-Origin Resource Sharing (CORS) rules. If the video is served
+from an external domain without the proper
+<code>Access-Control-Allow-Origin</code> headers, the media element
+becomes origin-clean tainted, and <code>captureStream()</code> will fail
+to capture the media tracks.</li>
+<li><strong>Real-Time Limitation:</strong> Because
+<code>captureStream()</code> records frames during playback, this method
+runs in real-time. A 60-second video will take 60 seconds to transcode,
+though developers can set <code>videoElement.playbackRate</code> to
+higher values (such as <code>2.0</code> or <code>3.0</code>) in
+supporting browsers to accelerate the process.</li>
+<li><strong>Mime Type Availability:</strong> Browser support for
+specific codecs inside the WebM container varies. Always verify support
+using <code>MediaRecorder.isTypeSupported()</code> before initiating
+recording.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

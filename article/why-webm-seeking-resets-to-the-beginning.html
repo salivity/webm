@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why WebM Seeking Resets to the Beginning - webm</title>
+    <meta name="description" content="Seeking in a WebM video often resets playback to the beginning when a web server fails to support HTTP byte-range requests, when the WebM file lacks essential index metadata known as "Cues," or when the server delivers the file with incorrect MIME header">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/why-webm-seeking-resets-to-the-beginning">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why WebM Seeking Resets to the Beginning - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/why-webm-seeking-resets-to-the-beginning" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Seeking in a WebM video often resets playback to the beginning when a web server fails to support HTTP byte-range requests, when the WebM file lacks essential index metadata known as "Cues," or when the server delivers the file with incorrect MIME header" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="why-webm-seeking-resets-to-the-beginning">Why WebM Seeking
+Resets to the Beginning</h1>
+<p>Seeking in a WebM video often resets playback to the beginning when a
+web server fails to support HTTP byte-range requests, when the WebM file
+lacks essential index metadata known as "Cues," or when the server
+delivers the file with incorrect MIME headers. Without the ability to
+request specific byte offsets or translate timestamps into file
+locations, web browsers cannot jump to a specific point in the media
+stream and default to restarting the video from the beginning.</p>
+<h3
+id="missing-http-byte-range-support-http-206-partial-content">Missing
+HTTP Byte-Range Support (HTTP 206 Partial Content)</h3>
+<p>The primary server-side cause of broken video seeking is the absence
+of HTTP Range Requests. When a user seeks to a new timestamp in an HTML5
+video, the browser calculates the corresponding byte offset and sends an
+HTTP request containing a <code>Range</code> header (e.g.,
+<code>Range: bytes=5242880-</code>).</p>
+<ul>
+<li><strong>Expected Behavior:</strong> A properly configured server
+responds with an <code>HTTP 206 Partial Content</code> status code, an
+<code>Accept-Ranges: bytes</code> header, and only the requested segment
+of data.</li>
+<li><strong>Failure State:</strong> If the server or application serving
+the file does not support range requests—common with custom backend
+scripts, basic cloud storage proxies, or misconfigured reverse
+proxies—the server returns an <code>HTTP 200 OK</code> status and
+streams the entire file starting from byte zero. Unable to retrieve the
+requested offset, the browser aborts the seek action and resets playback
+to the start.</li>
+</ul>
+<h3 id="missing-or-malformed-webm-cues-metadata">Missing or Malformed
+WebM "Cues" Metadata</h3>
+<p>WebM files are based on the Matroska (MKV) container format, which
+utilizes a metadata structure called "Cues" to function as an index.
+Cues map specific playback timestamps to their corresponding byte
+positions in the file.</p>
+<ul>
+<li>If a WebM file is encoded without a Cues element (often the case
+with live streams saved directly to disk or files created with fast
+encoding presets), the browser cannot determine which byte corresponds
+to the desired timestamp.</li>
+<li>When the browser cannot parse the index, it cannot request the
+correct byte range. Consequently, it either disables seeking entirely or
+drops playback back to the start of the stream.</li>
+</ul>
+<h3 id="incorrect-mime-type-and-dynamic-script-delivery">Incorrect MIME
+Type and Dynamic Script Delivery</h3>
+<p>Web servers must serve WebM files with the correct
+<code>Content-Type: video/webm</code> header. If a server delivers the
+media as <code>application/octet-stream</code> or
+<code>text/plain</code>, the browser may handle the file as a generic
+download rather than a seekable media stream.</p>
+<p>Furthermore, when video files are routed through server-side scripts
+(such as PHP, Python, or Node.js) for authentication or access control
+rather than served statically, developers must manually implement
+byte-range slicing logic. If the script reads and outputs the entire
+file using standard file-reading functions instead of handling
+<code>HTTP_RANGE</code> headers, seeking will consistently fail.</p>
+<h3 id="how-to-resolve-the-issue">How to Resolve the Issue</h3>
+<ol type="1">
+<li><strong>Enable Range Requests on the Server:</strong> Ensure web
+servers like Nginx or Apache serve static files directly with byte-range
+support enabled, and verify that any CDN or reverse proxy in front of
+the server forwards the <code>Range</code> and
+<code>Accept-Ranges</code> headers.</li>
+<li><strong>Re-mux the WebM File:</strong> Use FFmpeg to ensure that the
+file contains an optimized index at the beginning of the container by
+running: <code>ffmpeg -i input.webm -c copy output.webm</code></li>
+<li><strong>Verify Header Responses:</strong> Inspect the network tab in
+browser developer tools to verify that seeking triggers requests
+resulting in <code>206 Partial Content</code> instead of
+<code>200 OK</code>.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Intra-Only Frame Bitstream Characteristics - webm</title>
+    <meta name="description" content="In the VP9 video coding standard, an intra-only frame that does not function as an Instantaneous Decoder Refresh (IDR) frame allows full intra-prediction coding while maintaining existing reference frame buffers. Unlike standard keyframes that reset the">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp9-intra-only-frame-bitstream-characteristics">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Intra-Only Frame Bitstream Characteristics - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp9-intra-only-frame-bitstream-characteristics" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In the VP9 video coding standard, an intra-only frame that does not function as an Instantaneous Decoder Refresh (IDR) frame allows full intra-prediction coding while maintaining existing reference frame buffers. Unlike standard keyframes that reset the" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="vp9-intra-only-frame-bitstream-characteristics">VP9 Intra-Only
+Frame Bitstream Characteristics</h1>
+<p>In the VP9 video coding standard, an intra-only frame that does not
+function as an Instantaneous Decoder Refresh (IDR) frame allows full
+intra-prediction coding while maintaining existing reference frame
+buffers. Unlike standard keyframes that reset the decoder state to serve
+as random access points, these non-IDR intra frames enable
+high-efficiency compression and flexible reference management. This
+article examines the exact bitstream flags, uncompressed header fields,
+and WebM container-level attributes that define a VP9 intra-only,
+non-key frame.</p>
+<h3 id="the-vp9-frame-type-architecture">The VP9 Frame Type
+Architecture</h3>
+<p>VP9 categorizes frames into two fundamental types at the bitstream
+level: <code>KEY_FRAME</code> and <code>INTER_FRAME</code> (non-key
+frame).</p>
+<ul>
+<li><strong>KEY_FRAME (frame_type = 0):</strong> Operates as a
+traditional IDR frame. It is entirely intra-coded, completely resets
+decoder probability models, and overwrites or invalidates all eight
+internal reference frame buffers.</li>
+<li><strong>INTER_FRAME (frame_type = 1):</strong> Typically encodes
+inter-predicted data using temporal references. However, the VP9
+specification allows an inter frame to be signaled as exclusively
+intra-coded through a dedicated sub-flag.</li>
+</ul>
+<p>An intra-only non-IDR frame is functionally an
+<code>INTER_FRAME</code> that borrows intra-coding tools without
+triggering the global buffer flush of a <code>KEY_FRAME</code>.</p>
+<h3 id="uncompressed-header-syntax-elements">Uncompressed Header Syntax
+Elements</h3>
+<p>To identify a VP9 intra-only non-IDR frame within the bitstream, the
+uncompressed frame header must present a specific sequence of syntax
+elements:</p>
+<ol type="1">
+<li><strong>frame_marker (2 bits):</strong> Must equal <code>0b10</code>
+(<code>2</code>), confirming standard VP9 bitstream
+synchronization.</li>
+<li><strong>profile_low_bit and profile_high_bit (1–3 bits):</strong>
+Designates the VP9 profile (0 through 3).</li>
+<li><strong>show_existing_frame (1 bit):</strong> Must be
+<code>0</code>. A value of <code>1</code> immediately displays a
+previously decoded buffer and bypasses the rest of the uncompressed
+header.</li>
+<li><strong>frame_type (1 bit):</strong> Must be <code>1</code> (Non-Key
+Frame). Setting this to <code>0</code> would define a standard
+keyframe/IDR.</li>
+<li><strong>show_frame (1 bit):</strong> Can be either <code>0</code>
+(an alternate reference frame) or <code>1</code> (displayed
+immediately).</li>
+<li><strong>error_resilient_mode (1 bit):</strong> Can be <code>0</code>
+or <code>1</code>.</li>
+<li><strong>intra_only (1 bit):</strong> Must be <code>1</code>.</li>
+</ol>
+<p>Because <code>frame_type</code> is set to <code>1</code>, the decoder
+parses the <code>intra_only</code> flag immediately following
+<code>error_resilient_mode</code>. When <code>intra_only == 1</code>,
+the decoder knows that the current frame contains zero motion vectors
+and uses intra prediction exclusively across all transform blocks, while
+retaining non-keyframe semantics.</p>
+<h3 id="reference-buffer-management">Reference Buffer Management</h3>
+<p>The defining operational difference between an IDR keyframe and a
+non-IDR intra-only frame is reference buffer preservation:</p>
+<ul>
+<li><strong>refresh_frame_flags (8 bits):</strong> In an intra-only
+frame, this field explicitly specifies which of the eight decoder
+reference frame buffers are updated with the reconstructed data of the
+current frame.</li>
+<li><strong>Buffer Retention:</strong> Unlike a keyframe (which forces
+all reference slots to point to the newly decoded frame), an intra-only
+frame allows selective replacement. Reference slots that are not
+targeted by <code>refresh_frame_flags</code> remain untouched.
+Consequently, subsequent P-frames or B-frames can reference frames that
+appeared temporally prior to this intra-only frame, violating the
+definition of an IDR sync point.</li>
+</ul>
+<h3 id="context-and-probability-resets">Context and Probability
+Resets</h3>
+<p>In a VP9 keyframe, probability tables are unconditionally reset to
+default values. For an intra-only frame (<code>frame_type == 1</code>
+and <code>intra_only == 1</code>), context adaptation is controlled by
+the <code>reset_frame_context</code> syntax element (2 bits):</p>
+<ul>
+<li><code>0</code> or <code>1</code>: Do not reset, or reset only the
+context specified by <code>frame_context_idx</code>.</li>
+<li><code>2</code>: Reset all contexts to default tables.</li>
+<li><code>3</code>: Full reset.</li>
+</ul>
+<p>Even if <code>reset_frame_context</code> specifies a full reset, the
+frame remains structurally a non-IDR frame due to the selective
+retention of the reference picture buffers.</p>
+<h3 id="webm-container-mapping">WebM Container Mapping</h3>
+<p>At the WebM (Matroska) container level, video frames are stored
+inside <code>SimpleBlock</code> or <code>BlockGroup</code> elements.</p>
+<p>Within a <code>SimpleBlock</code>:</p>
+<ul>
+<li><strong>Keyframe Flag (Bit 7 of the flags byte):</strong> Set to
+<code>0</code>.</li>
+</ul>
+<p>Because a VP9 intra-only non-key frame retains references across its
+boundary, it is not a clean random access point. Consequently, WebM
+demuxers and multiplexers mark the container-level keyframe bit as
+<code>0</code> to prevent video players from seeking directly to this
+frame without also decoding preceding reference dependencies.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Video Frame Default Duration Parameters - webm</title>
+    <meta name="description" content="WebM relies on specific Matroska-derived container-level elements to specify the timing and default duration of video frames. At the core of this system are the DefaultDuration parameter located within the track header and the TimestampScale parameter de">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-video-frame-default-duration-parameters">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Video Frame Default Duration Parameters - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-video-frame-default-duration-parameters" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM relies on specific Matroska-derived container-level elements to specify the timing and default duration of video frames. At the core of this system are the DefaultDuration parameter located within the track header and the TimestampScale parameter de" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-video-frame-default-duration-parameters">WebM Video Frame
+Default Duration Parameters</h1>
+<p>WebM relies on specific Matroska-derived container-level elements to
+specify the timing and default duration of video frames. At the core of
+this system are the <code>DefaultDuration</code> parameter located
+within the track header and the <code>TimestampScale</code> parameter
+defined in the segment information header. Together, these values
+establish the base timing grid and nominal frame rate for playback
+engines and decoders.</p>
+<h3 id="the-defaultduration-element">The <code>DefaultDuration</code>
+Element</h3>
+<p>The primary container-level parameter defining the default duration
+of a video frame in WebM is the <code>DefaultDuration</code> element
+(EBML ID: <code>0x23E383</code>).</p>
+<ul>
+<li><strong>Location:</strong> <code>Segment</code> &gt;
+<code>Tracks</code> &gt; <code>TrackEntry</code></li>
+<li><strong>Units:</strong> Nanoseconds (ns)</li>
+<li><strong>Function:</strong> It specifies the expected duration of a
+single frame (or block) in nanoseconds.</li>
+</ul>
+<p>For fixed frame rate (CFR) video, players use this value to calculate
+the nominal frame rate: <span class="math display">\[\text{Frame Rate
+(FPS)} = \frac{1,000,000,000}{\text{DefaultDuration}}\]</span></p>
+<p>For example, a video intended to play at 24 frames per second (fps)
+will set <code>DefaultDuration</code> to approximately
+<code>41666666</code> nanoseconds (1,000,000,000 / 24). For 60 fps, it
+will be set to <code>16666666</code> nanoseconds.</p>
+<h3 id="the-timestampscale-element">The <code>TimestampScale</code>
+Element</h3>
+<p>While <code>DefaultDuration</code> dictates the length of an
+individual frame, container timestamps themselves are scaled by the
+<code>TimestampScale</code> element (EBML ID: <code>0x2AD7B1</code>,
+historically named <code>TimecodeScale</code>).</p>
+<ul>
+<li><strong>Location:</strong> <code>Segment</code> &gt;
+<code>Info</code></li>
+<li><strong>Units:</strong> Nanoseconds (ns)</li>
+<li><strong>Default Value:</strong> <code>1,000,000</code> (which equals
+1 millisecond)</li>
+<li><strong>Function:</strong> Acts as the multiplier to convert
+relative block timestamps (stored in integers) into real-time
+nanoseconds.</li>
+</ul>
+<p>The playback timestamp of a frame is calculated as: <span
+class="math display">\[\text{Absolute Timestamp} = \text{Block
+Timestamp} \times \text{TimestampScale}\]</span></p>
+<h3 id="frame-timing-priority-and-overrides">Frame Timing Priority and
+Overrides</h3>
+<p>WebM supports both Constant Frame Rate (CFR) and Variable Frame Rate
+(VFR) media through a tiered timing system:</p>
+<ol type="1">
+<li><strong><code>DefaultDuration</code> as a Baseline:</strong> If
+blocks do not explicitly carry individual duration metadata, the player
+defaults to the value set in <code>DefaultDuration</code>.</li>
+<li><strong>Explicit Block Timing:</strong> WebM uses
+<code>SimpleBlock</code> and <code>BlockGroup</code> structures to hold
+encoded video data. Each block contains an explicit relative timestamp.
+If successive block timestamps differ from <code>DefaultDuration</code>,
+the explicit delta between timestamps dictates the actual display timing
+(supporting VFR).</li>
+<li><strong><code>BlockDuration</code> Element:</strong> When using
+<code>BlockGroup</code> rather than <code>SimpleBlock</code>, an
+optional <code>BlockDuration</code> element (EBML ID: <code>0x8B</code>)
+can be present to explicitly declare the exact duration of a specific
+frame, overriding the track's <code>DefaultDuration</code> for that
+instance.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

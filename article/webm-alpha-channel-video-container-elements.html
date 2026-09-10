@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Alpha Channel Video Container Elements - webm</title>
+    <meta name="description" content="This article provides an overview of how the WebM container encapsulates transparency data alongside primary video streams. It details the specific Matroska-derived elements responsible for defining alpha support at the track level and linking alpha chan">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-alpha-channel-video-container-elements">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Alpha Channel Video Container Elements - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-alpha-channel-video-container-elements" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of how the WebM container encapsulates transparency data alongside primary video streams. It details the specific Matroska-derived elements responsible for defining alpha support at the track level and linking alpha chan" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-alpha-channel-video-container-elements">WebM Alpha Channel
+Video Container Elements</h1>
+<p>This article provides an overview of how the WebM container
+encapsulates transparency data alongside primary video streams. It
+details the specific Matroska-derived elements responsible for defining
+alpha support at the track level and linking alpha channel frames
+directly to the primary video frames within the container structure.</p>
+<p>In the WebM format (which is a subset of the Matroska container
+specification), the element that links the primary video track to its
+alpha channel data at the frame level is
+<strong><code>&lt;BlockAdditions&gt;</code></strong>.</p>
+<h3 id="frame-level-linkage-blockadditions">Frame-Level Linkage:
+<code>&lt;BlockAdditions&gt;</code></h3>
+<p>Within a WebM file containing transparency (often utilizing VP8 or
+VP9 with alpha), the alpha stream is not stored as an entirely
+independent track with its own distinct track UID. Instead, the alpha
+data is linked directly to the main video frames on a per-frame basis
+inside a <code>&lt;BlockGroup&gt;</code> container.</p>
+<p>The structure operates through the following hierarchy:</p>
+<ul>
+<li><strong><code>&lt;BlockGroup&gt;</code></strong>: Wraps the primary
+video frame along with any synchronized supplementary data.</li>
+<li><strong><code>&lt;Block&gt;</code></strong>: Contains the primary
+color data (YUV bitstream) for the frame.</li>
+<li><strong><code>&lt;BlockAdditions&gt;</code></strong>: A container
+element within the <code>&lt;BlockGroup&gt;</code> designed to store
+additional data attached to the primary block.
+<ul>
+<li><strong><code>&lt;BlockMore&gt;</code></strong>: An entry inside
+<code>&lt;BlockAdditions&gt;</code>.</li>
+<li><strong><code>&lt;BlockAddID&gt;</code></strong>: An integer set to
+<code>1</code> to explicitly designate that the accompanying payload is
+alpha channel transparency data.</li>
+<li><strong><code>&lt;BlockAdditional&gt;</code></strong>: The actual
+binary payload of the alpha channel frame (an auxiliary VP8/VP9 frame
+containing the monochrome opacity data).</li>
+</ul></li>
+</ul>
+<h3 id="track-level-declaration-alphamode">Track-Level Declaration:
+<code>&lt;AlphaMode&gt;</code></h3>
+<p>To alert media decoders that a video track contains linked alpha data
+via <code>&lt;BlockAdditions&gt;</code>, WebM relies on the
+<strong><code>&lt;AlphaMode&gt;</code></strong> element at the track
+configuration level.</p>
+<ul>
+<li><strong>Path</strong>: <code>Segment</code> -&gt;
+<code>Tracks</code> -&gt; <code>TrackEntry</code> -&gt;
+<code>Video</code> -&gt; <code>AlphaMode</code></li>
+<li><strong>Function</strong>: Setting <code>&lt;AlphaMode&gt;</code> to
+<code>1</code> indicates that the video stream includes transparency
+data linked to the primary frames. When set to <code>0</code> (or
+omitted), the track is treated as purely opaque, and decoders ignore any
+auxiliary block additions.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

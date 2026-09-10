@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools to Verify WebM Container Compliance - webm</title>
+    <meta name="description" content="Verifying that a WebM file strictly complies with its container specification requires specialized inspection and validation software. Because WebM is a restricted subset of the Matroska (EBML) format designed specifically for the web, standard media pla">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/tools-to-verify-webm-container-compliance">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Tools to Verify WebM Container Compliance - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/tools-to-verify-webm-container-compliance" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Verifying that a WebM file strictly complies with its container specification requires specialized inspection and validation software. Because WebM is a restricted subset of the Matroska (EBML) format designed specifically for the web, standard media pla" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="tools-to-verify-webm-container-compliance">Tools to Verify WebM
+Container Compliance</h1>
+<p>Verifying that a WebM file strictly complies with its container
+specification requires specialized inspection and validation software.
+Because WebM is a restricted subset of the Matroska (EBML) format
+designed specifically for the web, standard media players often tolerate
+structural errors that break compliance. This guide outlines the most
+effective command-line utilities and software tools designed to parse,
+inspect, and strictly validate WebM container structure, EBML header
+integrity, and stream conformance.</p>
+<h2 id="1-mkvalidator">1. mkvalidator</h2>
+<p><code>mkvalidator</code> is the primary and most accurate
+command-line utility for verifying strict compliance with both Matroska
+and WebM container specifications. Developed by the Matroska team, it
+checks the underlying EBML syntax, container hierarchy, and internal
+element rules against official format definitions.</p>
+<ul>
+<li><strong>Key Features:</strong> It explicitly validates against the
+WebM subset profile, flags missing mandatory elements, identifies
+misordered clusters, and verifies segment index (Cues) integrity.</li>
+<li><strong>Usage:</strong> Running the command with the
+<code>--webm</code> flag forces strict WebM validation:
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvalidator</span> <span class="at">--webm</span> input.webm</span></code></pre></div></li>
+<li><strong>Output:</strong> The tool returns a detailed report listing
+warnings, errors, and an overall pass/fail status indicating whether the
+file conforms strictly to the specification.</li>
+</ul>
+<h2 id="2-libwebm-sample-tools">2. libwebm Sample Tools</h2>
+<p><code>libwebm</code> is Google’s official open-source library for
+creating and parsing WebM files. The repository includes several
+built-in sample utilities capable of testing structural integrity and
+parser conformance.</p>
+<ul>
+<li><strong>Key Features:</strong> Because it serves as the reference
+implementation, any file that fails parsing within <code>libwebm</code>
+tools is non-compliant. Utilities such as <code>webmsample</code> and
+internal parser tests check cluster timing, EBML document types
+(<code>webm</code>), and audio/video track layout.</li>
+<li><strong>Usage:</strong> Developers typically compile the sample
+parsers directly from the <code>libwebm</code> source repository to
+inspect and validate raw payloads and container elements.</li>
+</ul>
+<h2 id="3-mkvtoolnix-mkvinfo">3. MKVToolNix (<code>mkvinfo</code>)</h2>
+<p>While <code>mkvinfo</code> is broadly targeted at Matroska files, its
+deep parsing engine makes it an indispensable tool for diagnosing WebM
+container violations.</p>
+<ul>
+<li><strong>Key Features:</strong> <code>mkvinfo</code> traverses the
+entire EBML tree, displaying element positions, track definitions,
+timestamps, and cluster boundaries.</li>
+<li><strong>Usage:</strong>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvinfo</span> <span class="at">-v</span> <span class="at">-v</span> input.webm</span></code></pre></div></li>
+<li><strong>Diagnostic Value:</strong> Setting high verbosity flags
+(<code>-v -v</code>) causes <code>mkvinfo</code> to report unknown
+elements, malformed headers, invalid element sizes, or corrupted cluster
+timecodes.</li>
+</ul>
+<h2 id="4-ffmpeg--ffprobe-integrity-and-conformance-checks">4. FFmpeg /
+FFprobe (Integrity and Conformance Checks)</h2>
+<p>While FFmpeg is generally lenient during playback to maximize
+compatibility, it can be configured to fail aggressively on
+non-compliant elements.</p>
+<ul>
+<li><strong>Key Features:</strong> It parses both the container
+structure and the underlying elementary streams (VP8, VP9, AV1, Opus,
+Vorbis).</li>
+<li><strong>Usage:</strong> Use strict error detection flags to force
+FFmpeg to stop and report invalid syntax:
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-err_detect</span> explode <span class="at">-i</span> input.webm <span class="at">-f</span> null <span class="at">-</span></span></code></pre></div></li>
+<li><strong>Diagnostic Value:</strong> When combined with
+<code>-err_detect explode</code>, the parser rejects broken headers,
+misaligned packets, and timing anomalies that violate container playback
+constraints.</li>
+</ul>
+<h2 id="5-mediainfo">5. MediaInfo</h2>
+<p>MediaInfo provides a high-level overview of container and stream
+metadata, making it useful for verifying profile constraints.</p>
+<ul>
+<li><strong>Key Features:</strong> MediaInfo quickly confirms whether
+the container format is identified as <code>WebM</code> rather than
+generic <code>Matroska</code>, and verifies that only permitted codecs
+(such as VP8/VP9/AV1 for video and Opus/Vorbis for audio) are
+present.</li>
+<li><strong>Usage:</strong>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mediainfo</span> <span class="at">--Details</span><span class="op">=</span>1 input.webm</span></code></pre></div></li>
+<li><strong>Diagnostic Value:</strong> The detailed output view reveals
+raw EBML tags and confirms whether elements match WebM-specific
+constraints.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

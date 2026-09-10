@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protect WebM Videos from Direct Server Ripping - webm</title>
+    <meta name="description" content="Securing copyrighted WebM video assets requires a multi-layered server architecture to prevent hotlinking, unauthorized downloading, and automated scraping. While fully public, static media files are inherently vulnerable to modern browser inspection too">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/protect-webm-videos-from-direct-server-ripping">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Protect WebM Videos from Direct Server Ripping - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/protect-webm-videos-from-direct-server-ripping" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Securing copyrighted WebM video assets requires a multi-layered server architecture to prevent hotlinking, unauthorized downloading, and automated scraping. While fully public, static media files are inherently vulnerable to modern browser inspection too" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="protect-webm-videos-from-direct-server-ripping">Protect WebM
+Videos from Direct Server Ripping</h1>
+<p>Securing copyrighted WebM video assets requires a multi-layered
+server architecture to prevent hotlinking, unauthorized downloading, and
+automated scraping. While fully public, static media files are
+inherently vulnerable to modern browser inspection tools, implementing
+strict server-level controls significantly raises the barrier against
+direct extraction. This guide outlines the essential server
+configurations—including cryptographic token authentication, header
+validation, rate limiting, and dynamic segmented delivery—required to
+safeguard your WebM video files against direct ripping.</p>
+<h3 id="1-cryptographically-signed-urls-and-time-limited-tokens">1.
+Cryptographically Signed URLs and Time-Limited Tokens</h3>
+<p>Serving static <code>.webm</code> paths directly (e.g.,
+<code>/videos/sample.webm</code>) makes assets easy targets for ripping
+tools. Instead, configure your origin server or reverse proxy (such as
+NGINX or Apache) to enforce signed URLs with short-lived expiration
+timestamps.</p>
+<ul>
+<li><strong>NGINX Secure Link Module:</strong> Use
+<code>ngx_http_secure_link_module</code> to evaluate a hashed string
+containing a secret key, the client's IP address, the URI, and an
+expiration timestamp. If the hash or the timestamp fails validation, the
+server immediately drops the connection with an HTTP 403 or 410.</li>
+<li><strong>CDN-Level Signing:</strong> If utilizing a Content Delivery
+Network (e.g., Cloudflare, CloudFront, Fastly), implement edge token
+authentication so that the origin server never serves files to requests
+that lack a valid cryptographic signature verified by the edge.</li>
+</ul>
+<h3 id="2-strict-referer-and-origin-validation">2. Strict Referer and
+Origin Validation</h3>
+<p>Prevent unauthorized domains and standalone download managers from
+fetching video assets by verifying the request source at the web server
+layer.</p>
+<ul>
+<li><strong>Hotlinking Prevention:</strong> Configure rules to reject
+requests where the <code>HTTP_REFERER</code> is blank or does not match
+your authorized domain list. In NGINX, this is achieved using the
+<code>valid_referers</code> directive:
+<pre class="nginx"><code>valid_referers none blocked server_names *.yourdomain.com;
+if ($invalid_referer) {
+    return 403;
+}</code></pre>
+<em>(Note: While referer headers can be spoofed by custom scripts,
+enforcing them stops standard cross-site embedding and low-effort
+scrapers.)</em></li>
+<li><strong>Restrict CORS:</strong> Limit the
+<code>Access-Control-Allow-Origin</code> header strictly to your trusted
+origins rather than using wildcard (<code>*</code>) rules, preventing
+third-party client-side applications from fetching chunks via standard
+Fetch or XMLHttpRequest APIs.</li>
+</ul>
+<h3 id="3-sub-request-authentication-via-reverse-proxy">3. Sub-Request
+Authentication via Reverse Proxy</h3>
+<p>Use an internal reverse proxy authentication handshake before
+delivering video chunks.</p>
+<ul>
+<li><strong>NGINX <code>auth_request</code>:</strong> Route incoming
+requests for WebM files through an internal endpoint that checks the
+user's active session, purchase status, or authorization rights. If the
+authorization sub-request returns an HTTP 200, the server delivers the
+file using internal redirects (<code>X-Accel-Redirect</code> in NGINX or
+<code>X-Sendfile</code> in Apache), keeping the real file-system
+location completely hidden from public visibility.</li>
+</ul>
+<h3 id="4-rate-limiting-and-connection-throttling">4. Rate Limiting and
+Connection Throttling</h3>
+<p>Automated video rippers and CLI tools (such as <code>yt-dlp</code> or
+generic multi-threaded downloaders) rely on rapid, parallel chunk
+downloads to accelerate ripping.</p>
+<ul>
+<li><strong>Limit Concurrent Connections:</strong> Restrict concurrent
+connections per IP address to prevent parallel stream downloading (e.g.,
+<code>limit_conn</code> in NGINX).</li>
+<li><strong>Bandwidth Throttling:</strong> Cap the download speed to
+roughly 1.2x to 1.5x of the video's actual playback bitrate using
+directives like <code>limit_rate</code>. This permits uninterrupted
+streaming for legitimate human playback while making bulk harvesting
+prohibitively slow for scrapers.</li>
+<li><strong>Request Frequency Limits:</strong> Use leaky-bucket
+algorithms (e.g., <code>limit_req</code>) to flag and block IP addresses
+that request media chunks at super-human frequencies.</li>
+</ul>
+<h3
+id="5-transition-from-monolithic-files-to-fragmented-webm-dashcenc">5.
+Transition from Monolithic Files to Fragmented WebM (DASH/CENC)</h3>
+<p>Serving single, monolithic <code>.webm</code> files is the primary
+reason videos are easily ripped; once the browser resolves the direct
+file path, the asset can be saved in its entirety. The most effective
+server-level countermeasure is segmenting the WebM asset:</p>
+<ul>
+<li><strong>Chunked Delivery (DASH):</strong> Package the WebM into
+fragmented chunks (<code>.webm</code> initialization and media segments)
+indexed by a dynamic Media Presentation Description (<code>.mpd</code>)
+manifest file.</li>
+<li><strong>Common Encryption (CENC):</strong> Encrypt the video
+segments at rest using AES-128 and deliver them via MPEG-DASH. Implement
+an encrypted key exchange mechanism, such as ClearKey or a full Digital
+Rights Management (DRM) licensing server (e.g., Google Widevine). The
+media segments remain unplayable on the user's file system without the
+server-issued decryption key, neutralizing standard file extraction
+utilities.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

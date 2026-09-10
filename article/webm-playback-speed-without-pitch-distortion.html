@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Playback Speed Without Pitch Distortion - webm</title>
+    <meta name="description" content="Modern WebM players dynamically adjust playback speed without creating the high-pitched "chipmunk" or low-pitched "slow-motion" effect through a digital signal processing technique known as Time-Scale Modification (TSM). When a user changes the playback">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-playback-speed-without-pitch-distortion">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Playback Speed Without Pitch Distortion - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-playback-speed-without-pitch-distortion" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern WebM players dynamically adjust playback speed without creating the high-pitched "chipmunk" or low-pitched "slow-motion" effect through a digital signal processing technique known as Time-Scale Modification (TSM). When a user changes the playback" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-playback-speed-without-pitch-distortion">WebM Playback
+Speed Without Pitch Distortion</h1>
+<p>Modern WebM players dynamically adjust playback speed without
+creating the high-pitched "chipmunk" or low-pitched "slow-motion" effect
+through a digital signal processing technique known as Time-Scale
+Modification (TSM). When a user changes the playback speed of a WebM
+video, the media engine separates the audio from the video, decodes the
+compressed audio streams into raw pulse-code modulation (PCM) data,
+applies specialized time-stretching algorithms to alter duration
+independently of pitch, and synchronizes the processed audio with the
+accelerated or decelerated video frames.</p>
+<h3 id="the-audio-pipeline-in-webm-playback">The Audio Pipeline in WebM
+Playback</h3>
+<p>WebM containers typically encapsulate video encoded in VP8, VP9, or
+AV1, paired with audio encoded in Vorbis or Opus. When speed adjustment
+occurs:</p>
+<ol type="1">
+<li><strong>Demuxing and Decoding:</strong> The player demuxes the WebM
+container and passes the compressed audio track to the appropriate Opus
+or Vorbis decoder, outputting uncompressed PCM audio buffers.</li>
+<li><strong>Time-Scale Modification (TSM):</strong> Instead of simply
+resampling the PCM data (which changes speed and pitch simultaneously),
+the engine routes the audio through a pitch-preserving time-scale
+modification algorithm.</li>
+<li><strong>Synchronization (A/V Sync):</strong> The player adjusts the
+Master Clock rate according to the requested playback multiplier (e.g.,
+1.5x or 0.75x). Video frames are rendered according to updated
+Presentation Timestamps (PTS), while the time-stretched PCM audio is
+buffered to maintain lip-sync.</li>
+</ol>
+<h3 id="key-pitch-preservation-algorithms">Key Pitch-Preservation
+Algorithms</h3>
+<p>Web browsers and standalone media engines rely on specific TSM
+algorithms to process the audio stream in real time:</p>
+<h4 id="1-waveform-similarity-overlap-add-wsola">1. Waveform Similarity
+Overlap-Add (WSOLA)</h4>
+<p>WSOLA operates directly in the time domain and is the standard
+implementation in many modern web browsers (such as Chromium).</p>
+<ul>
+<li>The algorithm segments the audio stream into small, overlapping
+windows.</li>
+<li>It searches for points of maximum correlation (waveform similarity)
+between adjacent segments.</li>
+<li>To speed up playback, it discards redundant segments and overlaps
+the remaining segments based on their natural periodicity.</li>
+<li>To slow down playback, it repeats segments while smoothly
+cross-fading them.</li>
+<li>Because the underlying frequency (wavelength) within each segment
+remains unaltered, the pitch remains unchanged.</li>
+</ul>
+<h4 id="2-phase-vocoder">2. Phase Vocoder</h4>
+<p>Phase vocoders operate in the frequency domain using the Short-Time
+Fourier Transform (STFT):</p>
+<ul>
+<li>The audio is converted from the time domain into spectral components
+(magnitude and phase).</li>
+<li>The time intervals between spectral frames are expanded or
+contracted.</li>
+<li>Phase values are adjusted mathematically to maintain phase coherence
+across frame boundaries, preventing phase cancellation and robotic
+artifacts.</li>
+<li>An Inverse Short-Time Fourier Transform (ISTFT) converts the
+modified spectrum back into time-domain audio.</li>
+</ul>
+<h3 id="integration-in-web-engines">Integration in Web Engines</h3>
+<p>In web environments, pitch correction during speed changes is managed
+by the browser's internal media pipeline:</p>
+<ul>
+<li><strong>HTMLMediaElement:</strong> The <code>playbackRate</code>
+property controls speed, while the <code>preservesPitch</code> boolean
+(enabled by default) dictates whether pitch correction algorithms are
+engaged.</li>
+<li><strong>Audio Processing Libraries:</strong> Browsers frequently use
+optimized libraries (such as <em>Sonic</em> or internal WSOLA
+implementations) directly within the audio rendering thread to ensure
+real-time performance with minimal CPU overhead and low latency.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

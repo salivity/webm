@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Profiles and Levels in WebM Explained - webm</title>
+    <meta name="description" content="VP9 video streams encapsulated within the WebM container standard rely on defined profiles and levels to ensure decoder capability and smooth playback across different hardware and software environments. This guide breaks down the four distinct VP9 profi">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp9-profiles-and-levels-in-webm-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Profiles and Levels in WebM Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp9-profiles-and-levels-in-webm-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="VP9 video streams encapsulated within the WebM container standard rely on defined profiles and levels to ensure decoder capability and smooth playback across different hardware and software environments. This guide breaks down the four distinct VP9 profi" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="vp9-profiles-and-levels-in-webm-explained">VP9 Profiles and
+Levels in WebM Explained</h1>
+<p>VP9 video streams encapsulated within the WebM container standard
+rely on defined profiles and levels to ensure decoder capability and
+smooth playback across different hardware and software environments.
+This guide breaks down the four distinct VP9 profiles, details the
+standard operating levels from 1 to 6.2, and explains how these
+parameters are signaled inside the WebM container.</p>
+<h2 id="vp9-profiles">VP9 Profiles</h2>
+<p>VP9 defines four profiles (0 through 3), which specify the color
+depth, chroma subsampling, and color space capabilities:</p>
+<ul>
+<li><strong>Profile 0:</strong> Standard 8-bit color depth with 4:2:0
+chroma subsampling. This is the most widely supported profile across web
+browsers and legacy hardware decoders.</li>
+<li><strong>Profile 1:</strong> Standard 8-bit color depth supporting
+advanced chroma subsampling, including 4:2:2 and 4:4:4, alongside
+full-color channel support.</li>
+<li><strong>Profile 2:</strong> High bit-depth profile supporting 10-bit
+and 12-bit color depth with 4:2:0 chroma subsampling. This profile is
+standard for High Dynamic Range (HDR10 and HLG) video delivery.</li>
+<li><strong>Profile 3:</strong> Premium high bit-depth profile
+supporting 10-bit and 12-bit color with 4:2:2 or 4:4:4 chroma
+subsampling.</li>
+</ul>
+<h2 id="vp9-levels">VP9 Levels</h2>
+<p>Levels define the decoder performance limits, including maximum
+resolution, frame rate, sample rate, and bitrate constraints. VP9
+defines 14 official levels:</p>
+<ul>
+<li><strong>Level 1 (1.0):</strong> 256×144 @ 15 fps (Max bitrate: 200
+kbps)</li>
+<li><strong>Level 1.1:</strong> 384×288 @ 15 fps (Max bitrate: 800
+kbps)</li>
+<li><strong>Level 2 (2.0):</strong> 480×360 @ 30 fps (Max bitrate: 1.8
+Mbps)</li>
+<li><strong>Level 2.1:</strong> 640×480 @ 30 fps (Max bitrate: 3.6
+Mbps)</li>
+<li><strong>Level 3 (3.0):</strong> 1080×720 @ 30 fps (Max bitrate: 7.2
+Mbps)</li>
+<li><strong>Level 3.1:</strong> 1280×720 @ 30 fps (Max bitrate: 12
+Mbps)</li>
+<li><strong>Level 4 (4.0):</strong> 1920×1080 @ 30 fps (Max bitrate: 18
+Mbps)</li>
+<li><strong>Level 4.1:</strong> 1920×1080 @ 60 fps (Max bitrate: 30
+Mbps)</li>
+<li><strong>Level 5 (5.0):</strong> 3840×2160 (4K) @ 30 fps (Max
+bitrate: 60 Mbps)</li>
+<li><strong>Level 5.1:</strong> 3840×2160 (4K) @ 60 fps (Max bitrate: 90
+Mbps)</li>
+<li><strong>Level 5.2:</strong> 3840×2160 (4K) @ 120 fps (Max bitrate:
+180 Mbps)</li>
+<li><strong>Level 6 (6.0):</strong> 7680×4320 (8K) @ 30 fps (Max
+bitrate: 180 Mbps)</li>
+<li><strong>Level 6.1:</strong> 7680×4320 (8K) @ 60 fps (Max bitrate:
+240 Mbps)</li>
+<li><strong>Level 6.2:</strong> 7680×4320 (8K) @ 120 fps (Max bitrate:
+480 Mbps)</li>
+</ul>
+<h2 id="webm-container-encapsulation">WebM Container Encapsulation</h2>
+<p>When a VP9 stream is packaged in a WebM (Matroska-based)
+container:</p>
+<ul>
+<li><strong>Codec ID:</strong> The stream is identified with the
+Matroska element <code>CodecID</code> set to <code>V_VP9</code>.</li>
+<li><strong>CodecPrivate Metadata:</strong> The specific profile, level,
+bit depth, and chroma subsampling are signaled inside the WebM track
+header using the <code>CodecPrivate</code> element (specifically
+formatted as VP9 Codec Feature Metadata). This allows media players and
+browser media engines (via MSE/EME) to parse playback requirements
+before initiating hardware decoding.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

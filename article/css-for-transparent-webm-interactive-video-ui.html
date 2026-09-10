@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS for Transparent WebM Interactive Video UI - webm</title>
+    <meta name="description" content="Transparent WebM videos using VP8 or VP9 codecs with alpha channels allow developers to overlay dynamic animations directly over web content. Building an interactive video UI requires precise CSS styling to handle layer positioning, user clicks, blending">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/css-for-transparent-webm-interactive-video-ui">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CSS for Transparent WebM Interactive Video UI - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/css-for-transparent-webm-interactive-video-ui" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Transparent WebM videos using VP8 or VP9 codecs with alpha channels allow developers to overlay dynamic animations directly over web content. Building an interactive video UI requires precise CSS styling to handle layer positioning, user clicks, blending" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="css-for-transparent-webm-interactive-video-ui">CSS for
+Transparent WebM Interactive Video UI</h1>
+<p>Transparent WebM videos using VP8 or VP9 codecs with alpha channels
+allow developers to overlay dynamic animations directly over web
+content. Building an interactive video UI requires precise CSS styling
+to handle layer positioning, user clicks, blending modes, and visual
+effects. This guide breaks down the key CSS properties that directly
+interact with and enhance transparent WebM video elements.</p>
+<h3 id="pointer-events-pointer-events">Pointer Events
+(<code>pointer-events</code>)</h3>
+<p>Even when a WebM video has a transparent background, the HTML
+<code>&lt;video&gt;</code> element remains a rectangular bounding box
+that captures mouse and touch events by default.</p>
+<ul>
+<li><code>pointer-events: none;</code>: Passes clicks and hovers
+directly through the entire video element to the UI controls
+underneath.</li>
+<li><code>pointer-events: auto;</code>: Restores clickability on
+specific overlay elements or wrapper containers positioned over the
+video.</li>
+</ul>
+<p>To achieve pixel-level interactivity where only the visible pixels
+register clicks, pair <code>pointer-events: none</code> on the video
+with an invisible SVG path or canvas overlay aligned with the video
+animation.</p>
+<h3 id="layering-and-stacking-z-index-position-isolation">Layering and
+Stacking (<code>z-index</code>, <code>position</code>,
+<code>isolation</code>)</h3>
+<p>Transparent video UIs depend heavily on precise layer management to
+sandwich video between backgrounds and interactive HTML elements.</p>
+<ul>
+<li><code>position: absolute;</code> or <code>position: fixed;</code>:
+Takes the video out of the normal document flow so it can overlap
+underlying content seamlessly.</li>
+<li><code>z-index</code>: Defines the stacking order relative to text,
+buttons, and graphics.</li>
+<li><code>isolation: isolate;</code>: Creates a new stacking context.
+This prevents blending modes on the video from unintentionally bleeding
+into unintended parent DOM elements.</li>
+</ul>
+<h3 id="visual-filters-and-shadows-filter-backdrop-filter">Visual
+Filters and Shadows (<code>filter</code>,
+<code>backdrop-filter</code>)</h3>
+<p>CSS filters respond directly to the alpha channel of transparent WebM
+files.</p>
+<ul>
+<li><code>filter: drop-shadow(...)</code>: Unlike
+<code>box-shadow</code>, which applies a shadow to the rectangular video
+box, <code>drop-shadow()</code> hugs the contours of the opaque pixels
+inside the transparent WebM.</li>
+<li><code>backdrop-filter</code>: Applies effects (like
+<code>blur()</code> or <code>brightness()</code>) to the content sitting
+<em>behind</em> the transparent areas of the video container.</li>
+<li><code>filter: hue-rotate()</code>,
+<code>filter: brightness()</code>, <code>filter: contrast()</code>:
+Modifies the color palette of the video on the fly without breaking the
+alpha transparency channel.</li>
+</ul>
+<h3 id="blending-modes-mix-blend-mode-background-blend-mode">Blending
+Modes (<code>mix-blend-mode</code>,
+<code>background-blend-mode</code>)</h3>
+<p>Blending modes alter how the opaque and semi-opaque pixels in a WebM
+interact with underlying web layers.</p>
+<ul>
+<li><code>mix-blend-mode: screen;</code> /
+<code>mix-blend-mode: lighten;</code>: Often used to remove dark
+compression artifacts around semi-transparent edges in alpha-channel
+video.</li>
+<li><code>mix-blend-mode: overlay;</code> /
+<code>mix-blend-mode: multiply;</code>: Integrates animated video
+elements into colored or textured backgrounds dynamically.</li>
+</ul>
+<h3 id="masking-and-clipping-mask-image-clip-path">Masking and Clipping
+(<code>mask-image</code>, <code>clip-path</code>)</h3>
+<p>Native video transparency can be combined with CSS masking for
+complex transitions and responsive adjustments.</p>
+<ul>
+<li><code>mask-image: linear-gradient(...);</code>: Adds soft gradients,
+feathered edges, or vignette fades to a transparent video without
+re-rendering the source video file.</li>
+<li><code>clip-path</code>: Cuts sharp geometric shapes out of the video
+bounds, enabling dynamic reveals or limiting the interactive area.</li>
+</ul>
+<h3 id="background-control-background-color">Background Control
+(<code>background-color</code>)</h3>
+<ul>
+<li><code>background-color: transparent;</code>: Ensures the
+<code>&lt;video&gt;</code> element itself does not render a default
+browser background color.</li>
+<li>Applying a <code>background-color</code> or
+<code>background-image</code> directly to the <code>&lt;video&gt;</code>
+element allows you to inject dynamic background themes behind the moving
+transparent foreground without adding extra DOM nodes.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

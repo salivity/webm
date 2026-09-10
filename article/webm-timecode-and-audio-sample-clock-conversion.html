@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Timecode and Audio Sample Clock Conversion - webm</title>
+    <meta name="description" content="This article explains the precise mathematical formulas that link WebM container timecodes to audio sample clocks. WebM structures its timing around a continuous nanosecond-based container timebase, whereas digital audio relies on a discrete integer cloc">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-timecode-and-audio-sample-clock-conversion">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Timecode and Audio Sample Clock Conversion - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-timecode-and-audio-sample-clock-conversion" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains the precise mathematical formulas that link WebM container timecodes to audio sample clocks. WebM structures its timing around a continuous nanosecond-based container timebase, whereas digital audio relies on a discrete integer cloc" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-timecode-and-audio-sample-clock-conversion">WebM Timecode
+and Audio Sample Clock Conversion</h1>
+<p>This article explains the precise mathematical formulas that link
+WebM container timecodes to audio sample clocks. WebM structures its
+timing around a continuous nanosecond-based container timebase, whereas
+digital audio relies on a discrete integer clock governed by a fixed
+sampling rate. Converting accurately between these two timing domains is
+critical for preventing audio-video synchronization drift and sample
+truncation during playback and multiplexing.</p>
+<hr />
+<h3 id="core-parameters-and-definitions">Core Parameters and
+Definitions</h3>
+<p>To map WebM timestamps to discrete audio samples, five primary
+variables are required:</p>
+<ul>
+<li><span class="math inline">\(T_{\text{webm}}\)</span>: The raw
+integer timecode stored in the WebM Block or SimpleBlock header.</li>
+<li><span class="math inline">\(S_{\text{seg}}\)</span>: The
+<code>TimestampScale</code> (formerly <code>TimecodeScale</code>)
+defined in the WebM Segment Information, expressed in nanoseconds per
+container tick (default is <span
+class="math inline">\(1{,}000{,}000\text{ ns}\)</span>, or <span
+class="math inline">\(1\text{ ms}\)</span>).</li>
+<li><span class="math inline">\(S_{\text{trk}}\)</span>: The
+<code>TrackTimestampScale</code> defined in the specific audio track
+entry (default is <span class="math inline">\(1.0\)</span>).</li>
+<li><span class="math inline">\(F_s\)</span>: The audio sampling rate in
+Hertz (e.g., <span class="math inline">\(48{,}000\text{ Hz}\)</span> or
+<span class="math inline">\(44{,}100\text{ Hz}\)</span>).</li>
+<li><span class="math inline">\(N\)</span>: The absolute audio sample
+index (a zero-based integer count of audio frames).</li>
+</ul>
+<hr />
+<h3 id="time-in-seconds">Time in Seconds</h3>
+<p>Both WebM timecodes and audio sample counts represent an absolute
+time <span class="math inline">\(t\)</span> in seconds from the start of
+the media presentation:</p>
+<p><span class="math display">\[\text{WebM Time: } t = T_{\text{webm}}
+\times S_{\text{seg}} \times S_{\text{trk}} \times 10^{-9}\]</span></p>
+<p><span class="math display">\[\text{Audio Sample Clock Time: } t =
+\frac{N}{F_s}\]</span></p>
+<hr />
+<h3 id="mathematical-conversions">Mathematical Conversions</h3>
+<h4 id="1-converting-webm-timecode-to-audio-sample-number">1. Converting
+WebM Timecode to Audio Sample Number</h4>
+<p>To determine the exact sample index <span
+class="math inline">\(N\)</span> corresponding to a given WebM block
+timecode <span class="math inline">\(T_{\text{webm}}\)</span>:</p>
+<p><span class="math display">\[N = \text{round}\left(
+\frac{T_{\text{webm}} \times S_{\text{seg}} \times S_{\text{trk}} \times
+F_s}{10^9} \right)\]</span></p>
+<p>When <span class="math inline">\(S_{\text{seg}} =
+1{,}000{,}000\)</span> (the standard <span class="math inline">\(1\text{
+ms}\)</span> tick) and <span class="math inline">\(S_{\text{trk}} =
+1.0\)</span>, the equation simplifies to:</p>
+<p><span class="math display">\[N = \text{round}\left(
+\frac{T_{\text{webm}} \times F_s}{1{,}000} \right)\]</span></p>
+<h4 id="2-converting-audio-sample-number-to-webm-timecode">2. Converting
+Audio Sample Number to WebM Timecode</h4>
+<p>To calculate the WebM timecode <span
+class="math inline">\(T_{\text{webm}}\)</span> for an audio packet
+starting at sample index <span class="math inline">\(N\)</span>:</p>
+<p><span class="math display">\[T_{\text{webm}} = \text{round}\left(
+\frac{N \times 10^9}{F_s \times S_{\text{seg}} \times S_{\text{trk}}}
+\right)\]</span></p>
+<p>Under standard default scaling (<span
+class="math inline">\(S_{\text{seg}} = 1{,}000{,}000\)</span> and <span
+class="math inline">\(S_{\text{trk}} = 1.0\)</span>), this simplifies
+to:</p>
+<p><span class="math display">\[T_{\text{webm}} = \text{round}\left(
+\frac{N \times 1{,}000}{F_s} \right)\]</span></p>
+<hr />
+<h3 id="practical-example">Practical Example</h3>
+<p>Consider a WebM file containing an Opus audio track at <span
+class="math inline">\(F_s = 48{,}000\text{ Hz}\)</span> with <span
+class="math inline">\(S_{\text{seg}} = 1{,}000{,}000\)</span> and <span
+class="math inline">\(S_{\text{trk}} = 1.0\)</span>:</p>
+<ul>
+<li><p><strong>Block Timecode to Sample:</strong> If a block has <span
+class="math inline">\(T_{\text{webm}} = 1500\)</span> (representing
+<span class="math inline">\(1.5\text{ seconds}\)</span>): <span
+class="math display">\[N = \frac{1500 \times 48{,}000}{1{,}000} =
+72{,}000\text{ samples}\]</span></p></li>
+<li><p><strong>Sample to Block Timecode:</strong> If an audio frame
+starts at sample <span class="math inline">\(N = 96{,}000\)</span>:
+<span class="math display">\[T_{\text{webm}} = \frac{96{,}000 \times
+1{,}000}{48{,}000} = 2000\text{ ms}\]</span></p></li>
+</ul>
+<h3 id="non-integer-timing-drift-and-quantization">Non-Integer Timing
+Drift and Quantization</h3>
+<p>Because default WebM timecodes operate at millisecond precision
+(<span class="math inline">\(1{,}000\text{ Hz}\)</span>), rates like
+<span class="math inline">\(44{,}100\text{ Hz}\)</span> yield
+non-integer sample counts per tick (<span
+class="math inline">\(44.1\text{ samples/ms}\)</span>). To avoid
+cumulative rounding errors:</p>
+<ol type="1">
+<li>Maintain audio playback position using a 64-bit integer sample
+accumulator (<span class="math inline">\(N\)</span>).</li>
+<li>Calculate container timecodes directly from the total sample count
+rather than accumulating rounded millisecond deltas.</li>
+<li>Use the <code>CodecDelay</code> element (in nanoseconds) to subtract
+encoder delay before computing the presentation time.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

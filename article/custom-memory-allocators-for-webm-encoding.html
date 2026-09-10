@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Memory Allocators for WebM Encoding - webm</title>
+    <meta name="description" content="Continuous WebM video encoding often leads to severe heap fragmentation due to frequent allocation and deallocation of non-uniform frame buffers, packet buffers, and transformation matrices. This article explains how developers configure and integrate cu">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/custom-memory-allocators-for-webm-encoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Custom Memory Allocators for WebM Encoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/custom-memory-allocators-for-webm-encoding" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Continuous WebM video encoding often leads to severe heap fragmentation due to frequent allocation and deallocation of non-uniform frame buffers, packet buffers, and transformation matrices. This article explains how developers configure and integrate cu" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="custom-memory-allocators-for-webm-encoding">Custom Memory
+Allocators for WebM Encoding</h1>
+<p>Continuous WebM video encoding often leads to severe heap
+fragmentation due to frequent allocation and deallocation of non-uniform
+frame buffers, packet buffers, and transformation matrices. This article
+explains how developers configure and integrate custom memory
+allocators—such as fixed-size slab allocators, memory pools, and modern
+general-purpose alternatives—into encoding pipelines like
+<code>libvpx</code> and <code>libaom</code> to ensure deterministic
+memory behavior, eliminate fragmentation, and maintain predictable
+throughput.</p>
+<h3 id="why-memory-fragmentation-occurs-in-webm-pipelines">Why Memory
+Fragmentation Occurs in WebM Pipelines</h3>
+<p>WebM encoding relies primarily on VP8, VP9, or AV1 video codecs
+paired with Vorbis or Opus audio. During video compression, encoders
+dynamically allocate memory for intra-frame prediction, discrete cosine
+transforms (DCT), motion vectors, and reference frames. Because intra
+(I-frames) and inter (P-frames and B-frames) vary substantially in byte
+size, using standard C runtime allocators (<code>malloc</code> and
+<code>free</code>) produces interleaved blocks of varying lifespans
+across the heap. Over time, particularly in live streaming or
+high-volume batch processing, this dynamic allocation creates isolated
+free memory gaps that the operating system cannot coalesce, driving up
+the application's resident set size (RSS) and ultimately triggering
+out-of-memory (OOM) faults.</p>
+<h3 id="replacing-the-system-allocator-globally">Replacing the System
+Allocator Globally</h3>
+<p>The least intrusive way to handle fragmentation across WebM pipelines
+is by replacing the standard glibc allocator (<code>ptmalloc</code>)
+with high-performance, fragmentation-resistant allocators such as
+<strong>jemalloc</strong> or <strong>mimalloc</strong>.</p>
+<ul>
+<li><strong>jemalloc</strong>: Organizes memory into discrete size-class
+bins and thread-local arenas, preventing small objects from fragmenting
+regions intended for large frame data. It can be linked at compile time
+or injected at runtime:
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">LD_PRELOAD</span><span class="op">=</span>/usr/lib/x86_64-linux-gnu/libjemalloc.so <span class="ex">./webm_encoder_service</span></span></code></pre></div>
+Developers tune jemalloc via the <code>MALLOC_CONF</code> environment
+variable to purge unused pages aggressively:
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">MALLOC_CONF</span><span class="op">=</span><span class="st">&quot;dirty_decay_ms:1000,muzzy_decay_ms:2000,narenas:4&quot;</span></span></code></pre></div></li>
+<li><strong>mimalloc</strong>: Uses free-list sharding and page segments
+that avoid cross-thread heap corruption and automatically reclaim empty
+segments, providing drop-in stability for multi-threaded encoding
+threads.</li>
+</ul>
+<h3
+id="implementing-arena-and-slab-allocators-for-codec-lifecycles">Implementing
+Arena and Slab Allocators for Codec Lifecycles</h3>
+<p>For mission-critical or embedded environments, relying on generic
+global replacements may be insufficient. Developers implement dedicated
+allocation strategies tailored to video pipelines:</p>
+<h4 id="1-frame-level-regionarena-allocators">1. Frame-Level
+Region/Arena Allocators</h4>
+<p>Certain computational buffers only need to survive for the duration
+of a single frame (e.g., intermediate transform coefficients and
+loop-filter stages). Developers allocate a contiguous memory arena per
+worker thread prior to encoding. Internal allocations increment an
+internal offset pointer. Once the frame packet is emitted, the encoder
+resets the offset counter to zero instead of freeing individual blocks,
+completely bypassing the heap allocator.</p>
+<h4 id="2-fixed-size-frame-buffer-pools">2. Fixed-Size Frame Buffer
+Pools</h4>
+<p>Raw YUV inputs and uncompressed reference frames require large,
+deterministic blocks of memory. For a 1080p YUV420p frame, the raw
+buffer size is fixed: <span class="math display">\[\text{Width} \times
+\text{Height} \times 1.5 = 1920 \times 1080 \times 1.5 \approx 3.11
+\text{ MB}\]</span></p>
+<p>Instead of allocating and freeing these buffers per keyframe,
+developers pre-allocate a static pool of buffers during initialization.
+When the encoder requires a reference slot or an input buffer, it
+acquires an index from the pool; when the reference frame is retired
+from the GOP (Group of Pictures) buffer, it returns to the pool.</p>
+<h3 id="hooking-custom-allocators-into-libvpx-and-libaom">Hooking Custom
+Allocators into <code>libvpx</code> and <code>libaom</code></h3>
+<p>The reference libraries <code>libvpx</code> (VP8/VP9) and
+<code>libaom</code> (AV1) manage low-level memory allocations through
+internal wrappers. Developers take two approaches to direct these
+libraries to custom memory routines:</p>
+<h4
+id="method-a-overriding-internal-memory-functions-at-compile-time">Method
+A: Overriding Internal Memory Functions at Compile Time</h4>
+<p>Both <code>libvpx</code> and <code>libaom</code> use internal
+abstraction functions (such as <code>vpx_memalign</code>,
+<code>vpx_malloc</code>, and <code>vpx_free</code>). By modifying the
+configuration or source directly prior to compilation, custom memory
+managers can be plugged in:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;my_custom_pool.h&quot;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>vpx_memalign<span class="op">(</span><span class="dt">size_t</span> align<span class="op">,</span> <span class="dt">size_t</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> custom_aligned_alloc<span class="op">(</span>align<span class="op">,</span> size<span class="op">);</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>vpx_malloc<span class="op">(</span><span class="dt">size_t</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> custom_pool_alloc<span class="op">(</span>size<span class="op">);</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> vpx_free<span class="op">(</span><span class="dt">void</span> <span class="op">*</span>mem<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    custom_pool_free<span class="op">(</span>mem<span class="op">);</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h4
+id="method-b-utilizing-external-buffer-hooks-in-application-pipelines">Method
+B: Utilizing External Buffer Hooks in Application Pipelines</h4>
+<p>In higher-level wrappers (such as FFmpeg using
+<code>libvpx-vp9</code>), developers can override the default packet and
+frame allocation strategies at the <code>AVCodecContext</code> level
+using custom <code>get_buffer2</code> callbacks:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">int</span> custom_get_video_buffer<span class="op">(</span>AVCodecContext <span class="op">*</span>ctx<span class="op">,</span> AVFrame <span class="op">*</span>frame<span class="op">,</span> <span class="dt">int</span> flags<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Retrieve reference to application&#39;s custom memory pool</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    CustomMemoryPool <span class="op">*</span>pool <span class="op">=</span> <span class="op">(</span>CustomMemoryPool <span class="op">*)</span>ctx<span class="op">-&gt;</span>opaque<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> required_size <span class="op">=</span> av_image_get_buffer_size<span class="op">(</span>ctx<span class="op">-&gt;</span>pix_fmt<span class="op">,</span> ctx<span class="op">-&gt;</span>width<span class="op">,</span> ctx<span class="op">-&gt;</span>height<span class="op">,</span> <span class="dv">64</span><span class="op">);</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Allocate contiguous SIMD-aligned buffer from the pre-allocated pool</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint8_t</span> <span class="op">*</span>buffer <span class="op">=</span> custom_pool_pop<span class="op">(</span>pool<span class="op">,</span> required_size<span class="op">);</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>buffer<span class="op">)</span> <span class="cf">return</span> AVERROR<span class="op">(</span>ENOMEM<span class="op">);</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    av_image_fill_arrays<span class="op">(</span>frame<span class="op">-&gt;</span>data<span class="op">,</span> frame<span class="op">-&gt;</span>linesize<span class="op">,</span> buffer<span class="op">,</span> ctx<span class="op">-&gt;</span>pix_fmt<span class="op">,</span> ctx<span class="op">-&gt;</span>width<span class="op">,</span> ctx<span class="op">-&gt;</span>height<span class="op">,</span> <span class="dv">64</span><span class="op">);</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Set custom free callback to return buffer to pool rather than freeing to OS</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    frame<span class="op">-&gt;</span>buf<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> av_buffer_create<span class="op">(</span>buffer<span class="op">,</span> required_size<span class="op">,</span> custom_buffer_release_callback<span class="op">,</span> pool<span class="op">,</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="simd-alignment-requirements">SIMD Alignment Requirements</h3>
+<p>Custom allocators must respect hardware SIMD constraints. VP9 and AV1
+encoders make extensive use of AVX-2, AVX-512, and ARM NEON intrinsics
+to accelerate motion estimation and quantization. When returning memory
+from a custom pool or arena, developers must align pointers to at least
+a 32-byte (for AVX-2) or 64-byte (for AVX-512) boundary:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>custom_aligned_alloc<span class="op">(</span><span class="dt">size_t</span> alignment<span class="op">,</span> <span class="dt">size_t</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">*</span>ptr <span class="op">=</span> NULL<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>posix_memalign<span class="op">(&amp;</span>ptr<span class="op">,</span> alignment<span class="op">,</span> size<span class="op">)</span> <span class="op">!=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ptr<span class="op">;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Failing to maintain proper alignment causes runtime segmentation
+faults when vector instructions attempt misaligned loads and stores.</p>
+<h3 id="verification-and-monitoring">Verification and Monitoring</h3>
+<p>To verify that the custom allocator successfully prevents
+fragmentation:</p>
+<ol type="1">
+<li><strong>Track <code>mallinfo2</code> Metrics</strong>: Monitor
+<code>arena</code> (non-mmap space allocated) and <code>fordblks</code>
+(total free space in chunks). A widening divergence between used memory
+and resident set size indicates ongoing fragmentation.</li>
+<li><strong>Inspect Process Memory Maps</strong>: Analyze
+<code>/proc/[pid]/smaps</code> to track the count and lifespan of
+anonymous memory mappings.</li>
+<li><strong>Run Extended Stress Tests</strong>: Encode 24+ hour
+continuous high-bitrate WebM video streams while observing the RSS
+plateau. A flat memory profile confirms the elimination of heap
+fragmentation.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

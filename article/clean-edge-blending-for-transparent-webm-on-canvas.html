@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Edge Blending for Transparent WebM on Canvas - webm</title>
+    <meta name="description" content="Rendering transparent WebM video onto an HTML5 canvas often introduces unsightly dark halos, discolored borders, or pixelated fringes around semi-transparent edges. This guide explains why these edge artifacts occur during alpha blending and highlights t">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/clean-edge-blending-for-transparent-webm-on-canvas">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Clean Edge Blending for Transparent WebM on Canvas - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/clean-edge-blending-for-transparent-webm-on-canvas" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering transparent WebM video onto an HTML5 canvas often introduces unsightly dark halos, discolored borders, or pixelated fringes around semi-transparent edges. This guide explains why these edge artifacts occur during alpha blending and highlights t" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="clean-edge-blending-for-transparent-webm-on-canvas">Clean Edge
+Blending for Transparent WebM on Canvas</h1>
+<p>Rendering transparent WebM video onto an HTML5 canvas often
+introduces unsightly dark halos, discolored borders, or pixelated
+fringes around semi-transparent edges. This guide explains why these
+edge artifacts occur during alpha blending and highlights the optimal 2D
+and WebGL canvas compositing modes, configurations, and rendering orders
+required to achieve crisp, clean edge blending.</p>
+<h3 id="the-cause-of-edge-artifacts-in-transparent-webm">The Cause of
+Edge Artifacts in Transparent WebM</h3>
+<p>Edge discoloration typically stems from an alpha premultiplication
+mismatch. WebM video with an alpha channel (VP8 or VP9) is typically
+encoded using straight (unassociated) alpha. However, the HTML5 2D
+canvas pipeline and many hardware-accelerated video decoders expect
+premultiplied alpha when drawing frame buffers.</p>
+<p>When a straight-alpha video frame is drawn using standard canvas
+operations, the semi-transparent edge pixels are blended as if they were
+already multiplied against black. This results in an unwanted dark or
+grayish outline along smooth or anti-aliased contours.</p>
+<hr />
+<h3 id="canvas-2d-compositing-modes-and-strategies">Canvas 2D
+Compositing Modes and Strategies</h3>
+<p>In the standard 2D context (<code>CanvasRenderingContext2D</code>),
+the <code>globalCompositeOperation</code> property controls how new
+video frames combine with existing canvas pixels.</p>
+<h4 id="1-reversed-rendering-with-destination-over">1. Reversed
+Rendering with <code>destination-over</code></h4>
+<p>Rather than drawing the background first and overlaying the video on
+top with <code>source-over</code>, invert the rendering sequence:</p>
+<ol type="1">
+<li>Clear the canvas or work on an isolated layer.</li>
+<li>Draw the transparent WebM video first while the canvas is
+transparent.</li>
+<li>Set
+<code>ctx.globalCompositeOperation = 'destination-over'</code>.</li>
+<li>Draw the background image, shapes, or underlying video beneath the
+transparent video.</li>
+</ol>
+<p>By placing the background under the already drawn video, the browser
+evaluates the anti-aliased edge values against the incoming background
+rather than double-applying the alpha attenuation, noticeably reducing
+dark fringe lines.</p>
+<h4 id="2-clean-additive-blending-with-lighter">2. Clean Additive
+Blending with <code>lighter</code></h4>
+<p>If the transparent WebM consists of light-based visual effects—such
+as fire, magic spells, sparks, or glowing particles—use additive
+blending:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>ctx<span class="op">.</span><span class="at">globalCompositeOperation</span> <span class="op">=</span> <span class="st">&#39;lighter&#39;</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>ctx<span class="op">.</span><span class="fu">drawImage</span>(videoElement<span class="op">,</span> x<span class="op">,</span> y)<span class="op">;</span></span></code></pre></div>
+<p>The <code>lighter</code> mode calculates the sum of source and
+destination color values, bypassing standard alpha subtraction. Because
+black pixels add zero luminance, dark edge halos vanish entirely. Note
+that this mode is unsuitable for opaque characters or solid objects, as
+it makes pixels translucent over bright backgrounds.</p>
+<h4 id="3-standard-source-over-with-intermediate-matte-correction">3.
+Standard <code>source-over</code> with Intermediate Matte
+Correction</h4>
+<p>When you must draw the video on top of pre-rendered content and
+cannot change the layer order:</p>
+<ol type="1">
+<li>Render the video frame to a temporary, offscreen canvas.</li>
+<li>If the edges contain black-matte contamination, apply a temporary
+composite filter or color transform to un-premultiply the RGB components
+relative to the alpha channel.</li>
+<li>Draw the offscreen canvas onto the main canvas using standard
+<code>ctx.globalCompositeOperation = 'source-over'</code>.</li>
+</ol>
+<hr />
+<h3 id="webgl-compositing-modes-for-perfect-alpha-control">WebGL
+Compositing Modes for Perfect Alpha Control</h3>
+<p>For projects requiring full precision, rendering the WebM frame into
+a WebGL context offers absolute control over color and alpha math using
+custom blend functions.</p>
+<h4 id="1-premultiplied-blend-function">1. Premultiplied Blend
+Function</h4>
+<p>When the browser decodes the WebM video into a premultiplied WebGL
+texture, standard straight-alpha blending causes dark borders. Correct
+this by setting:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>gl<span class="op">.</span><span class="fu">enable</span>(gl<span class="op">.</span><span class="at">BLEND</span>)<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>gl<span class="op">.</span><span class="fu">blendFunc</span>(gl<span class="op">.</span><span class="at">ONE</span><span class="op">,</span> gl<span class="op">.</span><span class="at">ONE_MINUS_SRC_ALPHA</span>)<span class="op">;</span></span></code></pre></div>
+<p>Using <code>gl.ONE</code> for the source factor instructs WebGL not
+to multiply the RGB channels by the source alpha a second time,
+eliminating the dark fringing.</p>
+<h4 id="2-straight-alpha-blend-function">2. Straight Alpha Blend
+Function</h4>
+<p>If you configure the WebGL texture upload to avoid
+premultiplication:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>gl<span class="op">.</span><span class="fu">pixelStorei</span>(gl<span class="op">.</span><span class="at">UNPACK_PREMULTIPLY_ALPHA_WEBGL</span><span class="op">,</span> <span class="kw">false</span>)<span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>gl<span class="op">.</span><span class="fu">enable</span>(gl<span class="op">.</span><span class="at">BLEND</span>)<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>gl<span class="op">.</span><span class="fu">blendFunc</span>(gl<span class="op">.</span><span class="at">SRC_ALPHA</span><span class="op">,</span> gl<span class="op">.</span><span class="at">ONE_MINUS_SRC_ALPHA</span>)<span class="op">;</span></span></code></pre></div>
+<p>This configuration accurately renders unmultiplied WebM frames by
+multiplying the source color by the alpha channel at the moment of
+compositing.</p>
+<hr />
+<h3 id="summary-checklist-for-clean-edges">Summary Checklist for Clean
+Edges</h3>
+<ul>
+<li><strong>For general 2D Canvas overlays:</strong> Use
+<code>destination-over</code> to render backgrounds behind the video
+whenever architecture permits.</li>
+<li><strong>For glowing and particle visual effects:</strong> Use
+<code>lighter</code> to eliminate dark fringing instantly.</li>
+<li><strong>For WebGL implementations:</strong> Pair
+<code>gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)</code> with
+premultiplied imports to handle alpha transitions seamlessly.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

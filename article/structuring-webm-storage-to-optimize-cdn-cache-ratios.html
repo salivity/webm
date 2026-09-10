@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structuring WebM Storage to Optimize CDN Cache Ratios - webm</title>
+    <meta name="description" content="This article examines how Video-on-Demand (VOD) platforms architect their WebM media storage to maximize Content Delivery Network (CDN) cache hit ratios. By standardizing segment durations, leveraging byte-range addressing, normalizing encoding profiles,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/structuring-webm-storage-to-optimize-cdn-cache-ratios">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Structuring WebM Storage to Optimize CDN Cache Ratios - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/structuring-webm-storage-to-optimize-cdn-cache-ratios" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article examines how Video-on-Demand (VOD) platforms architect their WebM media storage to maximize Content Delivery Network (CDN) cache hit ratios. By standardizing segment durations, leveraging byte-range addressing, normalizing encoding profiles," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1
+id="structuring-webm-storage-to-optimize-cdn-cache-ratios">Structuring
+WebM Storage to Optimize CDN Cache Ratios</h1>
+<p>This article examines how Video-on-Demand (VOD) platforms architect
+their WebM media storage to maximize Content Delivery Network (CDN)
+cache hit ratios. By standardizing segment durations, leveraging
+byte-range addressing, normalizing encoding profiles, and enforcing
+deterministic storage hierarchies, streaming architectures reduce origin
+egress costs, lower time-to-first-frame (TTFF) latency, and eliminate
+cache fragmentation across distributed edge servers.</p>
+<h3 id="fixed-segment-chunking-and-time-alignment">Fixed Segment
+Chunking and Time Alignment</h3>
+<p>VOD architectures package WebM containers—typically carrying VP9 or
+AV1 video streams—into Dynamic Adaptive Streaming over HTTP (DASH).
+Maximizing CDN hit ratios requires segmenting media into strictly
+uniform time slices, commonly between 2 to 6 seconds.</p>
+<p>Keyframes (IDR-frames) must align precisely at the start of each
+segment across all representations in the Adaptive Bitrate (ABR) ladder.
+When segment timestamps are perfectly aligned, edge caches treat
+requests for the same media point uniformly, preventing disparate
+segment generation that fractures the cache.</p>
+<h3 id="single-file-storage-with-byte-range-requests">Single-File
+Storage with Byte-Range Requests</h3>
+<p>Instead of storing millions of individual chunk files on origin
+object storage (such as Amazon S3 or Google Cloud Storage), modern VOD
+platforms store each WebM rendition as a single contiguous file
+alongside an initialization index.</p>
+<ul>
+<li><strong>Initialization Segment (<code>Init Range</code>):</strong>
+Contains the WebM container header, codec private data, and track
+information.</li>
+<li><strong>Media Segments:</strong> Delivered using standard HTTP
+<code>Range</code> requests defined by byte offsets in the Media
+Presentation Description (<code>.mpd</code>) manifest.</li>
+</ul>
+<p>CDNs configured to cache byte ranges aggregate overlapping requests
+into single origin fetches. Storing renditions as single files decreases
+origin metadata overhead while allowing edge nodes to cache specific
+sub-ranges efficiently.</p>
+<h3 id="deterministic-url-namespace-and-cache-keys">Deterministic URL
+Namespace and Cache Keys</h3>
+<p>CDNs evaluate cache hits based on the incoming request URI. VOD
+storage layouts must maintain static, deterministic paths that ignore
+ephemeral user parameters:</p>
+<pre class="text"><code>/media/{asset_id}/{resolution}_{bitrate}/{segment_index}.webm</code></pre>
+<p>Platforms strip tracking tokens, user identifiers, and session IDs
+from the segment URI before it hits the CDN cache engine. Storage
+engines structure paths hierarchically to group representations of the
+same asset together, making cache purging and cache-warming operations
+programmatic and predictable.</p>
+<h3 id="abr-ladder-normalization">ABR Ladder Normalization</h3>
+<p>Spreading views across too many resolution and bitrate variants
+dilutes the edge cache, leading to frequent cache misses. VOD platforms
+restrict their WebM ladder to a targeted set of profiles (e.g., 1080p,
+720p, 480p, 360p) based on actual audience analytics.</p>
+<p>By capping the ladder to essential profiles, multiple viewers
+dynamically converge on the same set of WebM chunks at the edge server,
+rapidly warming the cache and keeping hit ratios above 95%.</p>
+<h3 id="tiered-caching-headers-and-immutability">Tiered Caching Headers
+and Immutability</h3>
+<p>Media segments in a VOD system are static and never change once
+encoded. Storage origins must enforce strict HTTP headers to instruct
+CDNs to retain WebM chunks indefinitely:</p>
+<ul>
+<li><strong>Media Segments (<code>.webm</code>):</strong> Set with
+<code>Cache-Control: public, max-age=31536000, immutable</code>. This
+prevents edge servers from sending conditional
+<code>If-Modified-Since</code> requests back to the storage origin.</li>
+<li><strong>Manifest Files (<code>.mpd</code>):</strong> Served with
+shorter TTLs (e.g., <code>max-age=300</code>) or dynamically
+revalidated, allowing the platform to roll out new renditions without
+invalidating the cached media payload.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

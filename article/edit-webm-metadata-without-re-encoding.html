@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit WebM Metadata Without Re-Encoding - webm</title>
+    <meta name="description" content="Editing metadata tags in WebM video files does not require a time-consuming and quality-degrading re-encoding process. Because WebM is based on the Matroska (MKV) container format, specialized software tools can modify header properties, titles, artist t">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/edit-webm-metadata-without-re-encoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Edit WebM Metadata Without Re-Encoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/edit-webm-metadata-without-re-encoding" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Editing metadata tags in WebM video files does not require a time-consuming and quality-degrading re-encoding process. Because WebM is based on the Matroska (MKV) container format, specialized software tools can modify header properties, titles, artist t" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="edit-webm-metadata-without-re-encoding">Edit WebM Metadata
+Without Re-Encoding</h1>
+<p>Editing metadata tags in WebM video files does not require a
+time-consuming and quality-degrading re-encoding process. Because WebM
+is based on the Matroska (MKV) container format, specialized software
+tools can modify header properties, titles, artist tags, and track
+information instantly. This guide details the most effective free
+software programs that allow you to edit WebM video tags directly
+without re-compressing the video or audio streams.</p>
+<h3 id="1-mkvtoolnix-gui-and-cli">1. MKVToolNix (GUI and CLI)</h3>
+<p>MKVToolNix is the definitive toolset for Matroska and WebM container
+formats. It allows you to modify tags "in-place," meaning it edits the
+file header directly without creating a duplicate file or re-encoding
+the streams.</p>
+<ul>
+<li><p><strong>MKVToolNix GUI (Header Editor):</strong></p>
+<ol type="1">
+<li>Open MKVToolNix GUI and navigate to the <strong>Header
+Editor</strong> tab on the left sidebar.</li>
+<li>Open your <code>.webm</code> file.</li>
+<li>Expand the <strong>Segment information</strong> or specific track
+nodes to edit properties like Title, Language, or Track Name.</li>
+<li>Click <strong>Header editor &gt; Save</strong> to apply the changes
+instantly.</li>
+</ol></li>
+<li><p><strong>mkvpropedit (Command Line):</strong> Included with
+MKVToolNix, <code>mkvpropedit</code> allows instant batch scripting.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvpropedit</span> <span class="st">&quot;video.webm&quot;</span> <span class="at">--edit</span> info <span class="at">--set</span> <span class="st">&quot;title=My New Title&quot;</span></span></code></pre></div></li>
+</ul>
+<h3 id="2-ffmpeg">2. FFmpeg</h3>
+<p>FFmpeg is a versatile command-line multimedia framework. By using the
+stream copy parameter (<code>-c copy</code>), FFmpeg rewrites the
+container and updates the metadata within seconds, bypassing the
+re-encoding pipeline entirely.</p>
+<p>To edit tags with FFmpeg, run:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-c</span> copy <span class="at">-metadata</span> title=<span class="st">&quot;My Title&quot;</span> <span class="at">-metadata</span> artist=<span class="st">&quot;Creator Name&quot;</span> output.webm</span></code></pre></div>
+<h3 id="3-kid3-tag-editor">3. Kid3 Tag Editor</h3>
+<p>Kid3 is a dedicated open-source audio and video tag editor available
+for Windows, macOS, and Linux. It supports editing Matroska and WebM
+container tags through an intuitive user interface.</p>
+<ul>
+<li><strong>How to use:</strong>
+<ol type="1">
+<li>Open Kid3 and select the directory containing your WebM files.</li>
+<li>Select the WebM file from the list.</li>
+<li>Fill in fields such as Title, Artist, Album, Year, and Track Number
+under the tag sections.</li>
+<li>Click <strong>Save</strong> to write the tags directly to the file
+container without modifying the underlying streams.</li>
+</ol></li>
+</ul>
+<h3 id="4-exiftool">4. ExifTool</h3>
+<p>ExifTool by Phil Harvey is a robust, platform-independent
+command-line application used for reading, writing, and modifying
+metadata across a wide range of file types, including WebM.</p>
+<p>To set metadata using ExifTool:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">exiftool</span> <span class="at">-Title</span><span class="op">=</span><span class="st">&quot;New Title&quot;</span> <span class="at">-Artist</span><span class="op">=</span><span class="st">&quot;New Artist&quot;</span> video.webm</span></code></pre></div>
+<p>ExifTool updates the WebM container tags quickly and safely,
+automatically preserving a backup copy of the original file unless
+instructed otherwise.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

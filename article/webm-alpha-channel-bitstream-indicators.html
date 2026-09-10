@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Alpha Channel Bitstream Indicators - webm</title>
+    <meta name="description" content="This article explains how a WebM demuxer or parser identifies the presence of an alpha transparency channel within a video stream. Because WebM is based on the Matroska (EBML) container format, detection relies on specific container-level elements and fr">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-alpha-channel-bitstream-indicators">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Alpha Channel Bitstream Indicators - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-alpha-channel-bitstream-indicators" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how a WebM demuxer or parser identifies the presence of an alpha transparency channel within a video stream. Because WebM is based on the Matroska (EBML) container format, detection relies on specific container-level elements and fr" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-alpha-channel-bitstream-indicators">WebM Alpha Channel
+Bitstream Indicators</h1>
+<p>This article explains how a WebM demuxer or parser identifies the
+presence of an alpha transparency channel within a video stream. Because
+WebM is based on the Matroska (EBML) container format, detection relies
+on specific container-level elements and frame-level block structures
+rather than an interleaved pixel component inside the primary video
+bitstream. By inspecting the <code>AlphaMode</code> track header, the
+frame-level <code>BlockAdditions</code> structures, and the secondary
+compressed bitstream, parsers reliably determine transparency data for
+each video frame.</p>
+<h3 id="track-level-indicator-the-alphamode-element">Track-Level
+Indicator: The AlphaMode Element</h3>
+<p>Before processing individual video frames, a WebM parser checks the
+track headers within the EBML hierarchy:</p>
+<ul>
+<li><strong>Element Name:</strong> <code>AlphaMode</code></li>
+<li><strong>Element ID:</strong> <code>0x53C0</code></li>
+<li><strong>Location:</strong> <code>Segment</code> -&gt;
+<code>Tracks</code> -&gt; <code>TrackEntry</code> -&gt;
+<code>Video</code> -&gt; <code>AlphaMode</code></li>
+</ul>
+<p>The <code>AlphaMode</code> element is an unsigned integer. When set
+to <code>1</code>, it signals to the parser that the video track
+contains alpha channel data alongside the primary color data. If this
+element is absent or set to <code>0</code>, the parser treats the video
+as strictly opaque, ignoring any transparency metadata in subsequent
+blocks.</p>
+<h3
+id="frame-level-indicators-blockgroup-and-blockadditions">Frame-Level
+Indicators: BlockGroup and BlockAdditions</h3>
+<p>Standard WebM video streams without alpha typically store compressed
+frames inside <code>SimpleBlock</code> elements. When transparency is
+present, frames must instead be wrapped within a <code>BlockGroup</code>
+element to accommodate the secondary alpha stream.</p>
+<p>A parser identifies alpha on a per-frame basis using the following
+nested structure:</p>
+<ol type="1">
+<li><strong><code>BlockGroup</code> (<code>0xA0</code>):</strong>
+Replaces <code>SimpleBlock</code> to allow multi-part frame
+metadata.</li>
+<li><strong><code>Block</code> (<code>0xA1</code>):</strong> Contains
+the primary encoded video frame (YUV color data).</li>
+<li><strong><code>BlockAdditions</code> (<code>0x75A1</code>):</strong>
+A container for auxiliary frame data.</li>
+<li><strong><code>BlockMore</code> (<code>0xA6</code>):</strong> An
+individual entry inside <code>BlockAdditions</code>.</li>
+<li><strong><code>BlockAddID</code> (<code>0xEE</code>):</strong> An
+unsigned integer identifying the type of additional data. For WebM alpha
+transparency, this value must be set to <code>1</code>.</li>
+<li><strong><code>BlockAdditional</code> (<code>0xA5</code>):</strong>
+The binary payload containing the encoded alpha frame that corresponds
+directly to the primary color frame in the sibling
+<code>Block</code>.</li>
+</ol>
+<h3 id="secondary-codec-bitstream-structure">Secondary Codec Bitstream
+Structure</h3>
+<p>The data inside <code>BlockAdditional</code> is not raw uncompressed
+pixel values. Instead, it is a complete, independently encoded bitstream
+(typically VP8 or VP9) representing the alpha channel as a monochrome
+(luma-only) plane:</p>
+<ul>
+<li><strong>Keyframe Synchronization:</strong> The parser checks the
+keyframe flag of the primary <code>Block</code> bitstream and expects
+the bitstream in <code>BlockAdditional</code> to match the keyframe
+status of the primary frame.</li>
+<li><strong>Resolution Matching:</strong> When decoded, the frame
+generated from the <code>BlockAdditional</code> bitstream must match the
+horizontal and vertical pixel dimensions of the primary decoded YUV
+frame.</li>
+<li><strong>Plane Mapping:</strong> The parser extracts the luma (Y)
+plane from the decoded secondary frame and applies it as the 8-bit alpha
+(transparency) mask for the color image. Any chroma components (U/V)
+present in the secondary bitstream are discarded.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

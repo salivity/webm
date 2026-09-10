@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Output 10-Bit WebM Using FFmpeg - webm</title>
+    <meta name="description" content="Encoding WebM video with 10-bit color precision using FFmpeg eliminates color banding in gradients and enables High Dynamic Range (HDR) playback. The WebM container supports 10-bit color primarily through the VP9 and AV1 codecs. Achieving 10-bit output r">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-output-10-bit-webm-using-ffmpeg">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Output 10-Bit WebM Using FFmpeg - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-output-10-bit-webm-using-ffmpeg" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Encoding WebM video with 10-bit color precision using FFmpeg eliminates color banding in gradients and enables High Dynamic Range (HDR) playback. The WebM container supports 10-bit color primarily through the VP9 and AV1 codecs. Achieving 10-bit output r" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-output-10-bit-webm-using-ffmpeg">How to Output 10-Bit
+WebM Using FFmpeg</h1>
+<p>Encoding WebM video with 10-bit color precision using FFmpeg
+eliminates color banding in gradients and enables High Dynamic Range
+(HDR) playback. The WebM container supports 10-bit color primarily
+through the VP9 and AV1 codecs. Achieving 10-bit output requires setting
+a 10-bit pixel format, selecting an appropriate encoder profile, and
+configuring the correct container output parameters.</p>
+<h2 id="encoding-10-bit-webm-with-vp9">Encoding 10-Bit WebM with
+VP9</h2>
+<p>VP9 is the standard codec for WebM files and natively supports 10-bit
+color precision through <strong>Profile 2</strong>. When using the
+<code>libvpx-vp9</code> encoder, you must explicitly set the pixel
+format and profile.</p>
+<h3 id="standard-command">Standard Command</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-pix_fmt</span> yuv420p10le <span class="at">-profile:v</span> 2 <span class="at">-crf</span> 30 <span class="at">-b:v</span> 0 <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k output_10bit.webm</span></code></pre></div>
+<h3 id="parameter-breakdown">Parameter Breakdown</h3>
+<ul>
+<li><code>-c:v libvpx-vp9</code>: Selects the VP9 video encoder.</li>
+<li><code>-pix_fmt yuv420p10le</code>: Sets the pixel format to 10-bit
+Little Endian YUV 4:2:0.</li>
+<li><code>-profile:v 2</code>: Forces VP9 Profile 2, which is required
+for 10-bit and 12-bit color depth with 4:2:0 chroma subsampling.</li>
+<li><code>-crf 30 -b:v 0</code>: Enables Constant Quality mode.
+Recommended CRF values for VP9 range from 15 to 35 (lower values yield
+higher quality).</li>
+<li><code>-c:a libopus -b:a 128k</code>: Encodes audio to Opus at 128
+kbps, the recommended audio format for WebM.</li>
+</ul>
+<hr />
+<h2 id="encoding-10-bit-webm-with-av1">Encoding 10-Bit WebM with
+AV1</h2>
+<p>AV1 offers superior compression efficiency compared to VP9 and
+supports 10-bit precision natively. You can encode 10-bit AV1 inside a
+WebM container using <code>libsvtav1</code> (faster) or
+<code>libaom-av1</code> (reference encoder).</p>
+<h3 id="svt-av1-command-recommended">SVT-AV1 Command (Recommended)</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libsvtav1 <span class="at">-pix_fmt</span> yuv420p10le <span class="at">-crf</span> 28 <span class="at">-preset</span> 6 <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k output_av1_10bit.webm</span></code></pre></div>
+<h3 id="libaom-av1-command">libaom-AV1 Command</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libaom-av1 <span class="at">-pix_fmt</span> yuv420p10le <span class="at">-strict</span> <span class="at">-2</span> <span class="at">-crf</span> 28 <span class="at">-b:v</span> 0 <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k output_aom_10bit.webm</span></code></pre></div>
+<h3 id="parameter-breakdown-1">Parameter Breakdown</h3>
+<ul>
+<li><code>-c:v libsvtav1</code>: Uses the high-performance Scalable
+Video Technology AV1 encoder.</li>
+<li><code>-preset 6</code>: Sets the encoding speed/efficiency tradeoff
+for SVT-AV1 (values range from 0 to 13; 4 to 7 are common for balanced
+encoding).</li>
+<li><code>-crf 28</code>: Sets the target visual quality (typical range:
+20 to 35).</li>
+</ul>
+<hr />
+<h2 id="preserving-hdr-metadata-optional">Preserving HDR Metadata
+(Optional)</h2>
+<p>If your source contains HDR10 metadata, include color space and
+transfer characteristic flags to prevent colors from washing out:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input_hdr.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-pix_fmt</span> yuv420p10le <span class="at">-profile:v</span> 2 <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-color_primaries</span> bt2020 <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-color_trc</span> smpte2084 <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-colorspace</span> bt2020nc <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-crf</span> 28 <span class="at">-b:v</span> 0 <span class="at">-c:a</span> copy output_hdr_10bit.webm</span></code></pre></div>
+<ul>
+<li><code>-color_primaries bt2020</code>: Identifies the BT.2020 color
+gamut.</li>
+<li><code>-color_trc smpte2084</code>: Specifies the PQ (Perceptual
+Quantizer) transfer function.</li>
+<li><code>-colorspace bt2020nc</code>: Specifies non-constant luminance
+BT.2020 color matrix.</li>
+</ul>
+<hr />
+<h2 id="verifying-10-bit-output">Verifying 10-Bit Output</h2>
+<p>To confirm that the output file was encoded with 10-bit depth, run
+<code>ffprobe</code>:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-show_entries</span> stream=pix_fmt,profile <span class="at">-of</span> default=noprint_wrappers=1 output_10bit.webm</span></code></pre></div>
+<p>The output should display <code>pix_fmt=yuv420p10le</code> and
+<code>profile=Profile 2</code> (for VP9) or <code>profile=Main</code>
+(for AV1).</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

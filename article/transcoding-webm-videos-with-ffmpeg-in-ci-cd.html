@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcoding WebM Videos with FFmpeg in CI/CD - webm</title>
+    <meta name="description" content="Automated build and continuous integration (CI/CD) pipelines integrate FFmpeg to automatically convert diverse user-submitted media files into high-performance, web-optimised WebM formats. This workflow ensures all uploaded media meets uniform encoding s">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/transcoding-webm-videos-with-ffmpeg-in-ci-cd">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Transcoding WebM Videos with FFmpeg in CI/CD - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/transcoding-webm-videos-with-ffmpeg-in-ci-cd" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Automated build and continuous integration (CI/CD) pipelines integrate FFmpeg to automatically convert diverse user-submitted media files into high-performance, web-optimised WebM formats. This workflow ensures all uploaded media meets uniform encoding s" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="transcoding-webm-videos-with-ffmpeg-in-cicd">Transcoding WebM
+Videos with FFmpeg in CI/CD</h1>
+<p>Automated build and continuous integration (CI/CD) pipelines
+integrate FFmpeg to automatically convert diverse user-submitted media
+files into high-performance, web-optimised WebM formats. This workflow
+ensures all uploaded media meets uniform encoding standards, reduces
+bandwidth usage, and maintains cross-browser compatibility without
+manual intervention. By executing containerised FFmpeg instances,
+configuring target codecs like VP9 or AV1, and dispatching outputs to
+cloud storage, pipelines create a reliable, scalable ingestion
+architecture for media processing.</p>
+<h2 id="1-pipeline-environment-setup-and-containerization">1. Pipeline
+Environment Setup and Containerization</h2>
+<p>To run FFmpeg reliably across distributed CI/CD workers (such as
+GitHub Actions, GitLab CI, or AWS CodeBuild), the environment must have
+FFmpeg pre-installed with the required codec libraries. The standard
+practice is to use a containerised base image:</p>
+<ul>
+<li><strong>Docker Base Images:</strong> Use official Docker images or
+lean Linux images (such as Alpine or Ubuntu) with <code>ffmpeg</code>,
+<code>libvpx</code>, <code>libopus</code>, or <code>libsvtav1</code>
+packages installed.</li>
+<li><strong>Static Binaries:</strong> Alternatively, pipelines can
+download static FFmpeg builds directly during the setup stage to ensure
+all target codecs are compiled without relying on host system package
+managers.</li>
+</ul>
+<h2 id="2-configuring-ffmpeg-for-webm-transcoding">2. Configuring FFmpeg
+for WebM Transcoding</h2>
+<p>WebM containers typically require VP8, VP9, or AV1 for video streams,
+paired with Vorbis or Opus for audio. In automated pipelines, VP9 paired
+with Opus is the industry standard balance between encoding speed and
+compression efficiency.</p>
+<p>A standard automated command implemented in pipeline scripts looks
+like this:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input_media.mov <span class="dt">\</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c:v</span> libvpx-vp9 <span class="dt">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-crf</span> 30 <span class="at">-b:v</span> 0 <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-row-mt</span> 1 <span class="at">-threads</span> 4 <span class="dt">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  output_media.webm</span></code></pre></div>
+<p>Key parameters used in pipelines:</p>
+<ul>
+<li><code>-c:v libvpx-vp9</code>: Specifies the VP9 video codec.</li>
+<li><code>-crf 30 -b:v 0</code>: Enables Constant Quality mode, ensuring
+uniform visual quality regardless of input complexity.</li>
+<li><code>-row-mt 1</code>: Enables row-based multithreading to speed up
+encoding across multiple CPU cores assigned to CI runners.</li>
+<li><code>-c:a libopus</code>: Encodes audio to the Opus format for
+high-fidelity, low-bitrate compression.</li>
+</ul>
+<p>For higher quality requirements, pipelines can execute a two-pass
+encoding script (<code>-pass 1</code> followed by <code>-pass 2</code>)
+to allocate bitrate more effectively across complex video frames.</p>
+<h2 id="3-workflow-triggering-and-execution">3. Workflow Triggering and
+Execution</h2>
+<p>The automated execution pattern follows a sequence triggered by an
+event:</p>
+<ol type="1">
+<li><strong>Trigger:</strong> A user uploads a file to a staging storage
+bucket (e.g., Amazon S3, Google Cloud Storage), triggering a webhook or
+message queue event (e.g., AWS SQS).</li>
+<li><strong>Fetch:</strong> The CI/CD worker fetches the raw source file
+to its local temporary workspace.</li>
+<li><strong>Transcode:</strong> The pipeline runs the designated FFmpeg
+script, converting the source file to <code>.webm</code>.</li>
+<li><strong>Validation:</strong> The pipeline runs <code>ffprobe</code>
+to verify the resulting WebM container, stream integrity, duration, and
+codec compliance.</li>
+</ol>
+<h2 id="4-delivery-and-notification">4. Delivery and Notification</h2>
+<p>Once the transcode completes and passes validation:</p>
+<ul>
+<li><strong>Upload:</strong> The pipeline uploads the final
+<code>.webm</code> file to production media storage or a Content
+Delivery Network (CDN).</li>
+<li><strong>Metadata Update:</strong> An API call or database update
+registers the media URL, dimensions, and playback status as ready.</li>
+<li><strong>Cleanup:</strong> Temporary media files are deleted from the
+pipeline runner workspace to manage disk limits.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

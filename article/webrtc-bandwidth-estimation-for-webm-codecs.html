@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Bandwidth Estimation for WebM Codecs - webm</title>
+    <meta name="description" content="WebRTC uses dynamic bandwidth estimation (BWE) to deliver smooth real-time video over fluctuating network conditions. When handling WebM-compatible codecs—primarily VP8 and VP9—WebRTC implementations rely on congestion control mechanisms to calculate">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webrtc-bandwidth-estimation-for-webm-codecs">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebRTC Bandwidth Estimation for WebM Codecs - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webrtc-bandwidth-estimation-for-webm-codecs" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebRTC uses dynamic bandwidth estimation (BWE) to deliver smooth real-time video over fluctuating network conditions. When handling WebM-compatible codecs—primarily VP8 and VP9—WebRTC implementations rely on congestion control mechanisms to calculate" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webrtc-bandwidth-estimation-for-webm-codecs">WebRTC Bandwidth
+Estimation for WebM Codecs</h1>
+<p>WebRTC uses dynamic bandwidth estimation (BWE) to deliver smooth
+real-time video over fluctuating network conditions. When handling
+WebM-compatible codecs—primarily VP8 and VP9—WebRTC implementations rely
+on congestion control mechanisms to calculate available capacity and
+adapt encoder settings on the fly. This article covers the primary
+bandwidth estimation algorithms paired with WebM video codecs, how they
+operate, and how they control codec output.</p>
+<h2 id="google-congestion-control-gcc">Google Congestion Control
+(GCC)</h2>
+<p>Google Congestion Control (GCC) is the default and most widely
+implemented bandwidth estimation framework used with WebM codecs in
+WebRTC. Standardized through the IETF, GCC combines delay-based and
+loss-based metrics to estimate network throughput. GCC operates in two
+historical and modern modes:</p>
+<h3 id="1-sender-side-bwe-transport-wide-congestion-control">1.
+Sender-Side BWE (Transport-Wide Congestion Control)</h3>
+<p>Modern WebRTC deployments predominantly use sender-side bandwidth
+estimation via Transport-Wide Congestion Control (TWCC).</p>
+<ul>
+<li><strong>Mechanism:</strong> The receiver attaches a small sequence
+number to incoming RTP packets and periodically sends RTCP feedback
+messages detailing the exact arrival time of each packet.</li>
+<li><strong>Calculation:</strong> The sender analyzes the delay
+gradients (inter-arrival vs. inter-send time). If packet delay begins to
+climb, GCC detects early queuing at the network bottleneck before actual
+packet loss occurs and reduces the target bitrate.</li>
+<li><strong>Loss-based Fallback:</strong> If packet loss is detected
+without prior delay spikes, GCC scales down the target bitrate according
+to a predefined loss threshold.</li>
+</ul>
+<h3 id="2-receiver-side-bwe-remb">2. Receiver-Side BWE (REMB)</h3>
+<p>Before TWCC became the standard, WebRTC relied on Receiver Estimated
+Maximum Bitrate (REMB).</p>
+<ul>
+<li><strong>Mechanism:</strong> The receiving endpoint ran the
+delay-based estimation algorithm internally, calculating the maximum
+supportable bitrate.</li>
+<li><strong>Signaling:</strong> The receiver then sent an RTCP REMB
+feedback message back to the sender containing the computed bitrate
+limit. While largely superseded by TWCC due to sender-side flexibility
+and faster adaptation, REMB is still supported as a fallback for legacy
+endpoints streaming VP8.</li>
+</ul>
+<h2 id="alternative-bandwidth-estimation-algorithms">Alternative
+Bandwidth Estimation Algorithms</h2>
+<p>While GCC is the default in browser engines like Chromium,
+specialized WebRTC implementations and custom media servers occasionally
+pair WebM codecs with alternative algorithms:</p>
+<ul>
+<li><strong>BBR (Bottleneck Bandwidth and RTT):</strong> Developed by
+Google, BBR builds an explicit model of the network path by measuring
+maximum delivery rate and minimum round-trip time (RTT). Adapted
+variants of BBR for real-time video minimize latency while avoiding
+queue buildup.</li>
+<li><strong>SCReAM (Self-Clocked Rate Adaptation for
+Multimedia):</strong> An IETF-standardized algorithm (RFC 8298) designed
+for conversational media. SCReAM uses delay-based feedback and handles
+L4S (Low Latency, Low Loss, Scalable Throughput) environments
+effectively.</li>
+<li><strong>NADA (Network-Assisted Dynamic Adaptation):</strong>
+Standardized under RFC 8593, NADA utilizes delay, packet loss, and
+explicit congestion notifications (ECN) to balance link utilization and
+delay constraints.</li>
+</ul>
+<h2 id="how-webm-codecs-react-to-bwe-outputs">How WebM Codecs React to
+BWE Outputs</h2>
+<p>Bandwidth estimation feeds directly into the WebM encoding pipeline,
+which responds through structural rate control:</p>
+<h3 id="vp8-bitrate-adaptation">VP8 Bitrate Adaptation</h3>
+<p>VP8 typically leverages temporal scalability and simulcast to adapt
+to GCC calculations:</p>
+<ul>
+<li><strong>Temporal Layering:</strong> Drops higher temporal layers
+when BWE drops, reducing frame rate without dropping keyframes.</li>
+<li><strong>Simulcast:</strong> The sender generates multiple streams of
+different resolutions and bitrates. Based on BWE feedback, the selective
+forwarding unit (SFU) or sender switches to the appropriate stream.</li>
+</ul>
+<h3 id="vp9-bitrate-adaptation">VP9 Bitrate Adaptation</h3>
+<p>VP9 provides native Scalable Video Coding (SVC), offering
+finer-grained adaptation based on BWE:</p>
+<ul>
+<li><strong>Spatial Scalability:</strong> VP9 encodes multiple spatial
+resolutions into a single stream. If BWE drops, the encoder or SFU drops
+upper spatial layers instantly without needing a new keyframe.</li>
+<li><strong>Dynamic Quantization:</strong> The VP9 encoder dynamically
+adjusts its Quantization Parameter (QP) to match the exact
+bits-per-second budget supplied by the BWE module.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

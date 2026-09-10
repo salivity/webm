@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Live Streaming: Continuous Frame Delivery - webm</title>
+    <meta name="description" content="Modern live video streaming engines employ resilient transport protocols, dynamic jitter buffering, container-level fault tolerance, and frame-concealment techniques to ensure uninterrupted playback when WebM broadcasts encounter network drops or encoder">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-live-streaming-continuous-frame-delivery">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Live Streaming: Continuous Frame Delivery - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-live-streaming-continuous-frame-delivery" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern live video streaming engines employ resilient transport protocols, dynamic jitter buffering, container-level fault tolerance, and frame-concealment techniques to ensure uninterrupted playback when WebM broadcasts encounter network drops or encoder" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-live-streaming-continuous-frame-delivery">WebM Live
+Streaming: Continuous Frame Delivery</h1>
+<p>Modern live video streaming engines employ resilient transport
+protocols, dynamic jitter buffering, container-level fault tolerance,
+and frame-concealment techniques to ensure uninterrupted playback when
+WebM broadcasts encounter network drops or encoder disruptions. Because
+WebM is built on the Matroska (MKV) container and typically carries VP8,
+VP9, or AV1 video streams, engines must quickly recover from missing
+media chunks without terminating the presentation pipeline. This article
+details the specific technical mechanisms streaming architectures rely
+on to bridge packet loss, repair broken streams, and maintain smooth
+frame delivery.</p>
+<h3 id="resilient-transport-and-fast-feedback-loops">Resilient Transport
+and Fast Feedback Loops</h3>
+<p>Most modern low-latency WebM pipelines operate over WebRTC or Secure
+Reliable Transport (SRT), using UDP rather than TCP. When packet loss
+occurs:</p>
+<ul>
+<li><strong>RTCP Feedback (NACK and PLI/FIR):</strong> The client or
+media server immediately transmits Picture Loss Indication (PLI) or Full
+Intra Request (FIR) messages back to the ingest encoder. This instructs
+the encoder to generate an immediate intra-frame (keyframe), allowing
+the decoder to reset its reference picture buffer without waiting for
+the next scheduled group of pictures (GOP).</li>
+<li><strong>Selective Retransmission (NACK):</strong> For transient
+drops, the engine requests only the specific missing sequence numbers.
+If the packets arrive within the acceptable latency threshold, the
+stream reconstructs seamlessly before playback reaches that
+timestamp.</li>
+</ul>
+<h3 id="ebml-and-cluster-level-fault-isolation">EBML and Cluster-Level
+Fault Isolation</h3>
+<p>WebM structures data using the Extensible Binary Meta Language
+(EBML). Media samples are packaged into self-contained "Clusters"
+containing audio and video <code>SimpleBlock</code> elements.</p>
+<ul>
+<li>Streaming ingest parsers treat each Cluster as an independent
+decoding unit. If a network interruption corrupts an ongoing Cluster,
+the parser dumps the incomplete chunk, resynchronizes to the next EBML
+Cluster ID tag, and resumes parsing.</li>
+<li>By placing a keyframe at the start of each Cluster, encoders enable
+decoders to begin rendering the video immediately upon receiving a new
+Cluster, bypassing the corrupted temporal segment without
+re-initializing the media source buffer.</li>
+</ul>
+<h3 id="adaptive-jitter-buffers-and-playout-delay">Adaptive Jitter
+Buffers and Playout Delay</h3>
+<p>The receiving engine or player implements an adaptive jitter buffer
+that continuously gauges incoming packet arrival variance:</p>
+<ul>
+<li><strong>Delay Expansion:</strong> When jitter spikes or an
+interruption is detected, the engine dynamically increases playout delay
+by a few milliseconds, stretching available frames to buy time for
+retransmissions or keyframe recovery.</li>
+<li><strong>Audio-Driven Master Clock:</strong> The audio track
+typically serves as the master clock. If video frames are momentarily
+delayed or lost, the engine maintains continuous audio playback while
+holding or interpolating video frames, preventing the perceptible
+jarring effect of a hard stall.</li>
+</ul>
+<h3 id="decoder-side-error-concealment">Decoder-Side Error
+Concealment</h3>
+<p>If packets cannot be recovered in time, modern decoders (such as
+<code>libvpx</code> or <code>dav1d</code>) apply frame concealment to
+bridge gaps:</p>
+<ul>
+<li><strong>Frame Freezing / Repetition:</strong> The engine holds the
+last decoded reference frame while continuing to dispatch render ticks
+at the native display refresh rate, preventing black screens.</li>
+<li><strong>Motion Vector Extrapolation:</strong> Advanced renderers
+extrapolate motion vectors from the preceding frames to predict the
+position of objects in missing frames, smoothing out micro-interruptions
+until the next valid keyframe arrives.</li>
+</ul>
+<h3 id="adaptive-bitrate-switching-abr">Adaptive Bitrate Switching
+(ABR)</h3>
+<p>When interruptions stem from bandwidth saturation rather than
+isolated packet drops, transport engines leverage algorithms like Google
+Congestion Control (GCC) or BBR. The engine detects queue buildup and
+immediately drops the stream to a lower WebM rendition. This lowers both
+the packet frequency and the bitrate, clearing upstream bottleneck
+queues and ensuring that incoming frames maintain a steady transmission
+cadence to the client pipeline.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

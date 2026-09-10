@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM to Canvas via WebGL: Memory Copy Optimizations - webm</title>
+    <meta name="description" content="Rendering WebM videos to an HTML5 canvas using WebGL relies on specialized memory copy optimizations designed to bypass costly CPU-to-GPU data transfers and maintain high frame rates. Rather than repeatedly copying decoded pixel arrays from system RAM to">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-to-canvas-via-webgl-memory-copy-optimizations">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM to Canvas via WebGL: Memory Copy Optimizations - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-to-canvas-via-webgl-memory-copy-optimizations" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Rendering WebM videos to an HTML5 canvas using WebGL relies on specialized memory copy optimizations designed to bypass costly CPU-to-GPU data transfers and maintain high frame rates. Rather than repeatedly copying decoded pixel arrays from system RAM to" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-to-canvas-via-webgl-memory-copy-optimizations">WebM to
+Canvas via WebGL: Memory Copy Optimizations</h1>
+<p>Rendering WebM videos to an HTML5 canvas using WebGL relies on
+specialized memory copy optimizations designed to bypass costly
+CPU-to-GPU data transfers and maintain high frame rates. Rather than
+repeatedly copying decoded pixel arrays from system RAM to GPU VRAM,
+modern browsers employ zero-copy video frame imports, direct
+hardware-decoded texture sharing, and fragment-shader color space
+conversions. This article breaks down the low-level memory optimizations
+that occur across the browser, driver, and GPU when pipeline stages
+render WebM frames into a WebGL context.</p>
+<h3 id="hardware-decoding-to-gpu-surfaces">Hardware Decoding to GPU
+Surfaces</h3>
+<p>WebM streams (encoded with VP8, VP9, or AV1) are decoded by dedicated
+hardware video decoders (such as Intel QuickSync, NVIDIA NVDEC, Apple
+VideoToolbox, or AMD VCN) whenever available.</p>
+<p>In an unoptimized pipeline, the hardware decoder would output decoded
+frames to system RAM, requiring the browser to map and re-upload the
+frame data to the GPU using <code>gl.texImage2D()</code>. Modern
+browsers circumvent this by decoding video frames directly into
+GPU-resident memory surfaces—such as DXGI surfaces on Windows,
+<code>IOSurface</code> on macOS, and DMA-BUFs on Linux and Android. The
+decoded frame never touches system RAM, completely eliminating the
+CPU-to-GPU copy stage.</p>
+<h3 id="zero-copy-texture-sharing-mailbox-and-sharedimages">Zero-Copy
+Texture Sharing (Mailbox and SharedImages)</h3>
+<p>When calling <code>gl.texImage2D(..., videoElement)</code> or
+<code>gl.texSubImage2D()</code>, modern rendering engines (such as
+Chromium’s Blink/Skia pipeline and Gecko) use texture-sharing primitives
+to avoid copying pixel buffers between process boundaries:</p>
+<ul>
+<li><strong>Platform Interop Handles:</strong> The browser media engine
+binds the underlying GPU surface handle directly to WebGL as an external
+texture.</li>
+<li><strong>SharedImage / Cross-Process Sharing:</strong> In
+multiprocess architectures, the GPU process wraps the platform-native
+video frame buffer in a shared representation (such as Chromium's
+<code>SharedImage</code>). The WebGL process references this shared
+texture directly via synchronization points and virtual command buffers
+rather than transferring pixel payloads.</li>
+</ul>
+<p>Through this zero-copy pathway, rendering a video frame to a WebGL
+canvas merely involves updating a texture pointer or surface binding
+rather than allocating and copying pixel memory.</p>
+<h3 id="gpu-side-yuv-to-rgb-conversion">GPU-Side YUV to RGB
+Conversion</h3>
+<p>WebM video formats almost universally store pixel data in planar YUV
+formats (such as YUV420p or NV12). Converting YUV to RGB on the CPU is
+computationally expensive and inflates the memory footprint, as standard
+8-bit RGB requires 33% to 50% more memory bandwidth than YUV420.</p>
+<p>Optimized rendering pipelines retain the planar format all the way to
+the GPU:</p>
+<ol type="1">
+<li><strong>Multi-Plane Texture Binding:</strong> The browser binds the
+distinct luma (Y) and chroma (U/V or interleaved UV) planes as
+single-channel textures (such as <code>R8</code> and
+<code>RG88</code>).</li>
+<li><strong>Fragment Shader Matrix Math:</strong> The YUV-to-RGB color
+matrix transformation, gamma correction, and range expansion (limited
+vs. full range) execute inside the WebGL fragment shader during the
+final canvas draw call.</li>
+</ol>
+<p>This avoids an intermediate CPU conversion buffer and saves
+significant VRAM bandwidth by transferring fewer bytes per pixel across
+the memory bus.</p>
+<h3 id="asynchronous-dma-and-pixel-buffer-objects-pbos">Asynchronous DMA
+and Pixel Buffer Objects (PBOs)</h3>
+<p>When zero-copy surface sharing is unavailable—such as when falling
+back to software decoders (libvpx or dav1d) or during cross-adapter GPU
+scenarios—browsers employ direct memory access (DMA) via Pixel Buffer
+Objects (PBOs):</p>
+<ul>
+<li><strong>Non-Blocking Uploads:</strong> The CPU writes the decoded
+frame into mapped, pinned host memory (staging buffers).</li>
+<li><strong>Asynchronous DMA:</strong> The GPU's DMA engine pulls the
+data from the PBO into texture memory asynchronously, freeing the main
+JavaScript and rendering threads from blocking synchronous texture
+upload stalls.</li>
+<li><strong>Double-Buffering:</strong> A ring buffer of PBOs alternates
+between CPU write operations and GPU read operations, preventing memory
+locks and pipeline bubbles.</li>
+</ul>
+<h3 id="canvas-target-compositing-direct-blit">Canvas Target Compositing
+(Direct Blit)</h3>
+<p>Finally, when the WebGL context renders into an HTML5
+<code>&lt;canvas&gt;</code>, modern operating systems utilize hardware
+compositors (DirectComposition on Windows, CoreAnimation on macOS,
+Wayland subsurfaces on Linux). The canvas frame buffer is handed
+directly to the window compositor. This avoids a back-buffer copy,
+allowing the GPU to display the rendered WebM video frame directly on
+screen with minimal memory overhead.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

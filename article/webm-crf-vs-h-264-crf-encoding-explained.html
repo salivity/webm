@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM CRF vs H.264 CRF Encoding Explained - webm</title>
+    <meta name="description" content="The Constant Rate Factor (CRF) is a rate control mode that dynamically adjusts bitrate to maintain consistent visual quality across video frames. While both H.264 (typically encoded via libx264) and WebM codecs (VP8 and VP9 via libvpx and libvpx-vp9) uti">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-crf-vs-h-264-crf-encoding-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM CRF vs H.264 CRF Encoding Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-crf-vs-h-264-crf-encoding-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The Constant Rate Factor (CRF) is a rate control mode that dynamically adjusts bitrate to maintain consistent visual quality across video frames. While both H.264 (typically encoded via libx264) and WebM codecs (VP8 and VP9 via libvpx and libvpx-vp9) uti" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-crf-vs-h264-crf-encoding-explained">WebM CRF vs H.264 CRF
+Encoding Explained</h1>
+<p>The Constant Rate Factor (CRF) is a rate control mode that
+dynamically adjusts bitrate to maintain consistent visual quality across
+video frames. While both H.264 (typically encoded via
+<code>libx264</code>) and WebM codecs (VP8 and VP9 via
+<code>libvpx</code> and <code>libvpx-vp9</code>) utilize the
+<code>-crf</code> parameter, they operate on different numerical scales,
+handle bitrate limits differently in encoding tools like FFmpeg, and
+yield distinct visual quality at equivalent numerical values.</p>
+<h2 id="the-numerical-scale-differences">The Numerical Scale
+Differences</h2>
+<p>The most immediate difference between H.264 and WebM CRF is the scale
+range:</p>
+<ul>
+<li><strong>H.264 (<code>libx264</code>):</strong> The scale runs from
+<strong>0 to 51</strong>. A value of <code>0</code> is truly lossless,
+<code>23</code> is the default, and <code>18</code> is generally
+considered visually lossless. Every increase of +6 roughly halves the
+bitrate.</li>
+<li><strong>WebM (<code>libvpx</code> /
+<code>libvpx-vp9</code>):</strong> The scale runs from <strong>0 to
+63</strong>. A value of <code>0</code> represents the highest quality
+(lossless in VP9 when combined with specific profiles), while
+<code>63</code> represents the lowest quality.</li>
+</ul>
+<p>Because the scales have different maximum bounds and underlying
+mathematical models, identical numerical values do not produce
+equivalent visual quality.</p>
+<h2 id="quality-and-bitrate-equivalencies">Quality and Bitrate
+Equivalencies</h2>
+<p>A common misconception is that setting <code>-crf 23</code> in VP9
+will yield the same output as <code>-crf 23</code> in x264. In
+practice:</p>
+<ul>
+<li><strong>x264 Quality Baseline:</strong> Values between <strong>18
+and 28</strong> are standard. An x264 CRF of 23 produces high-definition
+content with a balanced file size.</li>
+<li><strong>VP9 Equivalent Targets:</strong> Recommended VP9 CRF values
+generally fall between <strong>15 and 35</strong>. To match the visual
+quality of an H.264 encode at CRF 23, VP9 typically requires a CRF value
+between <strong>30 and 33</strong>, resulting in a significantly smaller
+file size due to VP9's superior compression efficiency.</li>
+<li><strong>VP8 Target Range:</strong> For the older VP8 codec, usable
+CRF values generally sit between <strong>4 and 16</strong> for high
+quality, as VP8 is less efficient than both x264 and VP9.</li>
+</ul>
+<h2 id="ffmpeg-rate-control-implementation">FFmpeg Rate Control
+Implementation</h2>
+<p>In FFmpeg, the <code>-crf</code> parameter behaves differently
+depending on whether it is used with <code>libx264</code> or
+<code>libvpx-vp9</code>:</p>
+<h3 id="1-pure-crf-mode-in-h264">1. Pure CRF Mode in H.264</h3>
+<p>For H.264, invoking <code>-crf</code> automatically enables Constant
+Rate Factor mode without needing additional bitrate parameters:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libx264 <span class="at">-crf</span> 23 output.mp4</span></code></pre></div>
+<h3 id="2-constrained-vs-pure-crf-in-webm-vp9">2. Constrained vs. Pure
+CRF in WebM (VP9)</h3>
+<p>For WebM codecs, specifying only <code>-crf</code> triggers
+<strong>Constrained Quality (CQ)</strong> mode, which targets the
+specified CRF but caps the bitrate to the codec's default target
+bitrate. To achieve <strong>Pure CRF</strong> mode (unconstrained
+variable bitrate based strictly on visual quality), the video bitrate
+must explicitly be set to zero (<code>-b:v 0</code>):</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-crf</span> 31 <span class="at">-b:v</span> 0 output.webm</span></code></pre></div>
+<p>Omitting <code>-b:v 0</code> in VP9 encoding will cause the encoder
+to prioritize the default bitrate limit over the desired visual quality
+target.</p>
+<h2 id="summary-of-operational-differences">Summary of Operational
+Differences</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">H.264 (<code>libx264</code>)</th>
+<th style="text-align: left;">WebM (<code>libvpx-vp9</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Scale Range</strong></td>
+<td style="text-align: left;">0 to 51</td>
+<td style="text-align: left;">0 to 63</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Default CRF</strong></td>
+<td style="text-align: left;">23</td>
+<td style="text-align: left;">None (bitrate-driven by default)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Recommended General
+Range</strong></td>
+<td style="text-align: left;">18 – 28</td>
+<td style="text-align: left;">15 – 35</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Pure CRF FFmpeg
+Syntax</strong></td>
+<td style="text-align: left;"><code>-crf &lt;val&gt;</code></td>
+<td style="text-align: left;"><code>-crf &lt;val&gt; -b:v 0</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Step Behavior</strong></td>
+<td style="text-align: left;">+6 halves bitrate</td>
+<td style="text-align: left;">Gradual, non-linear adjustment</td>
+</tr>
+</tbody>
+</table></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

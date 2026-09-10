@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Initialization Structure for Live Video - webm</title>
+    <meta name="description" content="A valid WebM initialization sequence for live video streaming defines the structural metadata decoders require to parse subsequent media frames in real time. This article details the core components—the Extensible Binary Meta Language (EBML) header, Se">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-initialization-structure-for-live-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Initialization Structure for Live Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-initialization-structure-for-live-video" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="A valid WebM initialization sequence for live video streaming defines the structural metadata decoders require to parse subsequent media frames in real time. This article details the core components—the Extensible Binary Meta Language (EBML) header, Se" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-initialization-structure-for-live-video">WebM
+Initialization Structure for Live Video</h1>
+<p>A valid WebM initialization sequence for live video streaming defines
+the structural metadata decoders require to parse subsequent media
+frames in real time. This article details the core components—the
+Extensible Binary Meta Language (EBML) header, Segment element, Segment
+Information, and Track entries—along with the specific structural
+parameters required to instantiate a continuous, unbounded live
+stream.</p>
+<h3 id="1-the-ebml-header">1. The EBML Header</h3>
+<p>Every valid WebM byte stream must start with an EBML header (Element
+ID: <code>0x1A45DFA3</code>). For live video, this header establishes
+parser compatibility:</p>
+<ul>
+<li><strong>EBMLVersion (<code>0x4286</code>) &amp; EBMLReadVersion
+(<code>0x42F7</code>)</strong>: Typically set to <code>1</code>.</li>
+<li><strong>EBMLMaxIDLength (<code>0x42F2</code>)</strong>: Must be set
+to <code>4</code> (bytes).</li>
+<li><strong>EBMLMaxSizeLength (<code>0x42F3</code>)</strong>: Must be
+set between <code>1</code> and <code>8</code> (bytes).</li>
+<li><strong>DocType (<code>0x4282</code>)</strong>: Must be the ASCII
+string <code>"webm"</code>.</li>
+<li><strong>DocTypeVersion (<code>0x4287</code>) &amp;
+DocTypeReadVersion (<code>0x4285</code>)</strong>: Set to <code>2</code>
+or higher (commonly <code>4</code> for modern codecs like VP9 and
+AV1).</li>
+</ul>
+<h3 id="2-the-segment-header">2. The Segment Header</h3>
+<p>Immediately following the EBML header is the Root Segment element
+(Element ID: <code>0x18538067</code>).</p>
+<ul>
+<li><strong>Unknown Data Size</strong>: In a live streaming context, the
+total length of the media is unknown at stream inception. The size field
+of the Segment element must be set to an undefined/unknown size
+(represented in EBML as all <code>1</code> bits in the size descriptor,
+e.g., <code>0x01FFFFFFFFFFFFFF</code> for an 8-byte length
+descriptor).</li>
+</ul>
+<h3 id="3-segment-information-info">3. Segment Information
+(<code>Info</code>)</h3>
+<p>The <code>Info</code> element (Element ID: <code>0x1549A966</code>)
+provides global parameters for the stream timeline:</p>
+<ul>
+<li><strong>TimecodeScale (<code>0x2AD7B1</code>)</strong>: Defines the
+timestamp scale factor in nanoseconds. The default is
+<code>1000000</code> (1 millisecond per tick), which maps Cluster and
+Block timecodes directly to milliseconds.</li>
+<li><strong>Duration (<code>0x4489</code>)</strong>: For live streams,
+the <code>Duration</code> element must either be omitted entirely or set
+to an undefined state (NaN) so players treat the stream as an unbounded
+live broadcast.</li>
+<li><strong>MuxingApp (<code>0x4D80</code>) &amp; WritingApp
+(<code>0x5741</code>)</strong>: UTF-8 strings indicating the multiplexer
+software.</li>
+</ul>
+<h3 id="4-track-parameters-tracks">4. Track Parameters
+(<code>Tracks</code>)</h3>
+<p>The <code>Tracks</code> element (Element ID: <code>0x1654AE6B</code>)
+contains one or more <code>TrackEntry</code> elements (Element ID:
+<code>0xAE</code>). A valid live video track requires:</p>
+<ul>
+<li><strong>TrackNumber (<code>0xD7</code>)</strong>: A non-zero
+unsigned integer uniquely identifying the track within subsequent media
+clusters.</li>
+<li><strong>TrackUID (<code>0x73C5</code>)</strong>: A unique 64-bit
+integer identifier.</li>
+<li><strong>TrackType (<code>0x83</code>)</strong>: Set to
+<code>1</code> for video (<code>2</code> for audio if multiplexed).</li>
+<li><strong>CodecID (<code>0x86</code>)</strong>: ASCII string
+identifying the video codec (e.g., <code>"V_VP8"</code>,
+<code>"V_VP9"</code>, or <code>"V_AV1"</code>).</li>
+<li><strong>CodecPrivate (<code>0x63A2</code>)</strong>: Required for
+certain codecs (such as AV1 or Opus) to provide initialization and
+decoder configuration data prior to decoding the first frame.</li>
+<li><strong>Video Settings (<code>0xE0</code>)</strong>:
+<ul>
+<li><strong>PixelWidth (<code>0xB0</code>)</strong>: Width of the
+encoded video frames in pixels.</li>
+<li><strong>PixelHeight (<code>0xBA</code>)</strong>: Height of the
+encoded video frames in pixels.</li>
+<li><strong>DisplayWidth (<code>0x54B0</code>) &amp; DisplayHeight
+(<code>0x54BA</code>)</strong>: Optional; defines aspect ratio overrides
+if non-square pixels are used.</li>
+</ul></li>
+</ul>
+<h3 id="5-media-cluster-requirements-for-live-streaming">5. Media
+Cluster Requirements for Live Streaming</h3>
+<p>The initialization segment ends once the <code>Tracks</code> element
+closes. Media is subsequently delivered via independent
+<code>Cluster</code> elements (Element ID: <code>0x1F43B675</code>):</p>
+<ul>
+<li><strong>Cluster Timecode (<code>0xE7</code>)</strong>: Must be
+strictly monotonically increasing across clusters based on the
+configured <code>TimecodeScale</code>.</li>
+<li><strong>First Block Alignment</strong>: The first media payload
+(<code>SimpleBlock</code> or <code>BlockGroup</code>) inside the initial
+cluster following initialization must contain a Keyframe (flagged
+accordingly) to allow the decoder to establish its reference buffer
+immediately.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

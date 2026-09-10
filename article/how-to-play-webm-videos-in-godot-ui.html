@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Play WebM Videos in Godot UI - webm</title>
+    <meta name="description" content="This article explains how the Godot Engine integrates WebM video playback within its User Interface (UI) system. It covers the essential nodes used for video rendering, the setup process for WebM resources, how to utilize alpha transparency for animated">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-play-webm-videos-in-godot-ui">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Play WebM Videos in Godot UI - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-play-webm-videos-in-godot-ui" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how the Godot Engine integrates WebM video playback within its User Interface (UI) system. It covers the essential nodes used for video rendering, the setup process for WebM resources, how to utilize alpha transparency for animated" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-to-play-webm-videos-in-godot-ui">How to Play WebM Videos in
+Godot UI</h1>
+<p>This article explains how the Godot Engine integrates WebM video
+playback within its User Interface (UI) system. It covers the essential
+nodes used for video rendering, the setup process for WebM resources,
+how to utilize alpha transparency for animated UI elements, and the
+scripting methods required to control playback reliably.</p>
+<h3 id="the-role-of-videostreamplayer">The Role of
+VideoStreamPlayer</h3>
+<p>Godot handles UI-based video playback through the
+<code>VideoStreamPlayer</code> node. As a member of the
+<code>Control</code> node family, <code>VideoStreamPlayer</code>
+inherits all standard UI positioning, sizing, anchoring, and layout
+behaviors. This allows video files to be treated like any other UI
+component, such as a <code>TextureRect</code> or <code>Button</code>,
+enabling them to scale dynamically with responsive UI layouts or sit
+inside UI containers.</p>
+<h3 id="importing-and-assigning-webm-files">Importing and Assigning WebM
+Files</h3>
+<p>Godot supports WebM files encoded with VP8 or VP9 video codecs and
+Vorbis or Opus audio codecs. To integrate a WebM file:</p>
+<ol type="1">
+<li>Import the <code>.webm</code> video file into your Godot project by
+placing it into the project folder.</li>
+<li>Add a <code>VideoStreamPlayer</code> node to your active UI scene
+tree.</li>
+<li>In the Inspector panel, assign the imported WebM file to the
+<code>Stream</code> property of the <code>VideoStreamPlayer</code>.</li>
+<li>Adjust properties such as <code>Autoplay</code>, <code>Loop</code>,
+and <code>Expand</code> to determine how the video initializes and
+adapts to its bounding box.</li>
+</ol>
+<h3 id="supporting-alpha-channel-transparency">Supporting Alpha Channel
+Transparency</h3>
+<p>A major advantage of using WebM in Godot interfaces is support for
+transparent backgrounds. This is ideal for animated UI elements, such as
+animated portraits, dynamic borders, and stylized notification
+popups.</p>
+<p>To use transparent WebM playback:</p>
+<ul>
+<li>Ensure the source video is encoded with an alpha channel (VP8/VP9
+with transparency).</li>
+<li>No additional material or shader configuration is typically
+required; the <code>VideoStreamPlayer</code> natively renders
+transparent pixels directly over other UI nodes behind it in the scene
+tree hierarchy.</li>
+</ul>
+<h3 id="controlling-playback-with-gdscript">Controlling Playback with
+GDScript</h3>
+<p>Controlling WebM playback programmatically is handled via standard
+GDScript methods and signals provided by the
+<code>VideoStreamPlayer</code> node.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode gdscript"><code class="sourceCode gdscript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">extends</span> Control</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>@onready <span class="kw">var</span> video_player: VideoStreamPlayer <span class="op">=</span> <span class="va">$VideoStreamPlayer</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="bu">_ready</span>() <span class="op">-&gt;</span> void:</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Connect signals to handle playback events</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    video_player.finished.<span class="bu">connect</span>(<span class="co">_on_video_finished</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="fu">play_ui_animation</span>() <span class="op">-&gt;</span> void:</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    video_player.<span class="fu">play</span>()</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="fu">stop_ui_animation</span>() <span class="op">-&gt;</span> void:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    video_player.<span class="fu">stop</span>()</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="fu">_on_video_finished</span>() <span class="op">-&gt;</span> void:</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Logic for when video ends, such as hiding the element or looping</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;Video finished playing.&quot;</span>)</span></code></pre></div>
+<p>Common methods and properties include:</p>
+<ul>
+<li><code>play()</code>: Starts or resumes playback.</li>
+<li><code>stop()</code>: Halts playback and resets the video
+position.</li>
+<li><code>paused</code>: A boolean property to toggle pause states.</li>
+<li><code>finished</code>: A signal emitted when the stream reaches its
+end (if <code>loop</code> is disabled).</li>
+</ul>
+<h3 id="performance-considerations">Performance Considerations</h3>
+<p>Decoding video incurs higher CPU usage than static textures. When
+using WebM for UI in Godot:</p>
+<ul>
+<li>Keep video dimensions matching the target display size rather than
+relying on scaling down large, high-resolution files.</li>
+<li>Use lower framerates (such as 24 or 30 FPS) for background UI
+elements where high framerates are unnecessary.</li>
+<li>Stop or hide video players that are off-screen or part of closed
+menus to conserve processing cycles.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

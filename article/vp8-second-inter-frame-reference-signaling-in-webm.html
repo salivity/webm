@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP8 Second Inter-Frame Reference Signaling in WebM - webm</title>
+    <meta name="description" content="This article explains how the VP8 video codec within the WebM container identifies and applies its second inter-frame reference buffer, known as the Golden Frame. It details the bitstream-level mechanisms involved, from frame header buffer refresh contro">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp8-second-inter-frame-reference-signaling-in-webm">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP8 Second Inter-Frame Reference Signaling in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp8-second-inter-frame-reference-signaling-in-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how the VP8 video codec within the WebM container identifies and applies its second inter-frame reference buffer, known as the Golden Frame. It details the bitstream-level mechanisms involved, from frame header buffer refresh contro" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="vp8-second-inter-frame-reference-signaling-in-webm">VP8 Second
+Inter-Frame Reference Signaling in WebM</h1>
+<p>This article explains how the VP8 video codec within the WebM
+container identifies and applies its second inter-frame reference
+buffer, known as the Golden Frame. It details the bitstream-level
+mechanisms involved, from frame header buffer refresh controls to the
+macroblock-level entropy-coded syntax trees used during inter-prediction
+motion compensation.</p>
+<h3 id="the-vp8-reference-frame-model">The VP8 Reference Frame
+Model</h3>
+<p>VP8 maintains three distinct reference frame buffers in memory during
+decoding:</p>
+<ol type="1">
+<li><strong>Last Frame:</strong> The immediately preceding reconstructed
+frame.</li>
+<li><strong>Golden Frame:</strong> The designated second inter-frame
+reference buffer, typically containing an older, high-quality background
+or key scene elements.</li>
+<li><strong>Alternate Reference Frame (AltRef):</strong> The third
+buffer, often utilized for temporal filtering or non-displayed forward
+references.</li>
+</ol>
+<p>Signaling the use of the Golden Frame occurs at two distinct stages
+in the bitstream: buffer management at the frame header level, and
+prediction selection at the macroblock level.</p>
+<h3 id="frame-header-signaling-buffer-updates">Frame Header Signaling:
+Buffer Updates</h3>
+<p>Before a macroblock can reference the second reference buffer, the
+frame header must establish or update the contents of that buffer. The
+uncompressed frame header contains specific single-bit flags that
+control how the Golden Frame buffer is refreshed:</p>
+<ul>
+<li><strong><code>refresh_golden_frame</code> (1 bit):</strong> When set
+to <code>1</code>, the reconstructed output of the current inter-frame
+is written into the Golden Frame buffer, replacing its previous
+contents.</li>
+<li><strong><code>copy_buffer_to_golden</code> (2 bits):</strong> If
+<code>refresh_golden_frame</code> is <code>0</code>, this field dictates
+whether an existing reference buffer should be copied into the Golden
+Frame buffer (<code>0</code> for no copy, <code>1</code> to copy the
+Last Frame, or <code>2</code> to copy the Alternate Reference
+Frame).</li>
+</ul>
+<h3 id="macroblock-level-signaling-reference-selection">Macroblock-Level
+Signaling: Reference Selection</h3>
+<p>For inter-coded macroblocks, VP8 signals which reference buffer to
+use through its boolean entropy decoder. The reference frame selection
+is represented as a small binary decision tree.</p>
+<p>When a macroblock is marked as an inter-macroblock
+(<code>MB_MODE_MV</code>), the bitstream decodes the target reference
+frame using up to two binary decisions based on pre-defined context
+probabilities:</p>
+<ol type="1">
+<li><p><strong>First Decision (Is it Last Frame?):</strong> The decoder
+reads a boolean value governed by the context probability
+<code>prob[0]</code> (Last Frame probability).</p>
+<ul>
+<li>A value of <code>0</code> signals that the macroblock references the
+<strong>Last Frame</strong>.</li>
+<li>A value of <code>1</code> signals that the macroblock will use an
+alternative reference buffer (either Golden or AltRef).</li>
+</ul></li>
+<li><p><strong>Second Decision (Golden vs. AltRef):</strong> If the
+first decision is <code>1</code>, the decoder reads a second boolean
+value governed by <code>prob[1]</code> (Golden/AltRef probability).</p>
+<ul>
+<li>A value of <code>0</code> signals the use of the <strong>Golden
+Frame</strong> (the second reference buffer).</li>
+<li>A value of <code>1</code> signals the use of the <strong>Alternate
+Reference Frame</strong>.</li>
+</ul></li>
+</ol>
+<h3 id="probability-adaptation">Probability Adaptation</h3>
+<p>The probability values (<code>prob[0]</code> and
+<code>prob[1]</code>) that govern this binary tree are specified in the
+frame header within the reference frame probability update segment. If
+updating is enabled via the <code>refresh_entropy_probs</code> flag, the
+encoder transmits conditional update bits followed by new 8-bit
+probabilities. This dynamic adaptation allows the bitstream to minimize
+the bit overhead required to signal the Golden Frame when large portions
+of a scene consistently depend on that specific reference buffer.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

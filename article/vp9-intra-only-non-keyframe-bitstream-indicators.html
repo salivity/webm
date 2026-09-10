@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Intra-Only Non-Keyframe Bitstream Indicators - webm</title>
+    <meta name="description" content="This article provides an overview of the specific syntax elements within the VP9 uncompressed frame header that designate a frame as an intra-only non-keyframe. In VP9 video streams, decoders determine whether a frame uses solely intra-prediction without">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp9-intra-only-non-keyframe-bitstream-indicators">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Intra-Only Non-Keyframe Bitstream Indicators - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp9-intra-only-non-keyframe-bitstream-indicators" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of the specific syntax elements within the VP9 uncompressed frame header that designate a frame as an intra-only non-keyframe. In VP9 video streams, decoders determine whether a frame uses solely intra-prediction without" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="vp9-intra-only-non-keyframe-bitstream-indicators">VP9 Intra-Only
+Non-Keyframe Bitstream Indicators</h1>
+<p>This article provides an overview of the specific syntax elements
+within the VP9 uncompressed frame header that designate a frame as an
+intra-only non-keyframe. In VP9 video streams, decoders determine
+whether a frame uses solely intra-prediction without acting as a full
+keyframe by parsing a sequence of header flags, specifically evaluating
+the <code>show_existing_frame</code>, <code>frame_type</code>, and
+<code>intra_only</code> syntax elements.</p>
+<h3 id="the-vp9-uncompressed-header-syntax">The VP9 Uncompressed Header
+Syntax</h3>
+<p>In VP9, frame-level properties are signaled at the beginning of each
+frame in the uncompressed header. To determine if a frame is an
+intra-only non-keyframe, the decoder reads the bitstream in the
+following sequential order:</p>
+<ol type="1">
+<li><strong><code>frame_marker</code> (2 bits):</strong> Must be binary
+<code>10</code> (value 2) to validate the start of a VP9 frame.</li>
+<li><strong><code>profile</code> (1–3 bits):</strong> Determines the VP9
+profile (<code>profile_low_bit</code>, and conditionally
+<code>profile_high_bit</code> / <code>reserved_zero</code>).</li>
+<li><strong><code>show_existing_frame</code> (1 bit):</strong> Must be
+<code>0</code>. A value of <code>1</code> indicates that the frame is
+merely a display command for a previously decoded reference buffer,
+bypassing new frame decoding.</li>
+<li><strong><code>frame_type</code> (1 bit):</strong> Must be
+<code>1</code>. In VP9:
+<ul>
+<li><code>0</code> represents a <code>KEY_FRAME</code>.</li>
+<li><code>1</code> represents a <code>NON_KEY_FRAME</code> (typically an
+inter-coded frame).</li>
+</ul></li>
+<li><strong><code>show_frame</code> (1 bit):</strong> Dictates whether
+the frame is displayed immediately (<code>1</code>) or stored as a
+reference frame (<code>0</code>).</li>
+<li><strong><code>error_resilient_mode</code> (1 bit):</strong> Controls
+error resilience behavior.</li>
+<li><strong><code>intra_only</code> (1 bit):</strong> Must be
+<code>1</code>. This flag is only present in the bitstream when
+<code>frame_type</code> is <code>1</code> (non-keyframe).</li>
+</ol>
+<h3 id="key-signaling-condition">Key Signaling Condition</h3>
+<p>A frame is definitively identified as an <strong>intra-only
+non-keyframe</strong> when:</p>
+<ul>
+<li><code>show_existing_frame == 0</code></li>
+<li><code>frame_type == 1</code></li>
+<li><code>intra_only == 1</code></li>
+</ul>
+<h3 id="downstream-bitstream-implications">Downstream Bitstream
+Implications</h3>
+<p>When <code>intra_only</code> evaluates to <code>1</code> on a
+non-keyframe:</p>
+<ul>
+<li><strong><code>reset_frame_context</code> (2 bits):</strong> This
+field appears immediately after the <code>intra_only</code> flag. It
+specifies whether the frame context (probability tables) should be reset
+to default values (<code>0b11</code> or <code>0b10</code>) or maintained
+(<code>0b00</code>).</li>
+<li><strong>Absence of Reference Frame Selection:</strong> Unlike
+typical inter-frames (<code>intra_only == 0</code>), the bitstream skips
+parsing the <code>ref_frame_idx</code> and
+<code>ref_frame_sign_bias</code> fields because no temporal references
+(LAST, GOLDEN, or ALTREF) are utilized for reconstruction.</li>
+<li><strong><code>refresh_frame_flags</code> (8 bits):</strong> The
+bitstream explicitly signals which reference frame buffers should be
+overwritten by this newly decoded intra frame without forcing a
+mandatory refresh of all buffers, which is standard behavior for
+traditional keyframes.</li>
+</ul>
+<p>This signaling combination allows encoders to insert intra-coded
+recovery points or switch points (common in Scalable Video Coding / SVC)
+without disrupting the reference buffers required by subsequent
+dependent frames.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

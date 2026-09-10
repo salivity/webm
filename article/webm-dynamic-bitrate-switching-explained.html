@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Dynamic Bitrate Switching Explained - webm</title>
+    <meta name="description" content="The WebM container maintains stream continuity across dynamic bitrate switches by leveraging modular EBML structures, aligned keyframe boundaries, continuous presentation timestamps, and codec-level dynamic reconfiguration. Through frameworks like Media">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-dynamic-bitrate-switching-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Dynamic Bitrate Switching Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-dynamic-bitrate-switching-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container maintains stream continuity across dynamic bitrate switches by leveraging modular EBML structures, aligned keyframe boundaries, continuous presentation timestamps, and codec-level dynamic reconfiguration. Through frameworks like Media" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-dynamic-bitrate-switching-explained">WebM Dynamic Bitrate
+Switching Explained</h1>
+<p>The WebM container maintains stream continuity across dynamic bitrate
+switches by leveraging modular EBML structures, aligned keyframe
+boundaries, continuous presentation timestamps, and codec-level dynamic
+reconfiguration. Through frameworks like Media Source Extensions (MSE)
+and adaptive streaming protocols like MPEG-DASH, WebM allows media
+players to switch between different quality representations seamlessly
+without interrupting playback or tearing down the media decoding
+pipeline.</p>
+<h3 id="chunked-ebml-structure-and-initialization">Chunked EBML
+Structure and Initialization</h3>
+<p>WebM is a restricted subset of the Extensible Binary Meta Language
+(EBML), derived from the Matroska format. In adaptive bitrate streaming
+environments, WebM media is split into an initialization segment and
+multiple media segments:</p>
+<ul>
+<li><strong>Initialization Segment:</strong> Contains the EBML Header,
+<code>Segment Information</code>, and <code>Tracks</code> elements. This
+defines the codec configurations, track types, and base parameters
+required to instantiate the decoder pipeline.</li>
+<li><strong>Media Segments:</strong> Encapsulated within
+<code>Cluster</code> elements containing sequential
+<code>SimpleBlock</code> structures that house the actual compressed
+video and audio payloads.</li>
+</ul>
+<p>During a bitrate transition, the client player does not reload the
+entire container. Instead, it feeds the new representation's segment
+into the existing demuxing buffer. The modular structure of EBML allows
+parsers to process these incoming clusters independently as long as the
+underlying track IDs and core mappings remain consistent.</p>
+<h3 id="keyframe-synchronization-and-gop-alignment">Keyframe
+Synchronization and GOP Alignment</h3>
+<p>Seamless switching requires that target representations be aligned
+along uniform Group of Pictures (GOP) boundaries. A media player cannot
+switch representations mid-GOP because inter-coded frames (P-frames and
+B-frames) rely on temporal prediction from earlier frames rendered at a
+different quality or resolution.</p>
+<p>To preserve continuity:</p>
+<ol type="1">
+<li>Every switch point begins with an intra-frame (keyframe) at the
+start of a <code>Cluster</code>.</li>
+<li>Segment durations across different bitrate variants (e.g., 1080p at
+5 Mbps vs. 720p at 2.5 Mbps) are aligned to identical presentation time
+boundaries.</li>
+<li>Because the initial frame of the new segment contains complete
+spatial data and does not reference previous frames, the video decoder
+can instantly decode the new stream without waiting for missing
+reference frames or producing visual artifacts.</li>
+</ol>
+<h3 id="monotonic-timestamp-continuity">Monotonic Timestamp
+Continuity</h3>
+<p>The WebM container relies on internal timecodes to maintain playback
+timing across bitrate shifts:</p>
+<ul>
+<li>Each <code>Cluster</code> element defines a baseline
+<code>Timecode</code>.</li>
+<li>Individual audio and video frames within <code>SimpleBlock</code>
+structures use relative timecode offsets added to the cluster's base
+timecode.</li>
+</ul>
+<p>When switching bitrates, the new segment’s cluster timecodes must
+continue the global timeline sequentially rather than restarting from
+zero. Browser engines handling WebM via Media Source Extensions map
+these container-level timestamps into a continuous presentation
+timeline. This linear continuity prevents playback jitter, audio-video
+desynchronization, or player stalling.</p>
+<h3 id="in-band-codec-reconfiguration">In-Band Codec
+Reconfiguration</h3>
+<p>WebM primarily packages VP8, VP9, and AV1 video codecs. VP9 and AV1
+natively support resolution changes on keyframes without terminating the
+decoder instance.</p>
+<p>When a dynamic bitrate switch introduces a resolution change, the new
+WebM segment's keyframe contains in-band sequence header information
+detailing the updated frame dimensions and scaling matrices. The video
+decoder reads this metadata directly from the elementary stream inside
+the WebM <code>SimpleBlock</code>, dynamically resizing its internal
+reference buffers on the fly. This avoids hardware-accelerated decoder
+teardowns and eliminates black frames during resolution changes.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

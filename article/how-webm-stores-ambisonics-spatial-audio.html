@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Stores Ambisonics Spatial Audio - webm</title>
+    <meta name="description" content="This article explores how the WebM container encapsulates Ambisonics spatial audio to deliver immersive, 360-degree sound for virtual reality and interactive media. It breaks down the role of the Matroska-based architecture, the integration of the Opus a">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-webm-stores-ambisonics-spatial-audio">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Stores Ambisonics Spatial Audio - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-webm-stores-ambisonics-spatial-audio" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores how the WebM container encapsulates Ambisonics spatial audio to deliver immersive, 360-degree sound for virtual reality and interactive media. It breaks down the role of the Matroska-based architecture, the integration of the Opus a" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="how-webm-stores-ambisonics-spatial-audio">How WebM Stores
+Ambisonics Spatial Audio</h1>
+<p>This article explores how the WebM container encapsulates Ambisonics
+spatial audio to deliver immersive, 360-degree sound for virtual reality
+and interactive media. It breaks down the role of the Matroska-based
+architecture, the integration of the Opus audio codec, channel mapping
+families, and how players interpret this structural metadata to render
+directional sound fields.</p>
+<h2 id="the-webm-container-and-audio-architecture">The WebM Container
+and Audio Architecture</h2>
+<p>WebM is an open, royalty-free media file format derived from the
+Matroska (MKV) specification, structured using Extensible Binary Meta
+Language (EBML). To store spatial audio, WebM relies on its standard
+<code>TrackEntry</code> structure, designating an audio track
+(<code>TrackType = 2</code>) that packages multi-channel audio streams
+alongside synchronized video streams (typically VP9 or AV1).</p>
+<p>Rather than creating a proprietary spatial container layer, WebM
+relies on audio codec-level metadata and standard channel structures to
+carry full-sphere Ambisonics signals.</p>
+<h2 id="opus-codec-integration-and-channel-mapping-families">Opus Codec
+Integration and Channel Mapping Families</h2>
+<p>WebM almost exclusively pairs with the <strong>Opus audio
+codec</strong> (<code>CodecID = A_OPUS</code>) to store Ambisonics. The
+spatial audio configuration is defined inside the
+<code>CodecPrivate</code> element of the WebM track header, which
+contains the standard <code>OpusHead</code> identification header.</p>
+<p>Within the <code>OpusHead</code>, spatial audio is designated using
+<strong>Channel Mapping Families</strong>:</p>
+<ul>
+<li><strong>Channel Mapping Family 2 (Ambisonics):</strong> Used for
+pure B-format Ambisonic audio. It specifies the number of channels, the
+number of coupled streams, and an explicit mapping table.</li>
+<li><strong>Channel Mapping Family 3 (Ambisonics with Non-Diegetic
+Stereo):</strong> Extends Family 2 by adding non-diegetic stereo
+channels (such as background music or narration that does not rotate
+with user head movement) alongside the spatialized Ambisonic
+channels.</li>
+</ul>
+<h2 id="ambisonic-orders-component-ordering-and-normalization">Ambisonic
+Orders, Component Ordering, and Normalization</h2>
+<p>The WebM container handles different degrees of spatial resolution,
+known as Ambisonic orders:</p>
+<ul>
+<li><strong>First-Order Ambisonics (FOA):</strong> Requires 4 channels
+(<span class="math inline">\(N = (order + 1)^2\)</span>).</li>
+<li><strong>Second-Order Ambisonics (SOA):</strong> Requires 9
+channels.</li>
+<li><strong>Third-Order Ambisonics (TOA):</strong> Requires 16
+channels.</li>
+</ul>
+<p>To ensure uniform decoding across different playback engines,
+WebM/Opus enforces standardized audio conventions:</p>
+<ol type="1">
+<li><strong>ACN (Ambisonic Channel Number):</strong> Determines the
+exact sequence of spherical harmonic components (e.g., <span
+class="math inline">\(W, Y, Z, X\)</span> for First-Order
+Ambisonics).</li>
+<li><strong>SN3D Normalization:</strong> Defines the gain weighting
+applied to each spherical harmonic component, ensuring cross-platform
+signal consistency.</li>
+</ol>
+<h2 id="decoding-and-spatial-rendering">Decoding and Spatial
+Rendering</h2>
+<p>When a compatible player opens an Ambisonic WebM file, the playback
+pipeline operates as follows:</p>
+<ol type="1">
+<li><strong>Header Parsing:</strong> The media engine reads the WebM
+EBML header and inspects the <code>CodecPrivate</code> data to detect
+the Opus Channel Mapping Family (2 or 3) and channel count.</li>
+<li><strong>Decompression:</strong> The Opus decoder outputs the raw
+multi-channel Ambisonic B-format audio streams according to the defined
+ACN sequence.</li>
+<li><strong>Binaural Rendering:</strong> The player feeds the decoded
+B-format channels and real-time head-tracking data (yaw, pitch, roll)
+into a spatial audio renderer. The renderer applies Head-Related
+Transfer Functions (HRTFs) to synthesize an immersive, rotational 3D
+soundscape for headphone or speaker playback.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

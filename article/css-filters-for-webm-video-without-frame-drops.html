@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Filters for WebM Video Without Frame Drops - webm</title>
+    <meta name="description" content="Applying real-time visual adjustments to playing WebM videos using CSS filters can dramatically enhance web interfaces, but heavy rendering calculations often cause stutter and dropped frames. This guide details which CSS filter operations are lightweigh">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/css-filters-for-webm-video-without-frame-drops">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CSS Filters for WebM Video Without Frame Drops - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/css-filters-for-webm-video-without-frame-drops" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Applying real-time visual adjustments to playing WebM videos using CSS filters can dramatically enhance web interfaces, but heavy rendering calculations often cause stutter and dropped frames. This guide details which CSS filter operations are lightweigh" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="css-filters-for-webm-video-without-frame-drops">CSS Filters for
+WebM Video Without Frame Drops</h1>
+<p>Applying real-time visual adjustments to playing WebM videos using
+CSS filters can dramatically enhance web interfaces, but heavy rendering
+calculations often cause stutter and dropped frames. This guide details
+which CSS filter operations are lightweight enough to maintain smooth
+60fps WebM playback, which spatial filters you should avoid, and the
+hardware optimization techniques required to ensure stutter-free video
+performance.</p>
+<h2 id="hardware-accelerated-safe-filters">Hardware-Accelerated Safe
+Filters</h2>
+<p>CSS filters that operate purely on individual pixel color values are
+executed via GPU fragment shaders in a single pass. Because these
+operations do not require reading data from adjacent pixels, modern
+graphics cards process them in real time alongside video decoding
+without reducing the framerate.</p>
+<p>The following filters can be safely applied directly to an active
+<code>&lt;video&gt;</code> element playing WebM content:</p>
+<ul>
+<li><strong><code>brightness()</code></strong>: Linearly scales the RGB
+values of each frame. It has negligible computational overhead.</li>
+<li><strong><code>contrast()</code></strong>: Adjusts the spread of
+color values relative to gray. Highly optimized on modern hardware.</li>
+<li><strong><code>grayscale()</code></strong>: Converts color channels
+to luminance using a basic matrix multiplication.</li>
+<li><strong><code>sepia()</code></strong>: Applies a fixed color
+transform matrix across pixels with zero spatial overhead.</li>
+<li><strong><code>invert()</code></strong>: Flips the color values
+across the spectrum with virtually zero performance penalty.</li>
+<li><strong><code>saturate()</code></strong>: Multiplies color intensity
+values using direct GPU arithmetic.</li>
+<li><strong><code>hue-rotate()</code></strong>: Rotates the color wheel
+coordinates of each pixel via straightforward trigonometric calculations
+handled natively by the GPU.</li>
+<li><strong><code>opacity()</code></strong>: Adjusts the alpha channel.
+While safe, using the native CSS <code>opacity</code> property rather
+than <code>filter: opacity()</code> is generally preferred for broader
+compositor support.</li>
+</ul>
+<h2 id="filters-that-cause-frame-drops">Filters That Cause Frame
+Drops</h2>
+<p>Spatial and multi-pass filters require the graphics pipeline to
+sample neighboring pixels or render intermediate off-screen buffers. On
+high-resolution WebM files (such as 1080p or 4K), these operations
+quickly overwhelm the compositor thread and lead to noticeable frame
+loss:</p>
+<ul>
+<li><strong><code>blur()</code></strong>: Implements a Gaussian or box
+blur, requiring the GPU to sample a wide radius of neighboring pixels
+for every single pixel on every decoded video frame. Blurring video
+dynamically is one of the most common causes of dropped frames.</li>
+<li><strong><code>drop-shadow()</code></strong>: Generates an alpha mask
+of the video bounds, blurs it, offsets it, and composites it behind the
+element. This requires multiple rendering passes per frame and causes
+stuttering during playback.</li>
+</ul>
+<h2 id="optimization-techniques-for-video-filters">Optimization
+Techniques for Video Filters</h2>
+<p>To maintain smooth playback when applying supported CSS filters to
+WebM videos, implement the following configurations:</p>
+<h3 id="promote-the-video-to-its-own-compositor-layer">Promote the Video
+to Its Own Compositor Layer</h3>
+<p>Force the browser to isolate the video decoding and filtering to a
+dedicated GPU layer. This prevents repainting adjacent DOM elements when
+the video frame updates:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode css"><code class="sourceCode css"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>video {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">will-change</span><span class="ch">:</span> <span class="dv">filter</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">transform</span><span class="ch">:</span> <span class="fu">translateZ(</span><span class="dv">0</span><span class="fu">)</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="avoid-combining-too-many-filters">Avoid Combining Too Many
+Filters</h3>
+<p>While color matrix operations are fast, chaining four or five
+operations (for example:
+<code>filter: contrast(1.2) brightness(0.9) saturate(1.5) hue-rotate(10deg);</code>)
+forces the GPU to execute complex shader arithmetic sequentially for
+every pixel. Combine your adjustments into as few declarations as
+possible.</p>
+<h3 id="match-native-decode-resolution-to-display-size">Match Native
+Decode Resolution to Display Size</h3>
+<p>A 4K WebM video scaled down via CSS to 400 pixels wide still applies
+the CSS filter at the decoded resolution on many rendering engines
+before downsampling. Serve properly scaled WebM assets to minimize the
+fragment shader workload.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantization Matrices in Deep Color WebM Encoding - webm</title>
+    <meta name="description" content="Encoding deep color WebM footage—utilizing 10-bit or 12-bit color depth—relies primarily on the VP9 and AV1 video codecs. While traditional video formats like MPEG-2 or AVC rely heavily on user-customizable 8x8 or 16x16 frequency quantization matrice">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/quantization-matrices-in-deep-color-webm-encoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Quantization Matrices in Deep Color WebM Encoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/quantization-matrices-in-deep-color-webm-encoding" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Encoding deep color WebM footage—utilizing 10-bit or 12-bit color depth—relies primarily on the VP9 and AV1 video codecs. While traditional video formats like MPEG-2 or AVC rely heavily on user-customizable 8x8 or 16x16 frequency quantization matrice" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="quantization-matrices-in-deep-color-webm-encoding">Quantization
+Matrices in Deep Color WebM Encoding</h1>
+<p>Encoding deep color WebM footage—utilizing 10-bit or 12-bit color
+depth—relies primarily on the VP9 and AV1 video codecs. While
+traditional video formats like MPEG-2 or AVC rely heavily on
+user-customizable 8x8 or 16x16 frequency quantization matrices, WebM
+codecs handle quantization differently. VP9 abandons classical
+frequency-dependent quantization matrices entirely in favor of
+lookup-table-driven scalar quantization, whereas AV1 introduces a fixed
+set of predefined perceptual quantization matrices tailored to transform
+block sizes and color planes.</p>
+<h3
+id="quantization-architecture-in-vp9-deep-color-profile-2-and-profile-3">Quantization
+Architecture in VP9 Deep Color (Profile 2 and Profile 3)</h3>
+<p>VP9 supports deep color via Profile 2 (10-bit/12-bit, 4:2:0) and
+Profile 3 (10-bit/12-bit, 4:2:2/4:4:4). Unlike H.264 or HEVC, VP9 does
+not use frequency-weighting matrices that penalize high frequencies
+differently across a single transform block. Instead, it applies uniform
+scalar quantization across all transform coefficients within a block,
+modified by specific offset mechanisms:</p>
+<ul>
+<li><strong>Base Quantizer Index (<span
+class="math inline">\(QIndex\)</span>):</strong> The frame header
+specifies a global quantizer index ranging from 0 to 255.</li>
+<li><strong>Bit-Depth Lookup Tables:</strong> To accommodate 10-bit and
+12-bit depths, VP9 replaces its standard 8-bit dequantization tables
+with expanded lookup tables (<code>vp9_dc_quant</code> and
+<code>vp9_ac_quant</code> variants for 10-bit and 12-bit). These tables
+map the <span class="math inline">\(QIndex\)</span> to wider step sizes,
+preventing precision loss and rounding distortion in expanded dynamic
+ranges.</li>
+<li><strong>Plane and Component Deltas:</strong> VP9 permits delta
+adjustments relative to the base <span
+class="math inline">\(QIndex\)</span>. Separate quantization offsets can
+be signaled for the DC coefficient relative to AC coefficients, and for
+the chroma planes (<span class="math inline">\(U\)</span> and <span
+class="math inline">\(V\)</span>) relative to luma (<span
+class="math inline">\(Y\)</span>).</li>
+<li><strong>Segmentation:</strong> Encoders can divide frames into up to
+eight segments, each assigning an independent delta-<span
+class="math inline">\(QIndex\)</span> to adapt quantization locally
+without full coefficient matrices.</li>
+</ul>
+<h3 id="quantization-matrices-in-av1-deep-color">Quantization Matrices
+in AV1 Deep Color</h3>
+<p>AV1, the modern successor codec commonly deployed in the WebM
+container, reintroduces frequency-dependent quantization matrices (QMs)
+to improve perceptual compression efficiency. Unlike older standards,
+AV1 does not allow arbitrary, user-defined matrix tables to be
+transmitted in the bitstream, which saves header overhead.</p>
+<ul>
+<li><strong>Predefined Matrix Levels:</strong> AV1 defines 16 discrete,
+hardcoded quantization matrix weight profiles (levels 0 to 15). Level 15
+represents a flat matrix where all frequency coefficients are weighted
+equally, while level 0 applies the strongest suppression to
+high-frequency transform coefficients.</li>
+<li><strong>Transform Size Adaptation:</strong> AV1 computes distinct
+internal matrix weights matching every supported transform size, ranging
+from 4x4 up to 64x64, as well as rectangular variants (e.g., 4x16,
+16x64).</li>
+<li><strong>Per-Plane Signatures:</strong> The AV1 bitstream explicitly
+specifies separate matrix levels for the luma channel (<span
+class="math inline">\(Y\)</span>) and chroma channels (<span
+class="math inline">\(U\)</span>, <span
+class="math inline">\(V\)</span>). In deep color HDR mastering, encoders
+typically use flatter matrices (levels 12–15) on luma to preserve fine
+gradients and reduce banding, while applying steeper matrices to chroma
+channels to discard imperceptible color detail.</li>
+<li><strong>Integration with 10-Bit and 12-Bit Pipelines:</strong> The
+perceptual matrix weights scale the primary dequantization factor
+derived from AV1's base quantizer index. For 10-bit and 12-bit encoding,
+the final quantizer step size is dynamically scaled up by bit-shift
+operations, ensuring that the predefined matrix values scale
+proportionately with the broader dynamic range of high-bit-depth
+coefficients.</li>
+</ul>
+<h3 id="practical-encoding-configuration">Practical Encoding
+Configuration</h3>
+<p>When using reference tools such as <code>libvpx-vp9</code> or
+<code>libaom-av1</code> via FFmpeg to generate deep color WebM
+files:</p>
+<ul>
+<li>In <strong>VP9</strong>, manual matrix insertion is unsupported.
+Adjustments to quantization behavior are achieved exclusively through
+parameters controlling the quantizer scale (<code>-crf</code>,
+<code>-b:v</code>), bit depth (<code>-pix_fmt yuv420p10le</code>), and
+adaptive quantization modes (<code>-aq-mode</code>).</li>
+<li>In <strong>AV1</strong>, frequency-dependent matrices are activated
+via the <code>--enable-qm=1</code> flag in <code>libaom</code>. Encoders
+can constrain the matrix search bounds using <code>--qm-min</code> and
+<code>--qm-max</code> (values 0–15) to maintain flat or steep
+quantization profiles optimal for high-fidelity 10-bit mastering.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

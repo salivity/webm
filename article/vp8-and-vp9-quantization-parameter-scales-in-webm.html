@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP8 and VP9 Quantization Parameter Scales in WebM - webm</title>
+    <meta name="description" content="This article provides a concise overview of the standard Quantization Parameter (QP) scales used for VP8 and VP9 video tracks within WebM containers. Understanding these values is essential for optimizing compression efficiency, controlling bitrate, and">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp8-and-vp9-quantization-parameter-scales-in-webm">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP8 and VP9 Quantization Parameter Scales in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp8-and-vp9-quantization-parameter-scales-in-webm" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a concise overview of the standard Quantization Parameter (QP) scales used for VP8 and VP9 video tracks within WebM containers. Understanding these values is essential for optimizing compression efficiency, controlling bitrate, and" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="vp8-and-vp9-quantization-parameter-scales-in-webm">VP8 and VP9
+Quantization Parameter Scales in WebM</h1>
+<p>This article provides a concise overview of the standard Quantization
+Parameter (QP) scales used for VP8 and VP9 video tracks within WebM
+containers. Understanding these values is essential for optimizing
+compression efficiency, controlling bitrate, and managing visual
+fidelity during the video encoding process.</p>
+<h3 id="the-vp8-quantization-scale">The VP8 Quantization Scale</h3>
+<p>In the VP8 video codec, the native Quantization Parameter (QP) scale
+ranges from <strong>0 to 63</strong>.</p>
+<ul>
+<li><strong>0:</strong> Represents the lowest amount of quantization,
+yielding the highest visual quality and largest file size.</li>
+<li><strong>63:</strong> Represents the maximum quantization level,
+yielding the lowest visual quality and smallest file size.</li>
+</ul>
+<p>VP8 quantizer values are non-linear; step sizes increase as the
+quantizer value increases. In practical encoding tools like
+<code>libvpx</code> and FFmpeg, users can set quantization boundaries
+using parameters such as <code>-qmin</code> and <code>-qmax</code> (or
+<code>--min-q</code> and <code>--max-q</code>) within this 0–63
+range.</p>
+<h3 id="the-vp9-quantization-scale">The VP9 Quantization Scale</h3>
+<p>In the VP9 video codec specification, the internal bitstream
+quantizer index (often designated as <code>base_q_idx</code>) ranges
+from <strong>0 to 255</strong>.</p>
+<ul>
+<li><strong>0:</strong> Lossless/near-lossless mode with minimal
+quantization.</li>
+<li><strong>255:</strong> Maximum compression with heavy quantization
+artifacts.</li>
+</ul>
+<h4 id="native-index-vs-encoder-mapping">Native Index vs. Encoder
+Mapping</h4>
+<p>While the underlying VP9 bitstream operates on the 0–255 scale, many
+encoding tools provide an abstraction layer for usability:</p>
+<ul>
+<li><strong>Native libvpx/Bitstream Scale (0–255):</strong> Used
+internally to map lookup tables for AC and DC quantization coefficients
+across different transform block sizes.</li>
+<li><strong>FFmpeg / Constant Rate Factor (0–63):</strong> When using
+tools such as FFmpeg with <code>libvpx-vp9</code>, the Constant Rate
+Factor (<code>-crf</code>) and quality limits (<code>-qmin</code>,
+<code>-qmax</code>) are typically mapped onto a standardized <strong>0
+to 63</strong> scale to align with the interfaces of other common
+codecs. The encoder internally maps this 0–63 input to the corresponding
+0–255 index.</li>
+</ul>
+<h3 id="summary-of-scales-for-webm-tracks">Summary of Scales for WebM
+Tracks</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Codec</th>
+<th style="text-align: left;">Native Bitstream QP Range</th>
+<th style="text-align: left;">Common Encoder CLI Range
+(CRF/Min-Max)</th>
+<th style="text-align: left;">Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>VP8</strong></td>
+<td style="text-align: left;">0 – 63</td>
+<td style="text-align: left;">0 – 63</td>
+<td style="text-align: left;">Lower values yield higher visual
+quality.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>VP9</strong></td>
+<td style="text-align: left;">0 – 255</td>
+<td style="text-align: left;">0 – 63 (mapped) or 0 – 255 (native
+index)</td>
+<td style="text-align: left;">Lower values yield higher visual
+quality.</td>
+</tr>
+</tbody>
+</table></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

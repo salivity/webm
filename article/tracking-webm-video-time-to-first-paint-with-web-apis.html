@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking WebM Video Time-to-First-Paint with Web APIs - webm</title>
+    <meta name="description" content="Measuring the time it takes for a WebM media resource to display its first visible frame requires combining specialized media rendering and network performance APIs. Because standard document-level paint metrics do not isolate individual media elements,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/tracking-webm-video-time-to-first-paint-with-web-apis">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Tracking WebM Video Time-to-First-Paint with Web APIs - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/tracking-webm-video-time-to-first-paint-with-web-apis" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Measuring the time it takes for a WebM media resource to display its first visible frame requires combining specialized media rendering and network performance APIs. Because standard document-level paint metrics do not isolate individual media elements," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="tracking-webm-video-time-to-first-paint-with-web-apis">Tracking
+WebM Video Time-to-First-Paint with Web APIs</h1>
+<p>Measuring the time it takes for a WebM media resource to display its
+first visible frame requires combining specialized media rendering and
+network performance APIs. Because standard document-level paint metrics
+do not isolate individual media elements, developers must utilize the
+<code>requestVideoFrameCallback()</code> API alongside the Resource
+Timing API and Performance Timeline to pinpoint the exact moment a WebM
+video renders its initial frame.</p>
+<h3 id="the-htmlvideoelementrequestvideoframecallback-api">The
+HTMLVideoElement.requestVideoFrameCallback() API</h3>
+<p>The primary API for tracking when a WebM video paints its first frame
+to the screen is
+<code>HTMLVideoElement.requestVideoFrameCallback()</code>. Unlike legacy
+events like <code>loadeddata</code> or <code>canplay</code>, which only
+indicate that media data is available in the buffer,
+<code>requestVideoFrameCallback()</code> registers a callback that
+executes precisely when a new video frame is submitted for
+composition.</p>
+<p>To measure the time-to-first-paint for a WebM stream:</p>
+<ol type="1">
+<li>Initialize a reference timestamp using
+<code>performance.now()</code> when the video begins loading or playback
+is initiated.</li>
+<li>Call
+<code>videoElement.requestVideoFrameCallback((now, metadata) =&gt; { ... })</code>.</li>
+<li>Read the <code>metadata.presentedFrames</code> property. When
+<code>presentedFrames</code> equals <code>1</code>, capture
+<code>performance.now()</code>.</li>
+<li>Subtract the initial timestamp from the frame presentation timestamp
+to calculate the exact duration until the first frame is painted.</li>
+</ol>
+<p>The callback also provides high-resolution metadata, such as
+<code>metadata.presentationTime</code> and
+<code>metadata.expectedDisplayTime</code>, allowing sub-millisecond
+precision for the first visual render.</p>
+<h3 id="the-resource-timing-api">The Resource Timing API</h3>
+<p>To understand how the network delivery of the WebM container impacts
+paint times, the <strong>PerformanceResourceTiming</strong> API provides
+granular network metrics. By querying
+<code>performance.getEntriesByType('resource')</code>, developers can
+isolate the entry matching the <code>.webm</code> source URL.</p>
+<p>Key timestamps relevant to the first paint include:</p>
+<ul>
+<li><strong><code>responseStart</code> (Time to First Byte):</strong>
+Measures when the browser receives the first byte of the WebM file,
+containing the EBML header and video track metadata.</li>
+<li><strong><code>responseEnd</code>:</strong> Indicates when the entire
+media asset or initial requested range has finished downloading.</li>
+</ul>
+<p>Correlating <code>responseStart</code> with the timestamp gathered
+from <code>requestVideoFrameCallback()</code> reveals whether rendering
+delays stem from network latency, media decoding, or pipeline
+queuing.</p>
+<h3 id="the-performance-timeline-and-user-timing-apis">The Performance
+Timeline and User Timing APIs</h3>
+<p>The <strong>User Timing API (<code>performance.mark()</code> and
+<code>performance.measure()</code>)</strong> enables structured logging
+of custom first-paint metrics for WebM media.</p>
+<p>By placing <code>performance.mark('webm-load-start')</code> when
+requesting the media and
+<code>performance.mark('webm-first-frame-painted')</code> inside the
+first execution of <code>requestVideoFrameCallback()</code>, developers
+can generate a formal measurement via
+<code>performance.measure('webm-time-to-first-paint', 'webm-load-start', 'webm-first-frame-painted')</code>.
+These measures surface directly in browser developer tools and automated
+performance monitoring pipelines via
+<code>PerformanceObserver</code>.</p>
+<h3 id="browser-paint-apis-and-their-limitations-for-media">Browser
+Paint APIs and Their Limitations for Media</h3>
+<p>Standard document paint metrics—such as <strong>First Paint
+(FP)</strong> and <strong>First Contentful Paint (FCP)</strong> via the
+Paint Timing API—track page-level rendering and cannot distinguish
+between a text block, a background color, or a WebM media frame.</p>
+<p>Similarly, the <strong>Element Timing API</strong> can monitor the
+paint timing of static images and video poster frames using the
+<code>elementtiming</code> attribute, but it does not observe dynamic
+frame changes within the HTML5 <code>&lt;video&gt;</code> element
+itself. As a result, <code>requestVideoFrameCallback()</code> remains
+the only dedicated web platform mechanism to confirm visual output for
+WebM video content.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

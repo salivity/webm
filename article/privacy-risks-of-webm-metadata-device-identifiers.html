@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Risks of WebM Metadata Device Identifiers - webm</title>
+    <meta name="description" content="This article examines the privacy implications of embedding unique device identifiers within WebM media container metadata. It explores how hidden hardware or software signatures—such as unique segment identifiers, encoder strings, and device serials">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/privacy-risks-of-webm-metadata-device-identifiers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Privacy Risks of WebM Metadata Device Identifiers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/privacy-risks-of-webm-metadata-device-identifiers" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article examines the privacy implications of embedding unique device identifiers within WebM media container metadata. It explores how hidden hardware or software signatures—such as unique segment identifiers, encoder strings, and device serials" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="privacy-risks-of-webm-metadata-device-identifiers">Privacy Risks
+of WebM Metadata Device Identifiers</h1>
+<p>This article examines the privacy implications of embedding unique
+device identifiers within WebM media container metadata. It explores how
+hidden hardware or software signatures—such as unique segment
+identifiers, encoder strings, and device serials—can bypass standard
+browser protections, enable persistent cross-platform tracking,
+de-anonymize content creators, and facilitate behavioral profiling. The
+following sections detail how these identifiers function, the specific
+risks they pose to user privacy, and practical mitigation
+strategies.</p>
+<h2
+id="understanding-webm-metadata-and-device-identifiers">Understanding
+WebM Metadata and Device Identifiers</h2>
+<p>The WebM container format, based on Matroska (EBML), is widely used
+for delivering audio and video across the web. While its primary
+function is stream synchronization and codec configuration, WebM
+containers support numerous metadata fields. During the recording or
+encoding process, software and hardware encoders often populate these
+fields automatically.</p>
+<p>Embedded data can include:</p>
+<ul>
+<li><strong>Segment UIDs:</strong> 128-bit unique identifiers
+automatically generated to identify a media segment.</li>
+<li><strong>Muxing App and Writing App Strings:</strong> Detailed
+version numbers and build signatures of the encoding software or
+browser.</li>
+<li><strong>Hardware Signatures:</strong> Serial numbers, MAC addresses,
+or chip-level identifiers passed through by specific capture devices
+(e.g., webcams, capture cards).</li>
+<li><strong>Creation Timestamps:</strong> High-precision timestamps that
+can be correlated with network activity or local system logs.</li>
+</ul>
+<h2 id="core-privacy-considerations">Core Privacy Considerations</h2>
+<h3 id="1-persistent-tracking-bypassing-browser-defenses">1. Persistent
+Tracking Bypassing Browser Defenses</h3>
+<p>Unlike cookies, local storage, or browser caches, file metadata
+resides directly within the media binary. When a user uploads a WebM
+video to a forum, social media platform, or cloud host, these
+identifiers travel with the file. Third parties can parse this metadata
+to track the same physical device across multiple accounts, websites,
+and separate network sessions without relying on standard web tracking
+mechanisms.</p>
+<h3 id="2-de-anonymization-of-whistleblowers-and-creators">2.
+De-Anonymization of Whistleblowers and Creators</h3>
+<p>For individuals relying on pseudonyms—such as journalists, activists,
+or whistleblowers—unique device identifiers pose a severe
+deanonymization risk. A unique <code>SegmentUID</code> or specific
+encoder build hash generated by a local workstation can tie an anonymous
+video upload directly to other public files produced on the same
+machine, effectively unmasking the creator.</p>
+<h3 id="3-cross-context-and-cross-platform-fingerprinting">3.
+Cross-Context and Cross-Platform Fingerprinting</h3>
+<p>Metadata-based identifiers do not respect application boundaries. A
+WebM recorded on a desktop application and uploaded via a secure browser
+still retains the identifier generated by the native capture tool.
+Trackers can link user activity across completely separate environments
+(e.g., native desktop software, mobile apps, and web browsers) based
+solely on matching device signatures embedded in uploaded media.</p>
+<h3 id="4-immobility-and-permanence">4. Immobility and Permanence</h3>
+<p>Web tracking tokens typically have expiration dates or can be cleared
+by the user. In contrast, embedded WebM metadata is permanent unless
+explicitly stripped before distribution. Archived videos, mirrored
+files, and re-uploaded content retain their original identifiers
+indefinitely, enabling retrospective data correlation years after
+publication.</p>
+<h2 id="mitigation-strategies">Mitigation Strategies</h2>
+<p>To prevent unauthorized tracking and protect user privacy, metadata
+must be sanitized throughout the media lifecycle:</p>
+<ul>
+<li><strong>Server-Side Re-encoding and Sanitization:</strong> Web
+platforms processing user uploads should strip non-essential EBML
+elements (such as <code>SegmentUID</code>, custom tags, and application
+strings) or transcode the files through a pipeline configured to omit
+metadata.</li>
+<li><strong>Client-Side Metadata Stripping:</strong> Content creators
+should utilize tools like <code>ffmpeg</code> to clear identifying
+metadata prior to publishing:
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map_metadata</span> <span class="at">-1</span> <span class="at">-c</span> copy output.webm</span></code></pre></div></li>
+<li><strong>Encoder Privacy Standards:</strong> Developers of media
+recording software and web APIs (such as the MediaStream Recording API)
+should default to zeroed or randomized UIDs rather than deriving
+identifiers from system hardware properties.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM SourceBuffer Ready Events for Media Segments - webm</title>
+    <meta name="description" content="When streaming WebM media using the Media Source Extensions (MSE) API, feeding video or audio segments requires precise coordination with the buffer's asynchronous lifecycle. The primary event indicating that a SourceBuffer has finished processing an app">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-sourcebuffer-ready-events-for-media-segments">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM SourceBuffer Ready Events for Media Segments - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-sourcebuffer-ready-events-for-media-segments" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When streaming WebM media using the Media Source Extensions (MSE) API, feeding video or audio segments requires precise coordination with the buffer's asynchronous lifecycle. The primary event indicating that a SourceBuffer has finished processing an app" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-sourcebuffer-ready-events-for-media-segments">WebM
+SourceBuffer Ready Events for Media Segments</h1>
+<p>When streaming WebM media using the Media Source Extensions (MSE)
+API, feeding video or audio segments requires precise coordination with
+the buffer's asynchronous lifecycle. The primary event indicating that a
+<code>SourceBuffer</code> has finished processing an append operation
+and is ready for the next media segment is the <code>updateend</code>
+event. Monitoring this event, along with verifying the boolean state of
+the <code>updating</code> property, ensures that subsequent calls to
+<code>appendBuffer()</code> execute without throwing state errors.</p>
+<h2 id="the-core-event-updateend">The Core Event:
+<code>updateend</code></h2>
+<p>The <code>appendBuffer()</code> method on a <code>SourceBuffer</code>
+is asynchronous. When a WebM segment (such as an Initialization Segment
+or a Media Segment containing Clusters) is passed to
+<code>appendBuffer()</code>, the <code>SourceBuffer</code> sets its
+internal <code>updating</code> flag to <code>true</code> and begins
+parsing the byte stream.</p>
+<p>Once the parsing and appending process completes, the
+<code>SourceBuffer</code> fires the
+<strong><code>updateend</code></strong> event. This event fires in all
+terminal cases:</p>
+<ul>
+<li>After a successful append (immediately following the
+<code>update</code> event).</li>
+<li>After an aborted operation (following the <code>abort</code>
+event).</li>
+<li>After an error occurs during parsing or appending (following the
+<code>error</code> event).</li>
+</ul>
+<p>Because <code>updateend</code> consistently signals the end of the
+update cycle regardless of success or failure, it is the primary event
+used to trigger the transmission or appending of the next WebM segment
+in a streaming queue.</p>
+<h2 id="the-update-event">The <code>update</code> Event</h2>
+<p>The <strong><code>update</code></strong> event fires specifically
+when <code>appendBuffer()</code> or <code>remove()</code> completes
+successfully. While <code>update</code> indicates a successful write to
+the buffer, standard implementations rely on <code>updateend</code>
+because it cleanly encapsulates the finalization of the asynchronous
+cycle. If you need to distinguish between a successful append and a
+failed append before proceeding, listen for <code>update</code> to
+confirm success and <code>error</code> to handle failures, or handle
+both prior to the final <code>updateend</code> trigger.</p>
+<h2 id="verifying-readiness-with-the-updating-property">Verifying
+Readiness with the <code>updating</code> Property</h2>
+<p>Even when listening to events, the <code>SourceBuffer.updating</code>
+property serves as the definitive synchronous check:</p>
+<ul>
+<li><code>updating === true</code>: An append or remove operation is
+currently in progress. Calling <code>appendBuffer()</code> now will
+throw an <code>InvalidStateError</code>.</li>
+<li><code>updating === false</code>: The buffer is idle and ready to
+accept the next chunk of data.</li>
+</ul>
+<p>Before pushing a new WebM segment, your application logic should
+verify that <code>sourceBuffer.updating</code> is
+<code>false</code>.</p>
+<h2 id="parent-mediasource-prerequisites">Parent
+<code>MediaSource</code> Prerequisites</h2>
+<p>For a <code>SourceBuffer</code> to accept data, the parent
+<code>MediaSource</code> instance must also be in an active state:</p>
+<ul>
+<li><strong><code>sourceopen</code> Event</strong>: Media segments
+cannot be appended until the <code>MediaSource</code> object fires
+<code>sourceopen</code> and its <code>readyState</code> property is set
+to <code>'open'</code>.</li>
+<li>If the <code>MediaSource</code> transitions to <code>'ended'</code>
+or <code>'closed'</code>, no further segments can be appended until it
+re-opens.</li>
+</ul>
+<h2 id="standard-segment-queuing-pattern">Standard Segment Queuing
+Pattern</h2>
+<p>Because media chunks often download faster than the
+<code>SourceBuffer</code> can parse them, a segment queue pattern is
+standard:</p>
+<ol type="1">
+<li>Push downloaded WebM chunks into an in-memory array (queue).</li>
+<li>Define a function to process the queue: check if
+<code>!sourceBuffer.updating</code> and
+<code>queue.length &gt; 0</code>.</li>
+<li>If ready, shift the next segment from the queue and call
+<code>sourceBuffer.appendBuffer(segment)</code>.</li>
+<li>Attach an event listener to <code>sourceBuffer</code> for
+<code>updateend</code> that calls the queue processor again to send the
+next segment.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labeling Commentary Tracks in WebM Metadata - webm</title>
+    <meta name="description" content="WebM relies on a subset of the Matroska (MKV) container specification to manage audio and video streams, identifying secondary language commentary tracks through specific metadata elements inside the track header. By defining elements such as the track t">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/labeling-commentary-tracks-in-webm-metadata">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Labeling Commentary Tracks in WebM Metadata - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/labeling-commentary-tracks-in-webm-metadata" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM relies on a subset of the Matroska (MKV) container specification to manage audio and video streams, identifying secondary language commentary tracks through specific metadata elements inside the track header. By defining elements such as the track t" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="labeling-commentary-tracks-in-webm-metadata">Labeling Commentary
+Tracks in WebM Metadata</h1>
+<p>WebM relies on a subset of the Matroska (MKV) container specification
+to manage audio and video streams, identifying secondary language
+commentary tracks through specific metadata elements inside the track
+header. By defining elements such as the track type, descriptive naming
+strings, language codes, and specific track flags within an Extensible
+Binary Meta Language (EBML) structure, media players can correctly
+distinguish, label, and offer commentary audio alongside the primary
+mix.</p>
+<h3 id="the-trackentry-element">The TrackEntry Element</h3>
+<p>In a WebM container, every stream is defined within a
+<code>TrackEntry</code> master element located inside the
+<code>Tracks</code> header block. Commentary tracks are designated as
+audio by setting the <code>TrackType</code> element value to
+<code>2</code> (the standard Matroska identifier for audio).</p>
+<h3 id="descriptive-naming">Descriptive Naming</h3>
+<p>To make the track recognizable in user interfaces (such as audio
+selection menus in web browsers and media players), the
+<code>Name</code> element is utilized:</p>
+<ul>
+<li><strong>Element ID:</strong> <code>0x536E</code>
+(<code>Name</code>)</li>
+<li><strong>Value:</strong> A UTF-8 string explicitly describing the
+track's context (e.g., "Director's Commentary", "Cast Commentary
+(Spanish)").</li>
+</ul>
+<p>This label provides the immediate human-readable title shown to
+viewers selecting an alternative stream.</p>
+<h3 id="language-tagging">Language Tagging</h3>
+<p>WebM defines the language of an audio track using standard language
+descriptors to allow automated selection based on player locale
+settings:</p>
+<ul>
+<li><strong><code>Language</code> (<code>0x22B59C</code>):</strong> The
+legacy Matroska tag containing an ISO 639-2 three-letter language code
+(such as <code>eng</code> for English, <code>spa</code> for Spanish, or
+<code>fra</code> for French).</li>
+<li><strong><code>LanguageBCP47</code> (<code>0x22B59D</code>):</strong>
+The modern, preferred element adhering to BCP 47 syntax (such as
+<code>en</code>, <code>es-419</code>, or <code>fr-CA</code>), allowing
+more granular regional identification for secondary language
+tracks.</li>
+</ul>
+<h3 id="track-flags-and-roles">Track Flags and Roles</h3>
+<p>To prevent secondary commentary from clashing with the primary
+feature audio upon playback initiation, specific binary flags must be
+configured within the <code>TrackEntry</code>:</p>
+<ul>
+<li><strong><code>FlagDefault</code> (<code>0x88</code>):</strong> Must
+be set to <code>0</code> (False). This ensures players do not
+automatically select the commentary track over the main audio stream
+when loading the media file.</li>
+<li><strong><code>FlagForced</code> (<code>0x55AA</code>):</strong> Set
+to <code>0</code> (False), designating that the track is not required
+for fundamental comprehension.</li>
+<li><strong><code>FlagCommentary</code> (<code>0x55EE</code>):</strong>
+Introduced in newer Matroska specifications and supported by modern WebM
+parsers, this boolean flag formally designates the audio stream as
+supplemental commentary.</li>
+</ul>
+<h3 id="muxing-with-ffmpeg">Muxing with FFmpeg</h3>
+<p>When authoring WebM files, command-line tools like FFmpeg translate
+these metadata parameters into the corresponding Matroska EBML elements
+via track metadata and disposition tags:</p>
+<p><code>-metadata:s:a:1 title="Director's Commentary" -metadata:s:a:1 language=spa -disposition:s:a:1 commentary -disposition:s:a:1 default=0</code></p>
+<p>This configuration maps the secondary audio stream (<code>a:1</code>)
+to a Spanish language tag, applies the user-facing title, unsets default
+playback, and writes the proper commentary disposition directly to the
+WebM metadata block.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

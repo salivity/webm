@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seamless WebM Video Looping for HTML5 - webm</title>
+    <meta name="description" content="Achieving a seamless, glitch-free loop with a WebM file in an HTML5 <video loop> element requires strict technical synchronization between container metadata, internal codecs, and playback timestamps. This article outlines the essential structural and en">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/seamless-webm-video-looping-for-html5">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Seamless WebM Video Looping for HTML5 - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/seamless-webm-video-looping-for-html5" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Achieving a seamless, glitch-free loop with a WebM file in an HTML5 <video loop> element requires strict technical synchronization between container metadata, internal codecs, and playback timestamps. This article outlines the essential structural and en" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="seamless-webm-video-looping-for-html5">Seamless WebM Video
+Looping for HTML5</h1>
+<p>Achieving a seamless, glitch-free loop with a WebM file in an HTML5
+<code>&lt;video loop&gt;</code> element requires strict technical
+synchronization between container metadata, internal codecs, and
+playback timestamps. This article outlines the essential structural and
+encoding requirements—including audio-video duration parity, keyframe
+boundaries, container metadata optimization, and codec delay
+management—necessary to eliminate buffering pauses, audio pops, and
+frame freezes during playback restarts.</p>
+<h3 id="1-identical-audio-and-video-track-durations">1. Identical Audio
+and Video Track Durations</h3>
+<p>The primary cause of stuttering during an HTML5 loop is a duration
+mismatch between the audio and video streams. If an audio track is even
+a few milliseconds longer or shorter than the video track, the browser's
+media engine will pause on the last video frame waiting for the audio to
+finish, or cut the audio abruptly.</p>
+<ul>
+<li>Both elementary streams must terminate at the exact same
+millisecond.</li>
+<li>If audio is not strictly required, the audio track should be removed
+completely rather than muted.</li>
+</ul>
+<h3 id="2-closed-group-of-pictures-gop-and-starting-keyframes">2. Closed
+Group of Pictures (GOP) and Starting Keyframes</h3>
+<p>For a WebM file (using VP8, VP9, or AV1) to loop instantaneously, the
+browser must decode the first frame without relying on data from
+previous frames.</p>
+<ul>
+<li><strong>Initial Keyframe:</strong> The very first frame (Frame 0)
+must be a keyframe (intra-frame/IDR).</li>
+<li><strong>Closed GOP:</strong> The stream must not utilize "open GOP"
+structures where leading frames depend on future frames across the
+boundary.</li>
+<li><strong>Cadence:</strong> Ensure the end of the video does not end
+on a long sequence of non-reference frames that delay the decoders from
+resetting to the start.</li>
+</ul>
+<h3 id="3-absolute-zero-starting-timestamps">3. Absolute Zero Starting
+Timestamps</h3>
+<p>All presentation timestamps (PTS) and decode timestamps (DTS) must
+start cleanly at <code>00:00:00.000</code>.</p>
+<ul>
+<li>Negative presentation timestamps (often caused by B-frame reordering
+or audio pre-roll) cause browser playback pipelines to hesitate while
+calculating the origin point on repeat.</li>
+<li>Timestamps for all tracks must be monotonically increasing and reset
+cleanly without drift.</li>
+</ul>
+<h3 id="4-codec-delay-and-audio-padding-management">4. Codec Delay and
+Audio Padding Management</h3>
+<p>WebM audio typically uses Opus or Vorbis. These lossy audio codecs
+inherently introduce encoder delay and padding, which injects
+micro-silence at the start and end of a file.</p>
+<ul>
+<li><strong>Opus Codec Delay:</strong> Opus uses a mandatory pre-skip
+(usually 312 samples / 6.5ms). The WebM container must write this value
+correctly in the <code>CodecDelay</code> element of the audio track
+entry so the browser can discard the priming samples seamlessly.</li>
+<li><strong>Audio Trimming:</strong> Ensure the end of the audio track
+is trimmed cleanly using exact sample counts rather than relying on
+container-level truncation, which can cause audible clicks or pops at
+the loop point.</li>
+</ul>
+<h3 id="5-proper-ebml-and-cluster-structure">5. Proper EBML and Cluster
+Structure</h3>
+<p>The WebM container, based on Matroska (EBML), must be structured so
+the browser’s demuxer can instantly seek back to the beginning without
+re-parsing network buffers.</p>
+<ul>
+<li><strong>SeekHead and Cues:</strong> A populated
+<code>SeekHead</code> pointing to a <code>Cues</code> element allows
+instant index retrieval.</li>
+<li><strong>Cluster Boundaries:</strong> Ensure each cluster begins with
+a keyframe. Small, consistently sized clusters (around 1–2 seconds)
+reduce memory overhead and decoding latency when the player jumps back
+to the initial byte offset.</li>
+<li><strong>Accurate Duration Tag:</strong> The <code>Segment</code>
+info element must contain an exact <code>Duration</code> value that
+perfectly mirrors the actual decoded duration of the stream.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

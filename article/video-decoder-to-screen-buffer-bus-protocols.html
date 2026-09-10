@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Decoder to Screen Buffer Bus Protocols - webm</title>
+    <meta name="description" content="Hardware decoders processing WebM containers—typically decoding VP8, VP9, or AV1 video streams—rely on high-throughput internal and peripheral bus protocols to transfer uncompressed frames to display screen buffers. Because raw, high-resolution video">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/video-decoder-to-screen-buffer-bus-protocols">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Video Decoder to Screen Buffer Bus Protocols - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/video-decoder-to-screen-buffer-bus-protocols" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Hardware decoders processing WebM containers—typically decoding VP8, VP9, or AV1 video streams—rely on high-throughput internal and peripheral bus protocols to transfer uncompressed frames to display screen buffers. Because raw, high-resolution video" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="video-decoder-to-screen-buffer-bus-protocols">Video Decoder to
+Screen Buffer Bus Protocols</h1>
+<p>Hardware decoders processing WebM containers—typically decoding VP8,
+VP9, or AV1 video streams—rely on high-throughput internal and
+peripheral bus protocols to transfer uncompressed frames to display
+screen buffers. Because raw, high-resolution video streams demand
+gigabytes per second of bandwidth, these transfers bypass the CPU using
+Direct Memory Access (DMA) over system interconnects. The primary
+protocols facilitating this movement include ARM AMBA (AXI) on
+integrated System-on-Chips (SoCs), internal proprietary memory crossbars
+within dedicated GPUs, and PCIe across discrete hardware components.</p>
+<h3 id="arm-amba-axiace-in-socs">ARM AMBA (AXI/ACE) in SoCs</h3>
+<p>In mobile devices, smart TVs, and single-board computers, hardware
+video processing units (VPUs) share memory with the CPU and GPU through
+unified system architecture. The dominant protocols in these
+environments belong to the ARM Advanced Microcontroller Bus Architecture
+(AMBA) family:</p>
+<ul>
+<li><strong>AXI4 (Advanced eXtensible Interface):</strong> Decoders act
+as AXI master devices, writing decoded planar YUV (such as NV12 or P010)
+directly into system RAM via burst transfers.</li>
+<li><strong>ACE (AXI Coherency Extensions):</strong> Manages
+hardware-level cache coherency, ensuring the display processing unit
+(DPU) or GPU reads the most recent frame data written by the VPU without
+stalling the CPU to flush caches.</li>
+<li><strong>Network-on-Chip (NoC):</strong> Modern SoCs route AXI
+transactions across an integrated NoC interconnect, prioritizing video
+decoder traffic with Quality of Service (QoS) flags to prevent frame
+drops in the screen buffer.</li>
+</ul>
+<h3 id="gpu-memory-fabrics-and-crossbars">GPU Memory Fabrics and
+Crossbars</h3>
+<p>When WebM decoding occurs on a graphics card, the fixed-function
+decoding ASIC (such as NVIDIA NVDEC, AMD VCN, or Intel Quick Sync)
+transfers frames directly to local Video RAM (VRAM) rather than system
+memory:</p>
+<ul>
+<li><strong>NVIDIA Crossbar and NVLink:</strong> Decoders push raw pixel
+buffers directly across crossbar switches into the High-Bandwidth Memory
+(HBM) or GDDR framebuffers managed by the display engine.</li>
+<li><strong>AMD Infinity Fabric:</strong> Connects dedicated video codec
+blocks to memory controllers and the display controller engine (DCE/DCN)
+with low latency, preserving power by avoiding system-level
+interconnects.</li>
+<li><strong>Intel Xe Memory Fabric:</strong> Directs decoded output to
+local memory tiles where the display engine reads the scan-out buffer
+directly.</li>
+</ul>
+<h3 id="pci-express-pcie">PCI Express (PCIe)</h3>
+<p>PCIe serves as the physical and logical link when data must traverse
+physically separate processing domains:</p>
+<ul>
+<li><strong>Host-to-GPU Transfers:</strong> If a hardware accelerator
+card decodes the WebM stream, PCIe transfers the reconstructed frames
+into host RAM or directly into a primary GPU’s framebuffer using
+Peer-to-Peer (P2P) DMA.</li>
+<li><strong>Bandwidth Management:</strong> With modern PCIe revisions
+(Gen 4 and Gen 5), standard <span class="math inline">\(x4\)</span> to
+<span class="math inline">\(x16\)</span> lane configurations provide
+tens of gigabytes per second, enabling multi-stream 4K and 8K WebM frame
+delivery to screen buffers with negligible latency.</li>
+</ul>
+<h3 id="dma-and-unified-memory-architecture">DMA and Unified Memory
+Architecture</h3>
+<p>The physical buses are driven by DMA engines managed by kernel-level
+subsystems, such as Linux DMA-BUF or Android Gralloc. The hardware
+decoder generates raw YUV frames and commits them via the bus controller
+directly into physical memory addresses allocated for the screen buffer
+or compositor. The display controller reads these buffers over the same
+interconnect to generate the raster signal for the display panel,
+achieving a zero-copy data path across the bus.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

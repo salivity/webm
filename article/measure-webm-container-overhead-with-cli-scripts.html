@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measure WebM Container Overhead with CLI Scripts - webm</title>
+    <meta name="description" content="This article outlines how to measure the precise container overhead of WebM files across short clips using command-line scripts. For short video segments, the Matroska-derived EBML metadata, cues, and cluster headers in a WebM file can consume a dispropo">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/measure-webm-container-overhead-with-cli-scripts">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Measure WebM Container Overhead with CLI Scripts - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/measure-webm-container-overhead-with-cli-scripts" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article outlines how to measure the precise container overhead of WebM files across short clips using command-line scripts. For short video segments, the Matroska-derived EBML metadata, cues, and cluster headers in a WebM file can consume a dispropo" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="measure-webm-container-overhead-with-cli-scripts">Measure WebM
+Container Overhead with CLI Scripts</h1>
+<p>This article outlines how to measure the precise container overhead
+of WebM files across short clips using command-line scripts. For short
+video segments, the Matroska-derived EBML metadata, cues, and cluster
+headers in a WebM file can consume a disproportionate amount of the
+total file size compared to the actual video and audio payloads. By
+using standard CLI utilities like FFprobe, MKVToolNix, and Bash, you can
+isolate payload bytes from container structures to calculate exact
+overhead metrics across your media libraries.</p>
+<h3 id="understanding-webm-container-overhead">Understanding WebM
+Container Overhead</h3>
+<p>WebM container overhead is the difference between the total file size
+on disk and the combined size of all multiplexed audio, video, and
+subtitle packets:</p>
+<p><span class="math display">\[\text{Overhead (bytes)} = \text{Total
+File Size} - \sum \text{Packet Sizes}\]</span></p>
+<p><span class="math display">\[\text{Overhead Percentage} = \left(
+\frac{\text{Overhead (bytes)}}{\text{Total File Size}} \right) \times
+100\]</span></p>
+<p>On short duration files (e.g., under 5 seconds), this overhead
+frequently exceeds 5% to 15% of the total bit budget due to fixed-size
+initialization headers and frequent cluster timecodes.</p>
+<h3 id="method-1-precise-extraction-via-ffprobe-and-awk">Method 1:
+Precise Extraction via FFprobe and Awk</h3>
+<p>The most universal method uses <code>ffprobe</code> to sum the exact
+size of every demuxed media packet, and then compares that to the
+filesystem size via <code>stat</code> or <code>wc</code>.</p>
+<h4 id="single-file-command">Single-File Command</h4>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">TOTAL_BYTES</span><span class="op">=</span><span class="va">$(</span><span class="fu">wc</span> <span class="at">-c</span> <span class="op">&lt;</span> <span class="st">&quot;clip.webm&quot;</span><span class="va">)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">PAYLOAD_BYTES</span><span class="op">=</span><span class="va">$(</span><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-show_entries</span> packet=size <span class="at">-of</span> csv=p=0 <span class="st">&quot;clip.webm&quot;</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;{sum += $1} END {print sum}&#39;</span><span class="va">)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">OVERHEAD_BYTES</span><span class="op">=</span><span class="va">$((TOTAL_BYTES</span> <span class="op">-</span> <span class="va">PAYLOAD_BYTES))</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-v</span> total=<span class="st">&quot;</span><span class="va">$TOTAL_BYTES</span><span class="st">&quot;</span> <span class="at">-v</span> payload=<span class="st">&quot;</span><span class="va">$PAYLOAD_BYTES</span><span class="st">&quot;</span> <span class="at">-v</span> overhead=<span class="st">&quot;</span><span class="va">$OVERHEAD_BYTES</span><span class="st">&quot;</span> <span class="st">&#39;BEGIN {</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="st">    printf &quot;Total Size:      %d bytes\n&quot;, total;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="st">    printf &quot;Payload Size:    %d bytes\n&quot;, payload;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">    printf &quot;Overhead:        %d bytes (%.2f%%)\n&quot;, overhead, (overhead / total) * 100;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="st">}&#39;</span></span></code></pre></div>
+<h3 id="method-2-batch-analysis-script-across-short-clips">Method 2:
+Batch Analysis Script Across Short Clips</h3>
+<p>To analyze a directory of short WebM clips, save the following Bash
+script as <code>measure_webm_overhead.sh</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">DIRECTORY</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${1</span><span class="op">:-</span>.<span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&quot;%-30s %-12s %-12s %-12s %-10s\n&quot;</span> <span class="st">&quot;File&quot;</span> <span class="st">&quot;Total&quot;</span> <span class="st">&quot;Payload&quot;</span> <span class="st">&quot;Overhead&quot;</span> <span class="st">&quot;Overhead %&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&quot;%s\n&quot;</span> <span class="st">&quot;--------------------------------------------------------------------------------&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> file <span class="kw">in</span> <span class="st">&quot;</span><span class="va">$DIRECTORY</span><span class="st">&quot;</span>/<span class="pp">*</span>.webm<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">[[</span> <span class="ot">-f</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">continue</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">total_size</span><span class="op">=</span><span class="va">$(</span><span class="fu">wc</span> <span class="at">-c</span> <span class="op">&lt;</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">tr</span> <span class="at">-d</span> <span class="st">&#39; &#39;</span><span class="va">)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Extract and sum packet sizes</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">payload_size</span><span class="op">=</span><span class="va">$(</span><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> v:0<span class="pp">?</span> <span class="at">-select_streams</span> a:0<span class="pp">?</span> <span class="dt">\</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">-show_entries</span> packet=size <span class="at">-of</span> csv=p=0 <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">awk</span> <span class="st">&#39;{s+=$1} END {print (s==&quot;&quot;) ? 0 : s}&#39;</span><span class="va">)</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">overhead_bytes</span><span class="op">=</span><span class="va">$((total_size</span> <span class="op">-</span> <span class="va">payload_size))</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">awk</span> <span class="at">-v</span> f=<span class="st">&quot;</span><span class="va">$(</span><span class="fu">basename</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span><span class="va">)</span><span class="st">&quot;</span> <span class="at">-v</span> tot=<span class="st">&quot;</span><span class="va">$total_size</span><span class="st">&quot;</span> <span class="at">-v</span> pay=<span class="st">&quot;</span><span class="va">$payload_size</span><span class="st">&quot;</span> <span class="at">-v</span> ovh=<span class="st">&quot;</span><span class="va">$overhead_bytes</span><span class="st">&quot;</span> <span class="st">&#39;BEGIN {</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="st">        pct = (tot &gt; 0) ? (ovh / tot) * 100 : 0;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="st">        printf &quot;%-30.30s %-12d %-12d %-12d %-9.2f%%\n&quot;, f, tot, pay, ovh, pct;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="st">    }&#39;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p>Make the script executable and run it against a directory containing
+your clips:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> +x measure_webm_overhead.sh</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./measure_webm_overhead.sh</span> ./clips</span></code></pre></div>
+<h3 id="method-3-using-mkvtoolnix-for-ebml-level-precision">Method 3:
+Using MKVToolNix for EBML-Level Precision</h3>
+<p>Because WebM is a subset of Matroska, <code>mkvmerge</code> can
+output structured identification JSON that breaks down stream data
+without relying on FFmpeg demuxers.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-J</span> <span class="st">&quot;clip.webm&quot;</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="st">  .container.properties.size as $total |</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="st">  ([.tracks[].properties.tag_number_of_bytes // 0] | add) as $tagged_payload |</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="st">  {</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="st">    total_size: $total,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="st">    payload_size: $tagged_payload,</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="st">    overhead_bytes: ($total - $tagged_payload),</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="st">    overhead_percent: ((($total - $tagged_payload) / $total) * 100)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="st">  }</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;</span></span></code></pre></div>
+<p><em>Note: This method requires that the track headers contain
+<code>tag_number_of_bytes</code> statistics, which standard encoders
+like FFmpeg write by default.</em></p>
+<h3 id="script-optimization-tips-for-short-clips">Script Optimization
+Tips for Short Clips</h3>
+<ul>
+<li><strong>Cluster Intervals:</strong> WebM places video frames into
+clusters. By default, frequent keyframes (such as every 1 second in
+short looping animations) create many small clusters, each adding a
+12-to-30 byte header plus timecode elements.</li>
+<li><strong>Cue Points:</strong> WebM index tables (Cues) allow seeking.
+For clips under 3 seconds, disabling cues during encoding via
+<code>-reserve_index_space 0</code> in FFmpeg eliminates substantial
+static container overhead.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handling Opus Frame Sizes in WebM Containers - webm</title>
+    <meta name="description" content="The WebM container format efficiently packages Opus audio streams containing frame sizes from 2.5ms to 60ms by delegating frame duration parsing to the codec layer while maintaining stream synchronization through container-level timestamping. Because Web">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/handling-opus-frame-sizes-in-webm-containers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Handling Opus Frame Sizes in WebM Containers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/handling-opus-frame-sizes-in-webm-containers" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format efficiently packages Opus audio streams containing frame sizes from 2.5ms to 60ms by delegating frame duration parsing to the codec layer while maintaining stream synchronization through container-level timestamping. Because Web" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="handling-opus-frame-sizes-in-webm-containers">Handling Opus
+Frame Sizes in WebM Containers</h1>
+<p>The WebM container format efficiently packages Opus audio streams
+containing frame sizes from 2.5ms to 60ms by delegating frame duration
+parsing to the codec layer while maintaining stream synchronization
+through container-level timestamping. Because WebM is a restricted
+subset of the Matroska (EBML) specification, it encapsulates Opus
+packets inside standard block structures without requiring
+container-level recalculations for varying frame durations. This article
+details the mechanics of Opus packet encapsulation, container timestamp
+scaling, and how decoders resolve dynamic frame durations within
+WebM.</p>
+<h3 id="opus-self-delimiting-architecture-and-the-toc-byte">Opus
+Self-Delimiting Architecture and the TOC Byte</h3>
+<p>Opus does not rely on the container to define whether a frame is
+2.5ms, 5ms, 10ms, 20ms, 40ms, or 60ms long. Instead, every Opus packet
+begins with a Table of Contents (TOC) byte.</p>
+<p>The TOC byte encodes:</p>
+<ul>
+<li><strong>Configuration Number (Bits 0–4):</strong> Dictates the
+operating mode (SILK, Hybrid, or CELT), the audio bandwidth, and the
+specific frame duration (2.5ms to 60ms).</li>
+<li><strong>Stereo Flag (Bit 5):</strong> Indicates mono or stereo
+channels.</li>
+<li><strong>Frame Count Code (Bits 6–7):</strong> Specifies whether the
+packet contains a single frame, two equal-sized frames, two
+variable-sized frames, or an arbitrary number of frames (up to 120ms
+total audio duration).</li>
+</ul>
+<p>Because the internal Opus header is entirely self-describing, the
+WebM container treats each Opus packet as an opaque byte sequence. The
+container does not need dedicated metadata fields to signal frame size
+transitions.</p>
+<h3 id="webm-block-encapsulation">WebM Block Encapsulation</h3>
+<p>WebM encapsulates Opus packets primarily inside
+<code>SimpleBlock</code> elements (or standard <code>Block</code>
+elements inside a <code>BlockGroup</code>).</p>
+<ol type="1">
+<li><strong>Payload Mapping:</strong> A single WebM
+<code>SimpleBlock</code> typically carries exactly one Opus packet. Even
+if that Opus packet consists of multiple internal frames (such as three
+20ms frames to form a 60ms packet), WebM stores the entire packet
+payload directly within the block data area without extra delimiter
+bytes.</li>
+<li><strong>Header Overhead:</strong> A <code>SimpleBlock</code> carries
+a track number, a relative timestamp (signed 16-bit integer), and flags
+(such as keyframe indication, though all Opus frames are technically
+independent packets without inter-frame dependencies).</li>
+</ol>
+<p>Because WebM uses this simple mapping, audio frames with varying
+durations do not disrupt container parsing. A 2.5ms low-latency frame
+and a 60ms high-efficiency frame use identical WebM structural
+framing.</p>
+<h3 id="timestamp-scaling-and-precision">Timestamp Scaling and
+Precision</h3>
+<p>Matroska and WebM use an EBML element called
+<code>TimestampScale</code> (historically <code>TimecodeScale</code>)
+within the <code>Info</code> element to determine container time
+precision. By default, this is set to 1,000,000 nanoseconds (1
+millisecond).</p>
+<ul>
+<li><strong>Container Presentation Timestamps (PTS):</strong> Each
+<code>SimpleBlock</code> specifies a timestamp offset relative to its
+parent <code>Cluster</code>. With a 1ms <code>TimestampScale</code>,
+fractional frame durations (such as 2.5ms) cannot always be represented
+as an exact integer timestamp at the container level without rounding or
+using a finer <code>TimestampScale</code>.</li>
+<li><strong>Sample-Accurate Decoding:</strong> WebM decoders avoid drift
+caused by container timestamp rounding by relying on the internal Opus
+sample clock (which consistently operates on a 48 kHz reference clock).
+The decoder uses the container timestamp to seek to the correct
+approximate location, but advances audio playback continuously based on
+the exact sample count decoded from the Opus TOC headers.</li>
+</ul>
+<h3 id="handling-dynamic-frame-size-switching">Handling Dynamic Frame
+Size Switching</h3>
+<p>Opus allows dynamic switching of frame sizes on a packet-by-packet
+basis to adapt to network congestion or content changes (e.g., switching
+from 20ms frames during steady speech to 2.5ms frames during rapid
+transients).</p>
+<p>Within WebM, this transition is seamless:</p>
+<ol type="1">
+<li><strong>No Track Re-initialization:</strong> The WebM
+<code>TrackEntry</code> for Opus includes the <code>CodecPrivate</code>
+element containing the mandatory identification header
+(<code>OpusHead</code>). This header sets the channel count, pre-skip,
+and original sample rate, none of which change when frame duration
+changes.</li>
+<li><strong>Sequential Ingestion:</strong> The demuxer reads consecutive
+<code>SimpleBlock</code> elements, hands the raw payload to the Opus
+decoder, and the decoder reads the TOC byte to instantiate the correct
+frame sizing buffer on the fly.</li>
+</ol>
+<p>By separating packet duration identification (handled inside the Opus
+bitstream) from temporal synchronization (handled by WebM Cluster and
+Block timestamps), WebM supports the full range of 2.5ms to 60ms Opus
+frames without structural modifications or parsing overhead.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Web Servers for WebM MIME Types - webm</title>
+    <meta name="description" content="Serving WebM video and audio files correctly requires your web server to send the proper Multipurpose Internet Mail Extensions (MIME) types in HTTP response headers. If these headers are missing or misconfigured, web browsers may fail to play media inlin">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/configure-web-servers-for-webm-mime-types">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Configure Web Servers for WebM MIME Types - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/configure-web-servers-for-webm-mime-types" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Serving WebM video and audio files correctly requires your web server to send the proper Multipurpose Internet Mail Extensions (MIME) types in HTTP response headers. If these headers are missing or misconfigured, web browsers may fail to play media inlin" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="configure-web-servers-for-webm-mime-types">Configure Web Servers
+for WebM MIME Types</h1>
+<p>Serving WebM video and audio files correctly requires your web server
+to send the proper Multipurpose Internet Mail Extensions (MIME) types in
+HTTP response headers. If these headers are missing or misconfigured,
+web browsers may fail to play media inline, encounter seeking errors, or
+force the user to download the file instead. This guide covers the
+correct MIME definitions for the WebM format and provides
+straightforward configuration steps for Apache, Nginx, Microsoft IIS,
+and Caddy to ensure automated, accurate delivery.</p>
+<h2 id="standard-webm-mime-types">Standard WebM MIME Types</h2>
+<p>When serving WebM content, use the following standardized MIME
+types:</p>
+<ul>
+<li><strong>Video (<code>.webm</code> with video stream):</strong>
+<code>video/webm</code></li>
+<li><strong>Audio (<code>.weba</code> or audio-only
+<code>.webm</code>):</strong> <code>audio/webm</code></li>
+</ul>
+<h2 id="apache-http-server">Apache HTTP Server</h2>
+<p>Apache maps extensions to MIME types using either the main server
+configuration files (<code>httpd.conf</code> /
+<code>apache2.conf</code>) or directory-level <code>.htaccess</code>
+files.</p>
+<h3 id="using-htaccess-or-httpdconf">Using <code>.htaccess</code> or
+<code>httpd.conf</code></h3>
+<p>Add the <code>AddType</code> directives inside your
+<code>.htaccess</code> file or within the
+<code>&lt;VirtualHost&gt;</code> / <code>&lt;Directory&gt;</code> block
+of your main configuration:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode apache"><code class="sourceCode apache"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>AddType<span class="st"> video/webm .webm</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>AddType<span class="st"> audio/webm .weba</span></span></code></pre></div>
+<h3 id="using-mimetypes">Using <code>mime.types</code></h3>
+<p>If Apache loads an external <code>mime.types</code> file (typically
+via <code>mod_mime</code>), you can append the mappings directly:</p>
+<pre class="text"><code>video/webm    webm
+audio/webm    weba</code></pre>
+<p>Reload Apache to apply changes:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2   <span class="co"># Debian/Ubuntu</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload httpd     <span class="co"># RHEL/CentOS</span></span></code></pre></div>
+<h2 id="nginx">Nginx</h2>
+<p>Nginx determines MIME types through the <code>mime.types</code> file
+included within the <code>http</code> block of
+<code>nginx.conf</code>.</p>
+<h3 id="updating-mimetypes">Updating <code>mime.types</code></h3>
+<p>Open <code>/etc/nginx/mime.types</code> and ensure the following
+lines exist inside the <code>types { ... }</code> block:</p>
+<pre class="nginx"><code>types {
+    video/webm                            webm;
+    audio/webm                            weba;
+}</code></pre>
+<h3 id="adding-directly-to-server-blocks">Adding Directly to Server
+Blocks</h3>
+<p>If you cannot edit the global <code>mime.types</code> file, add the
+mapping inside your specific <code>server</code> or
+<code>location</code> block in <code>nginx.conf</code>:</p>
+<pre class="nginx"><code>location ~* \.webm$ {
+    add_header Content-Type video/webm;
+}
+
+location ~* \.weba$ {
+    add_header Content-Type audio/webm;
+}</code></pre>
+<p>Test the configuration and reload Nginx:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> nginx <span class="at">-t</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload nginx</span></code></pre></div>
+<h2 id="microsoft-iis">Microsoft IIS</h2>
+<p>In Microsoft Internet Information Services (IIS), you can configure
+MIME types using the graphical IIS Manager or by modifying the
+<code>web.config</code> file in your application's root directory.</p>
+<h3 id="using-webconfig">Using <code>web.config</code></h3>
+<p>Add the static content mappings inside the
+<code>&lt;system.webServer&gt;</code> section:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode xml"><code class="sourceCode xml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">configuration</span>&gt;</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>   &lt;<span class="kw">system.webServer</span>&gt;</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">staticContent</span>&gt;</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>         &lt;<span class="kw">remove</span> <span class="ot">fileExtension=</span><span class="st">&quot;.webm&quot;</span> /&gt;</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>         &lt;<span class="kw">mimeMap</span> <span class="ot">fileExtension=</span><span class="st">&quot;.webm&quot;</span> <span class="ot">mimeType=</span><span class="st">&quot;video/webm&quot;</span> /&gt;</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>         &lt;<span class="kw">remove</span> <span class="ot">fileExtension=</span><span class="st">&quot;.weba&quot;</span> /&gt;</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>         &lt;<span class="kw">mimeMap</span> <span class="ot">fileExtension=</span><span class="st">&quot;.weba&quot;</span> <span class="ot">mimeType=</span><span class="st">&quot;audio/webm&quot;</span> /&gt;</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      &lt;/<span class="kw">staticContent</span>&gt;</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>   &lt;/<span class="kw">system.webServer</span>&gt;</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">configuration</span>&gt;</span></code></pre></div>
+<p><em>(Note: The <code>&lt;remove&gt;</code> tags prevent duplicate
+mapping errors if the MIME type is already defined at the global server
+level.)</em></p>
+<h2 id="caddy">Caddy</h2>
+<p>Modern versions of Caddy detect standard WebM MIME types
+automatically. To explicitly override or guarantee the header, use the
+<code>header</code> directive in your <code>Caddyfile</code>:</p>
+<pre class="caddy"><code>example.com {
+    root * /var/www/html
+    file_server
+
+    @webm path *.webm
+    header @webm Content-Type video/webm
+
+    @weba path *.weba
+    header @weba Content-Type audio/webm
+}</code></pre>
+<p>Reload Caddy to apply changes:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">caddy</span> reload</span></code></pre></div>
+<h2 id="verifying-the-configuration">Verifying the Configuration</h2>
+<p>To verify that your server outputs the correct
+<code>Content-Type</code> header, run a <code>curl</code> request
+against a hosted WebM file:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-I</span> https://example.com/media/sample.webm</span></code></pre></div>
+<p>Inspect the output to confirm the header is present:</p>
+<pre class="http"><code>HTTP/2 200
+content-type: video/webm
+...</code></pre></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

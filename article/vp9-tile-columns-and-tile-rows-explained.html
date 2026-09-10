@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Tile Columns and Tile Rows Explained - webm</title>
+    <meta name="description" content="The -tile-columns and -tile-rows options in WebM VP9 encoding enable multi-threaded encoding and decoding by partitioning video frames into independent rectangular grids called tiles. By splitting frames into parallel processing units, these settings sig">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp9-tile-columns-and-tile-rows-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Tile Columns and Tile Rows Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp9-tile-columns-and-tile-rows-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The -tile-columns and -tile-rows options in WebM VP9 encoding enable multi-threaded encoding and decoding by partitioning video frames into independent rectangular grids called tiles. By splitting frames into parallel processing units, these settings sig" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="vp9-tile-columns-and-tile-rows-explained">VP9 Tile Columns and
+Tile Rows Explained</h1>
+<p>The <code>-tile-columns</code> and <code>-tile-rows</code> options in
+WebM VP9 encoding enable multi-threaded encoding and decoding by
+partitioning video frames into independent rectangular grids called
+tiles. By splitting frames into parallel processing units, these
+settings significantly decrease encoding time on multi-core CPUs and
+reduce playback latency on client devices with minimal impact on
+compression efficiency.</p>
+<h2 id="what-is-tiling-in-vp9">What is Tiling in VP9?</h2>
+<p>In modern video compression, encoding a single high-resolution frame
+is traditionally a sequential process because adjacent pixels rely on
+previously encoded pixels for prediction. Tiling breaks this sequential
+dependency by dividing each frame into a grid of independent columns and
+rows.</p>
+<p>Because each tile is isolated from its neighbors, an encoder or
+decoder can assign different threads to different tiles at the same
+time.</p>
+<h2 id="how-the-parameters-work-log2-scaling">How the Parameters Work
+(Log2 Scaling)</h2>
+<p>A critical detail when configuring <code>-tile-columns</code> and
+<code>-tile-rows</code> in FFmpeg or <code>libvpx-vp9</code> is that
+their values are represented on a <strong><span
+class="math inline">\(\text{log}_2\)</span> (base-2 logarithmic)
+scale</strong>, not as direct counts.</p>
+<ul>
+<li><strong>0:</strong> <span class="math inline">\(2^0 = 1\)</span>
+tile (no split)</li>
+<li><strong>1:</strong> <span class="math inline">\(2^1 = 2\)</span>
+tiles</li>
+<li><strong>2:</strong> <span class="math inline">\(2^2 = 4\)</span>
+tiles</li>
+<li><strong>3:</strong> <span class="math inline">\(2^3 = 8\)</span>
+tiles</li>
+<li><strong>4:</strong> <span class="math inline">\(2^4 = 16\)</span>
+tiles</li>
+<li><strong>5:</strong> <span class="math inline">\(2^5 = 32\)</span>
+tiles</li>
+<li><strong>6:</strong> <span class="math inline">\(2^6 = 64\)</span>
+tiles (maximum limit for columns)</li>
+</ul>
+<p>For example, setting <code>-tile-columns 2</code> divides the video
+horizontally into 4 column segments. Setting <code>-tile-rows 1</code>
+divides the video vertically into 2 row segments, creating a total grid
+of <span class="math inline">\(4 \times 2 = 8\)</span> tiles.</p>
+<h2 id="key-benefits-of-using-tiles">Key Benefits of Using Tiles</h2>
+<ol type="1">
+<li><strong>Faster Multi-Threaded Encoding:</strong> The VP9 encoder
+(<code>libvpx-vp9</code>) cannot effectively use multiple CPU threads
+without tiling. Enabling tile columns allows the encoder to distribute
+work across available processor cores.</li>
+<li><strong>Improved Playback Performance:</strong> On end-user
+devices—especially mobile devices and web browsers—multithreaded VP9
+decoding depends on tiles. Without tiles, 4K or 60fps VP9 playback may
+stutter due to single-core CPU bottlenecks.</li>
+<li><strong>Low-Latency Streaming:</strong> For live streaming
+environments, tiling allows lower buffer requirements since slices of
+the frame can be processed concurrently.</li>
+</ol>
+<h2 id="resolution-guidelines-and-best-practices">Resolution Guidelines
+and Best Practices</h2>
+<p>Tiling introduces slight spatial prediction boundaries, which can
+cause a negligible decrease in compression efficiency. To maintain
+optimal compression quality, choose tile counts appropriate for the
+video resolution:</p>
+<ul>
+<li><strong>720p (HD):</strong> <code>-tile-columns 1</code> (2
+columns)</li>
+<li><strong>1080p (Full HD):</strong> <code>-tile-columns 2</code> (4
+columns)</li>
+<li><strong>1440p (2K) / 2160p (4K):</strong>
+<code>-tile-columns 3</code> (8 columns) or <code>-tile-columns 4</code>
+(16 columns)</li>
+</ul>
+<p>In practice, <code>-tile-columns</code> is used much more frequently
+than <code>-tile-rows</code>. VP9 decoders are primarily optimized for
+column-based parallelism, so setting <code>-tile-rows 0</code> or
+<code>-tile-rows 1</code> is usually sufficient for most encoding
+workflows.</p>
+<h2 id="example-ffmpeg-usage">Example FFmpeg Usage</h2>
+<p>To enable effective multi-threading in FFmpeg with VP9, combine
+<code>-tile-columns</code> and <code>-tile-rows</code> with the
+<code>-threads</code> and <code>-row-mt</code> (row-based
+multi-threading) flags:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 0 <span class="at">-crf</span> 30 <span class="dt">\</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-tile-columns</span> 2 <span class="at">-tile-rows</span> 1 <span class="dt">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-threads</span> 8 <span class="at">-row-mt</span> 1 <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c:a</span> libopus output.webm</span></code></pre></div>
+<p>Using these options ensures that the encoder fully utilizes your CPU
+resources while producing a WebM file optimized for smooth,
+multi-threaded playback.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

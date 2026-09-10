@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strip Subtitles from Multi-Track WebM Files - webm</title>
+    <meta name="description" content="Removing unwanted subtitle tracks from a multi-track WebM file helps declutter your media, resolve player compatibility issues, and prevent unwanted captions from displaying by default. This guide covers how to quickly strip specific or all subtitle trac">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/strip-subtitles-from-multi-track-webm-files">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Strip Subtitles from Multi-Track WebM Files - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/strip-subtitles-from-multi-track-webm-files" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Removing unwanted subtitle tracks from a multi-track WebM file helps declutter your media, resolve player compatibility issues, and prevent unwanted captions from displaying by default. This guide covers how to quickly strip specific or all subtitle trac" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="strip-subtitles-from-multi-track-webm-files">Strip Subtitles
+from Multi-Track WebM Files</h1>
+<p>Removing unwanted subtitle tracks from a multi-track WebM file helps
+declutter your media, resolve player compatibility issues, and prevent
+unwanted captions from displaying by default. This guide covers how to
+quickly strip specific or all subtitle tracks using FFmpeg and
+MKVToolNix without re-encoding the video or audio streams, preserving
+original quality and processing the file in seconds.</p>
+<h2 id="method-1-using-ffmpeg-command-line">Method 1: Using FFmpeg
+(Command Line)</h2>
+<p>FFmpeg allows you to selectively remove subtitle streams directly
+from the command line using stream mapping and stream copying.</p>
+<h3 id="step-1-identify-the-subtitle-tracks">Step 1: Identify the
+Subtitle Tracks</h3>
+<p>Run the following command in your terminal or command prompt to
+inspect the streams within your WebM file:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> input.webm</span></code></pre></div>
+<p>Look at the output to find the stream numbers for your subtitles
+(e.g., <code>Stream #0:2: Subtitle: webvtt</code>,
+<code>Stream #0:3: Subtitle: webvtt</code>).</p>
+<h3 id="step-2-strip-the-unwanted-tracks">Step 2: Strip the Unwanted
+Tracks</h3>
+<p>Choose the command that fits your needs:</p>
+<ul>
+<li><p><strong>Remove all subtitle tracks:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map</span> 0 <span class="at">-map</span> <span class="at">-0:s</span> <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<p><em>(The <code>-map -0:s</code> flag excludes all subtitle streams,
+while <code>-c copy</code> copies video and audio without
+re-encoding.)</em></p></li>
+<li><p><strong>Remove a specific subtitle track:</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map</span> 0 <span class="at">-map</span> <span class="at">-0:s:1</span> <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<p><em>(Replace <code>0:s:1</code> with the index of the specific
+subtitle stream you want to exclude.)</em></p></li>
+<li><p><strong>Keep only video, audio, and a single specific subtitle
+track:</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map</span> 0:v <span class="at">-map</span> 0:a <span class="at">-map</span> 0:s:0 <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<p><em>(This copies all video tracks, all audio tracks, and only the
+first subtitle track <code>0:s:0</code>.)</em></p></li>
+</ul>
+<hr />
+<h2 id="method-2-using-mkvtoolnix-graphical-interface">Method 2: Using
+MKVToolNix (Graphical Interface)</h2>
+<p>Because WebM is based on the Matroska format, MKVToolNix can open and
+remux WebM files natively.</p>
+<ol type="1">
+<li>Open <strong>MKVToolNix GUI</strong>.</li>
+<li>Drag and drop your WebM file into the <strong>Source files</strong>
+pane.</li>
+<li>In the <strong>Tracks, chapters and tags</strong> section, look
+through the list for subtitle tracks.</li>
+<li>Uncheck the boxes next to the unwanted subtitle tracks you wish to
+remove.</li>
+<li>In the <strong>Destination file</strong> field at the bottom, ensure
+the output filename ends with the <code>.webm</code> extension.</li>
+<li>Click <strong>Start multiplexing</strong>.</li>
+</ol>
+<p>The program will generate a new WebM container containing only the
+checked audio, video, and desired subtitle tracks without altering media
+quality.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

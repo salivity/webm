@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Surround to Stereo Phase Cancellation Algorithms - webm</title>
+    <meta name="description" content="Downmixing multi-channel WebM audio—typically encoded using Opus or Vorbis codecs in 5.1 or 7.1 configurations—into a two-channel stereo format often leads to phase cancellation, which results in comb filtering, hollow vocals, and missing acoustic de">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-surround-to-stereo-phase-cancellation-algorithms">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Surround to Stereo Phase Cancellation Algorithms - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-surround-to-stereo-phase-cancellation-algorithms" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Downmixing multi-channel WebM audio—typically encoded using Opus or Vorbis codecs in 5.1 or 7.1 configurations—into a two-channel stereo format often leads to phase cancellation, which results in comb filtering, hollow vocals, and missing acoustic de" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-surround-to-stereo-phase-cancellation-algorithms">WebM
+Surround to Stereo Phase Cancellation Algorithms</h1>
+<p>Downmixing multi-channel WebM audio—typically encoded using Opus or
+Vorbis codecs in 5.1 or 7.1 configurations—into a two-channel stereo
+format often leads to phase cancellation, which results in comb
+filtering, hollow vocals, and missing acoustic details. This article
+explores the primary digital signal processing (DSP) algorithms and
+techniques engineered to mitigate phase issues during the channel
+reduction process, ranging from fixed phase-shift networks and
+frequency-domain alignment to adaptive decorrelation and dynamic
+matrixing.</p>
+<h2 id="the-cause-of-phase-cancellation-in-webm-downmixing">The Cause of
+Phase Cancellation in WebM Downmixing</h2>
+<p>WebM containers standardly wrap multichannel Vorbis or Opus streams.
+When collapsing these surround channels (Left, Right, Center, LFE,
+Surround Left, Surround Right) into standard stereo (Left Total, Right
+Total), simple linear summation matrices are typically applied:</p>
+<p><span class="math display">\[L_{mix} = L + 0.707C + 0.707SL\]</span>
+<span class="math display">\[R_{mix} = R + 0.707C + 0.707SR\]</span></p>
+<p>When acoustic information is shared across channels with slight time
+delays or inverted polarities (common in ambient surround tracks,
+reverberation, and multi-mic center-channel bleed), direct algebraic
+addition causes destructive interference. This cancellation severely
+thins out the mid-range frequencies and often weakens dialogue.</p>
+<h2 id="1-hilbert-transform-and-90-degree-phase-shift-networks">1.
+Hilbert Transform and 90-Degree Phase-Shift Networks</h2>
+<p>The Hilbert transform is widely used to prevent destructive
+interference between front and rear channels. Instead of summing rear
+channels directly into the front channels, a discrete-time Hilbert
+transform applies a uniform <span
+class="math inline">\(+90^\circ\)</span> or <span
+class="math inline">\(-90^\circ\)</span> phase shift to the surround
+channels across the entire audio spectrum.</p>
+<ul>
+<li><strong>How it works:</strong> By shifting the surround channels by
+<span class="math inline">\(\pm 90^\circ\)</span> relative to the front
+channels, the correlation between the signals is rendered orthogonal.
+Because the real parts of orthogonal signals do not cancel out
+algebraically, summing them into the front channels prevents destructive
+phase notch-filtering.</li>
+<li><strong>Application in Downmixing:</strong> This technique forms the
+mathematical foundation of matrix-encoded stereo algorithms like Dolby
+Pro Logic (Lt/Rt matrices). When downmixing WebM audio via software like
+FFmpeg, applying a Hilbert phase shifter to the surround channels
+preserves dialogue intelligibility without creating center-channel
+voids.</li>
+</ul>
+<h2 id="2-short-time-fourier-transform-stft-phase-alignment">2.
+Short-Time Fourier Transform (STFT) Phase Alignment</h2>
+<p>STFT-based phase alignment operates in the frequency domain rather
+than the time domain. This algorithm analyzes multi-channel audio by
+slicing it into discrete time-frequency bins.</p>
+<ul>
+<li><strong>How it works:</strong> The algorithm computes the
+cross-spectral density across corresponding channels (e.g., Center and
+Left/Right). For each frequency bin, it calculates the phase difference
+<span class="math inline">\(\Delta\theta(f)\)</span>. If the phase
+difference approaches <span class="math inline">\(180^\circ\)</span>
+(indicating cancellation), the algorithm rotates the phase vector of the
+secondary channel to align with the primary channel prior to
+summation.</li>
+<li><strong>Benefits:</strong> This provides targeted correction,
+resolving comb filtering only at the exact frequencies where
+cancellation occurs, leaving naturally uncorrelated ambient frequencies
+unaffected.</li>
+</ul>
+<h2 id="3-transient-preserving-all-pass-decorrelation">3.
+Transient-Preserving All-Pass Decorrelation</h2>
+<p>When phase shifts alone are insufficient—such as with wide synthetic
+stereo or highly diffuse surround effects—decorrelation algorithms are
+used to randomize the phase relationships between channels without
+modifying their spectral magnitude.</p>
+<ul>
+<li><strong>How it works:</strong> Cascaded Infinite Impulse Response
+(IIR) all-pass filters or Velvet Noise Decorrelators (VND) disperse the
+phase of the surround channels across time. Because all-pass filters
+exhibit a flat magnitude response (<span
+class="math inline">\(|H(e^{j\omega})| = 1\)</span>), the timbral
+balance remains identical while the inter-channel cross-correlation
+(ICCC) is minimized toward zero.</li>
+<li><strong>Benefits:</strong> Decorrelated channels can be collapsed
+into a stereo bus without causing phase comb filtering, maintaining the
+perceived spatial width of the original multichannel WebM track.</li>
+</ul>
+<h2 id="4-adaptive-matrixing-with-inter-channel-correlation-icc">4.
+Adaptive Matrixing with Inter-Channel Correlation (ICC)</h2>
+<p>Adaptive downmixers monitor signal properties in real-time, utilizing
+algorithms derived from spatial audio coding frameworks (such as MPEG
+Surround and directional Opus decoders).</p>
+<ul>
+<li><strong>How it works:</strong> The downmixer constantly computes the
+Inter-Channel Correlation (<span class="math inline">\(ICC\)</span>) and
+Inter-Channel Level Difference (<span
+class="math inline">\(ICLD\)</span>). When the algorithm detects a high
+negative correlation coefficient (<span class="math inline">\(ICC &lt;
+-0.5\)</span>) between folding channels, it dynamically modifies the
+downmixing matrix. It either scales down the contribution of the
+out-of-phase signal or engages localized phase rotators.</li>
+<li><strong>Benefits:</strong> Unlike static downmixing matrices that
+apply constant attenuation (typically <span
+class="math inline">\(-3\text{ dB}\)</span> for center and surround
+channels), dynamic matrixing intervenes only during active phase
+conflict, preventing continuous alteration of the mix dynamics.</li>
+</ul>
+<h2 id="5-itu-r-bs775-3-standard-matrix-with-energy-conservation">5.
+ITU-R BS.775-3 Standard Matrix with Energy Conservation</h2>
+<p>The International Telecommunication Union (ITU) standard ITU-R BS.775
+provides standardized formulas designed to manage channel-to-channel
+energy distribution to minimize perceived cancellation.</p>
+<ul>
+<li><strong>How it works:</strong> Rather than downmixing strictly by
+voltage, the algorithm applies power-normalized coefficients:
+<ul>
+<li>Front Left and Right: <span class="math inline">\(0\text{
+dB}\)</span></li>
+<li>Center: <span class="math inline">\(-3\text{ dB}\)</span> sent
+equally to Left and Right</li>
+<li>Surrounds: Variable between <span class="math inline">\(-3\text{
+dB}\)</span> and <span class="math inline">\(-6\text{ dB}\)</span>,
+often paired with low-pass filtering or LFE exclusion.</li>
+</ul></li>
+<li><strong>Benefits:</strong> Completely omitting or sharply
+attenuating the Low-Frequency Effects (LFE) channel is standard in ITU
+downmix algorithms. The LFE channel frequently contains low frequencies
+that are heavily out-of-phase with the front speakers, so omitting it
+avoids phase cancellation in the sub-bass region (<span
+class="math inline">\(20\text{ Hz} - 120\text{ Hz}\)</span>).</li>
+</ul>
+<h2 id="implementing-downmixing-algorithms-via-ffmpeg">Implementing
+Downmixing Algorithms via FFmpeg</h2>
+<p>When transcoding WebM audio containing 5.1 streams (e.g., Opus),
+common DSP tools implement these techniques programmatically:</p>
+<ul>
+<li><strong>Matrix Phase Shift (<code>pan</code> filter):</strong> Used
+to inject phase offsets into the surround folding logic.</li>
+<li><strong>Head-Related Transfer Function / Ambisonic Downmix
+(<code>sofalizer</code> or <code>binaural</code> filters):</strong>
+Resolves cancellation natively by processing channels through measured
+spatial impulse responses, distributing signals into distinct
+time-arrival patterns similar to human binaural hearing.</li>
+</ul></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

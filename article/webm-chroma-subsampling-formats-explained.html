@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Chroma Subsampling Formats Explained - webm</title>
+    <meta name="description" content="The WebM container format supports multiple chroma subsampling formats, including YUV 4:2:0, 4:2:2, and 4:4:4, as well as monochrome (4:0:0). However, the specific chroma subsampling formats valid in a WebM file depend directly on the underlying video co">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-chroma-subsampling-formats-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Chroma Subsampling Formats Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-chroma-subsampling-formats-explained" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format supports multiple chroma subsampling formats, including YUV 4:2:0, 4:2:2, and 4:4:4, as well as monochrome (4:0:0). However, the specific chroma subsampling formats valid in a WebM file depend directly on the underlying video co" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-chroma-subsampling-formats-explained">WebM Chroma
+Subsampling Formats Explained</h1>
+<p>The WebM container format supports multiple chroma subsampling
+formats, including YUV 4:2:0, 4:2:2, and 4:4:4, as well as monochrome
+(4:0:0). However, the specific chroma subsampling formats valid in a
+WebM file depend directly on the underlying video codec used inside the
+container: VP8, VP9, or AV1.</p>
+<h3 id="chroma-subsampling-by-video-codec">Chroma Subsampling by Video
+Codec</h3>
+<p>Because WebM is a container based on Matroska, it inherits video
+capabilities from its supported codecs.</p>
+<h4 id="1-vp8">1. VP8</h4>
+<p>VP8 has the most restricted color format support:</p>
+<ul>
+<li><strong>4:2:0:</strong> Valid (8-bit only).</li>
+<li><strong>4:2:2 / 4:4:4:</strong> <strong>Not supported.</strong> VP8
+cannot encode or decode 4:2:2 or 4:4:4 chroma subsampling.</li>
+</ul>
+<h4 id="2-vp9">2. VP9</h4>
+<p>VP9 introduced profile-based support for higher chroma fidelity and
+bit depths:</p>
+<ul>
+<li><strong>Profile 0:</strong> 4:2:0 (8-bit depth)</li>
+<li><strong>Profile 1:</strong> 4:2:2, 4:4:4, and 4:4:0 (8-bit
+depth)</li>
+<li><strong>Profile 2:</strong> 4:2:0 (10-bit and 12-bit depth)</li>
+<li><strong>Profile 3:</strong> 4:2:2, 4:4:4, and 4:4:0 (10-bit and
+12-bit depth)</li>
+</ul>
+<p>In VP9 WebM files, 4:2:0, 4:2:2, and 4:4:4 are all fully valid
+formats.</p>
+<h4 id="3-av1">3. AV1</h4>
+<p>AV1 provides broad subsampling support across its standard
+profiles:</p>
+<ul>
+<li><strong>Main Profile:</strong> 4:2:0 and 4:0:0 (Monochrome) in 8-bit
+or 10-bit depth.</li>
+<li><strong>High Profile:</strong> 4:4:4 and 4:0:0 in 8-bit or 10-bit
+depth.</li>
+<li><strong>Professional Profile:</strong> 4:2:2, 4:4:4, and 4:2:0 in
+8-bit, 10-bit, or 12-bit depth.</li>
+</ul>
+<p>In AV1 WebM files, 4:2:0, 4:2:2, and 4:4:4 are all valid formats.</p>
+<h3 id="summary-of-valid-formats">Summary of Valid Formats</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Chroma Format</th>
+<th style="text-align: left;">VP8 in WebM</th>
+<th style="text-align: left;">VP9 in WebM</th>
+<th style="text-align: left;">AV1 in WebM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>4:2:0</strong></td>
+<td style="text-align: left;">Valid</td>
+<td style="text-align: left;">Valid</td>
+<td style="text-align: left;">Valid</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>4:2:2</strong></td>
+<td style="text-align: left;">Invalid</td>
+<td style="text-align: left;">Valid (Profiles 1 &amp; 3)</td>
+<td style="text-align: left;">Valid (Professional Profile)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>4:4:4</strong></td>
+<td style="text-align: left;">Invalid</td>
+<td style="text-align: left;">Valid (Profiles 1 &amp; 3)</td>
+<td style="text-align: left;">Valid (High &amp; Professional
+Profiles)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>4:0:0 (Monochrome)</strong></td>
+<td style="text-align: left;">Invalid</td>
+<td style="text-align: left;">Valid (Profiles 1 &amp; 3)</td>
+<td style="text-align: left;">Valid (All Profiles)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="practical-considerations">Practical Considerations</h3>
+<p>While 4:2:2 and 4:4:4 are valid within WebM containers using VP9 or
+AV1, <strong>YUV 4:2:0</strong> remains the standard for broad hardware
+acceleration and universal web browser playback. High-profile formats
+like 4:4:4 and 4:2:2 may fall back to software decoding on devices that
+lack specialized hardware decoders.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

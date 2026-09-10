@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edge Extension Padding in WebM Motion Compensation - webm</title>
+    <meta name="description" content="In video compression formats using WebM—primarily powered by the VP8 and VP9 codecs—motion compensation frequently requires reference blocks that extend beyond the physical boundaries of a reference frame. This article explains how WebM manages out-o">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/edge-extension-padding-in-webm-motion-compensation">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Edge Extension Padding in WebM Motion Compensation - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/edge-extension-padding-in-webm-motion-compensation" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In video compression formats using WebM—primarily powered by the VP8 and VP9 codecs—motion compensation frequently requires reference blocks that extend beyond the physical boundaries of a reference frame. This article explains how WebM manages out-o" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="edge-extension-padding-in-webm-motion-compensation">Edge
+Extension Padding in WebM Motion Compensation</h1>
+<p>In video compression formats using WebM—primarily powered by the VP8
+and VP9 codecs—motion compensation frequently requires reference blocks
+that extend beyond the physical boundaries of a reference frame. This
+article explains how WebM manages out-of-bounds motion vectors through
+edge extension padding, a technique that replicates boundary pixels
+outward. By clamping coordinate lookups and extending edge samples, the
+codec maintains high compression efficiency during camera pans and
+object movement while preventing memory access violations during
+decoding.</p>
+<h3 id="the-purpose-of-boundary-motion-vectors">The Purpose of Boundary
+Motion Vectors</h3>
+<p>During video playback, camera panning, zooming, and objects crossing
+into or out of the camera view cause pixels to shift over frame edges.
+If motion compensation restricted motion vectors strictly to the
+interior of the reference frame, blocks at the perimeter would fail to
+find adequate matches. Encoders would then be forced to encode those
+blocks using less efficient intra-frame prediction, resulting in lower
+compression ratios or visual artifacts.</p>
+<p>To solve this, WebM's underlying codecs allow motion vectors to point
+outside the displayable area, relying on edge extension padding to
+synthesize reference data that does not physically exist in the original
+frame.</p>
+<h3 id="the-mechanism-of-edge-extension">The Mechanism of Edge
+Extension</h3>
+<p>WebM does not fill out-of-bounds areas with neutral colors like black
+or gray, as doing so would introduce sharp artificial edges and degrade
+compression performance. Instead, it uses border replication
+(clamping):</p>
+<ul>
+<li><strong>Horizontal Edges:</strong> The leftmost and rightmost pixel
+columns of the reconstructed frame are duplicated horizontally into the
+padding region.</li>
+<li><strong>Vertical Edges:</strong> The topmost and bottommost rows are
+duplicated vertically.</li>
+<li><strong>Corners:</strong> The four corner pixels are extended
+diagonally to fill the respective corner padding zones.</li>
+</ul>
+<p>Mathematically, any sample coordinate <span class="math inline">\((x,
+y)\)</span> referenced by a motion vector is clamped to the range of the
+frame dimensions <span class="math inline">\(W \times H\)</span>:</p>
+<p><span class="math display">\[x&#39; = \max(0, \min(x, W -
+1))\]</span> <span class="math display">\[y&#39; = \max(0, \min(y, H -
+1))\]</span></p>
+<p>By evaluating pixels through this clamping logic, moving objects
+smoothly exit or enter the view, as the reference block simply carries
+forward the last known color values from the boundary.</p>
+<h3 id="edge-padding-in-sub-pixel-interpolation">Edge Padding in
+Sub-Pixel Interpolation</h3>
+<p>Motion compensation in both VP8 and VP9 supports fractional-pixel
+precision (quarter-pel in VP8; eighth-pel in VP9). Calculating
+fractional samples requires applying multi-tap finite impulse response
+(FIR) interpolation filters—such as 6-tap filters in VP8 or 8-tap
+filters in VP9.</p>
+<p>Because multi-tap filters require surrounding samples to calculate an
+interpolated value, sampling near or slightly beyond the frame edge
+requires valid data points on both sides of the filter window. The edge
+extension padding ensures that the filter taps have continuous,
+deterministic values to read, eliminating edge distortion and preventing
+out-of-bounds memory reads.</p>
+<h3
+id="implementation-memory-buffers-vs-dynamic-clamping">Implementation:
+Memory Buffers vs. Dynamic Clamping</h3>
+<p>Decoders generally handle edge extension padding in one of two
+ways:</p>
+<ol type="1">
+<li><strong>Allocated Border Padding:</strong> Software decoders often
+allocate a reference frame buffer that is larger than the visible video
+resolution. Surrounding the active display area is a dedicated border
+(typically 16 to 64 pixels wide, matching the largest supported
+transform block plus filter tap overhang). Once a frame is
+reconstructed, a fast memory copy routine extends the outer pixels into
+this border. Motion vector lookups can then read directly from memory
+without evaluating boundary conditions per pixel.</li>
+<li><strong>Dynamic Coordinate Clamping:</strong> Modern hardware
+decoders and specialized SIMD pipelines often clamp coordinates on the
+fly at the hardware addressing level. This approach eliminates the
+computational overhead and memory bandwidth needed to copy padding
+pixels into an external buffer after each frame.</li>
+</ol></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

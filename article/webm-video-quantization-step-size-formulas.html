@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Video Quantization Step Size Formulas - webm</title>
+    <meta name="description" content="WebM video compression, powered primarily by the VP8 and VP9 codecs, relies on non-linear quantization mechanics to regulate bitrate and visual fidelity. This article details the mathematical formulas, scaling functions, and index mappings that determine">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/webm-video-quantization-step-size-formulas">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Video Quantization Step Size Formulas - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/webm-video-quantization-step-size-formulas" />
+    <meta property="og:image:url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM video compression, powered primarily by the VP8 and VP9 codecs, relies on non-linear quantization mechanics to regulate bitrate and visual fidelity. This article details the mathematical formulas, scaling functions, and index mappings that determine" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <article><h1 id="webm-video-quantization-step-size-formulas">WebM Video
+Quantization Step Size Formulas</h1>
+<p>WebM video compression, powered primarily by the VP8 and VP9 codecs,
+relies on non-linear quantization mechanics to regulate bitrate and
+visual fidelity. This article details the mathematical formulas, scaling
+functions, and index mappings that determine quantization step sizes
+across WebM quality levels.</p>
+<h2 id="fundamentals-of-webm-quantization">Fundamentals of WebM
+Quantization</h2>
+<p>In transform-based video encoding, quantization reduces the precision
+of Discrete Cosine Transform (DCT) or Asymmetric Discrete Sine Transform
+(ADST) coefficients. The forward quantization formula transforms a
+frequency coefficient <span class="math inline">\(C\)</span> into a
+quantized level <span class="math inline">\(C_q\)</span>:</p>
+<p><span class="math display">\[C_q = \text{sgn}(C) \cdot \left\lfloor
+\frac{|C| + f}{Q_{\text{step}}} \right\rfloor\]</span></p>
+<p>Where:</p>
+<ul>
+<li><span class="math inline">\(C\)</span> is the transformed transform
+coefficient.</li>
+<li><span class="math inline">\(Q_{\text{step}}\)</span> is the actual
+quantization step size.</li>
+<li><span class="math inline">\(f\)</span> is a rounding offset
+(typically between <span class="math inline">\(0\)</span> and <span
+class="math inline">\(Q_{\text{step}} / 2\)</span>).</li>
+<li><span class="math inline">\(\text{sgn}(C)\)</span> preserves the
+sign of the input.</li>
+</ul>
+<p>During decoding, dequantization reconstructs the approximate
+coefficient value <span class="math inline">\(\hat{C}\)</span>:</p>
+<p><span class="math display">\[\hat{C} = C_q \cdot
+Q_{\text{step}}\]</span></p>
+<p>The value of <span class="math inline">\(Q_{\text{step}}\)</span>
+directly dictates lossiness: larger values discard more high-frequency
+detail for lower bitrates, while smaller values preserve fidelity.</p>
+<hr />
+<h2 id="vp8-quantization-step-size-formulas">VP8 Quantization Step Size
+Formulas</h2>
+<p>VP8 maps a baseline Quantization Index (<span class="math inline">\(q
+\in [0, 63]\)</span>) to step sizes using discrete lookup formulas for
+DC and AC components across luma (Y) and chroma (U, V) planes.</p>
+<p>While implemented in standard libraries via the
+<code>vp8_ac_qlookup</code> and <code>vp8_dc_qlookup</code> tables,
+these step sizes follow piecewise exponential curves governed by:</p>
+<h3 id="1-luma-ac-step-size-q_textstep-ac">1. Luma AC Step Size (<span
+class="math inline">\(Q_{\text{step, AC}}\)</span>)</h3>
+<p><span class="math display">\[Q_{\text{step, AC}}(q) \approx
+\begin{cases}
+4 \cdot q + 4 &amp; \text{for } 0 \le q \le 3 \\
+\left\lfloor 0.0416 \cdot q^2 + 1.343 \cdot q + 14.1 \right\rfloor &amp;
+\text{for } 4 \le q \le 63
+\end{cases}\]</span></p>
+<h3 id="2-luma-dc-step-size-q_textstep-dc">2. Luma DC Step Size (<span
+class="math inline">\(Q_{\text{step, DC}}\)</span>)</h3>
+<p>Low-frequency DC coefficients use finer resolution to prevent
+blocking artifacts in flat regions:</p>
+<p><span class="math display">\[Q_{\text{step, DC}}(q) =
+\min\left(Q_{\text{step, AC}}(q), \left\lfloor 1.32 \cdot q + 4
+\right\rfloor\right)\]</span></p>
+<hr />
+<h2 id="vp9-quantization-step-size-formulas">VP9 Quantization Step Size
+Formulas</h2>
+<p>VP9 expands the quantizer index range to <span
+class="math inline">\(Q_{\text{index}} \in [0, 255]\)</span>, providing
+significantly finer granularity. The continuous mathematical model that
+generates the VP9 step size lookup tables approximates an exponential
+scaling curve:</p>
+<p><span class="math display">\[Q_{\text{step}}(Q_{\text{index}})
+\approx Q_{\text{min}} \cdot 2^{\frac{Q_{\text{index}}}{K}}\]</span></p>
+<p>Where:</p>
+<ul>
+<li><span class="math inline">\(Q_{\text{min}}\)</span> is the baseline
+minimum step size at <span class="math inline">\(Q_{\text{index}} =
+0\)</span>.</li>
+<li><span class="math inline">\(K\)</span> is the index interval over
+which the step size doubles (typically <span class="math inline">\(K
+\approx 32\)</span> to <span class="math inline">\(40\)</span> depending
+on bit depth).</li>
+</ul>
+<h3 id="exact-implementation-formulation">Exact Implementation
+Formulation</h3>
+<p>The reference VP9 codec (libvpx) computes the exact 8-bit AC
+quantizer table using continuous piecewise polynomial and exponential
+fits:</p>
+<p><span class="math display">\[Q_{\text{step, AC}}(q) = \begin{cases}
+q + 4 &amp; \text{for } 0 \le q \le 4 \\
+\left\lfloor 4.2 \cdot e^{0.0245 \cdot q} \right\rfloor &amp; \text{for
+} 5 \le q \le 255
+\end{cases}\]</span></p>
+<p>For higher bit-depth streams (<span
+class="math inline">\(10\)</span>-bit and <span
+class="math inline">\(12\)</span>-bit), the base step size scales
+proportionally with the bit depth <span
+class="math inline">\(B\)</span>:</p>
+<p><span class="math display">\[Q_{\text{step, B-bit}}(q) =
+Q_{\text{step, 8-bit}}(q) \cdot 2^{B - 8}\]</span></p>
+<hr />
+<h2 id="delta-quantization-offsets">Delta Quantization Offsets</h2>
+<p>WebM codecs apply contextual offsets (<span
+class="math inline">\(\Delta Q\)</span>) to alter the step size per
+frame, segment, or transform block. The final effective index <span
+class="math inline">\(Q_{\text{effective}}\)</span> is computed prior to
+table conversion:</p>
+<p><span class="math display">\[Q_{\text{effective}} =
+\text{clamp}\left(Q_{\text{base}} + \Delta Q_{\text{plane}} + \Delta
+Q_{\text{coeff}} + \Delta Q_{\text{segment}},\, 0,\,
+255\right)\]</span></p>
+<p>Where:</p>
+<ul>
+<li><span class="math inline">\(Q_{\text{base}}\)</span> is the
+frame-level quality target.</li>
+<li><span class="math inline">\(\Delta Q_{\text{plane}}\)</span>
+represents adjustments for Chroma channels (<span
+class="math inline">\(\text{UV}_{\text{dc\_delta}}\)</span>, <span
+class="math inline">\(\text{UV}_{\text{ac\_delta}}\)</span>).</li>
+<li><span class="math inline">\(\Delta Q_{\text{coeff}}\)</span>
+modulates high-frequency AC coefficients relative to DC coefficients
+(<span class="math inline">\(\text{Y}_{\text{dc\_delta}}\)</span>).</li>
+<li><span class="math inline">\(\Delta Q_{\text{segment}}\)</span>
+dynamically applies local step sizes for Region of Interest (ROI) and
+background segmentation.</li>
+</ul>
+<hr />
+<h2 id="crf-and-bitrate-mapping">CRF and Bitrate Mapping</h2>
+<p>In WebM encoding tools such as FFmpeg, the Constant Rate Factor
+(<code>-crf</code>) directly drives the selection of <span
+class="math inline">\(Q_{\text{base}}\)</span>. For VP9, the mapping
+function from user-defined CRF to the encoder's internal quantization
+index is a linear scale:</p>
+<p><span class="math display">\[Q_{\text{base}} = \left\lfloor
+\frac{255}{63} \cdot \text{CRF} \right\rfloor \approx 4.0476 \cdot
+\text{CRF}\]</span></p>
+<p>This mapping ensures that incremental increases in CRF produce
+uniform, exponential decreases in bitrate corresponding to the
+underlying step size formulas.</p></article>
+        <div id="comments-container"></div>
+
+        <script>
+            const utterancesScript = document.createElement('script');
+            
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>
