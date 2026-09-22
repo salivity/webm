@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manipulate WebM Frame Buffers with WebAssembly - webm</title>
+    <meta name="description" content="Browser-based video editors manipulate raw WebM frame buffers with near-native performance by combining WebAssembly (Wasm) with modern browser multimedia APIs. This process involves demuxing the WebM container, extracting and decoding compressed video fr">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/manipulate-web-m-frame-buffers-with-web-assembly">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Manipulate WebM Frame Buffers with WebAssembly - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/manipulate-web-m-frame-buffers-with-web-assembly" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Browser-based video editors manipulate raw WebM frame buffers with near-native performance by combining WebAssembly (Wasm) with modern browser multimedia APIs. This process involves demuxing the WebM container, extracting and decoding compressed video fr" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="manipulate-webm-frame-buffers-with-webassembly">Manipulate WebM
+Frame Buffers with WebAssembly</h1>
+<p>Browser-based video editors manipulate raw WebM frame buffers with
+near-native performance by combining WebAssembly (Wasm) with modern
+browser multimedia APIs. This process involves demuxing the WebM
+container, extracting and decoding compressed video frames into raw
+pixel arrays, loading those buffers into WebAssembly's linear memory,
+applying compute-heavy transformations via compiled C, C++, or Rust
+algorithms, and finally re-encoding the output stream.</p>
+<h3 id="1-demuxing-and-decoding-the-webm-stream">1. Demuxing and
+Decoding the WebM Stream</h3>
+<p>A WebM file is a Matroska-based container typically housing VP8, VP9,
+or AV1 video streams. The manipulation pipeline begins by separating
+audio and video packets:</p>
+<ul>
+<li><strong>Container Demuxing:</strong> The browser fetches chunks of
+the WebM file as an <code>ArrayBuffer</code>. A lightweight JavaScript
+demuxer or a Wasm-compiled tool (such as a stripped-down FFmpeg/libwebm)
+reads the Matroska elements to extract the raw video bitstream.</li>
+<li><strong>Decoding to Raw Pixels:</strong> The compressed bitstream is
+fed into either the native <strong>WebCodecs API</strong>
+(<code>VideoDecoder</code>) or a Wasm-compiled software decoder (like
+<code>libvpx</code> or <code>dav1d</code>). WebCodecs provides direct
+access to GPU-accelerated decoding, outputting <code>VideoFrame</code>
+objects that expose raw pixel data, typically in <code>YUV420P</code>
+(I420) or <code>NV12</code> formats.</li>
+</ul>
+<h3 id="2-zero-copy-memory-transfer-to-webassembly">2. Zero-Copy Memory
+Transfer to WebAssembly</h3>
+<p>WebAssembly operates on its own linear memory space
+(<code>WebAssembly.Memory</code>). Efficient editors minimize memory
+allocation and data duplication between JavaScript and Wasm:</p>
+<ul>
+<li><strong>Buffer Mapping:</strong> The raw frame buffers extracted
+from a <code>VideoFrame</code> via <code>copyTo()</code> are written
+directly into a pre-allocated region inside the WebAssembly module's
+memory heap.</li>
+<li><strong>Pointer Passing:</strong> Instead of passing large byte
+arrays over the JavaScript-Wasm bridge, the JavaScript runtime passes a
+32-bit or 64-bit integer representing the memory address (pointer) of
+the frame buffer.</li>
+<li><strong>SharedArrayBuffer:</strong> When using Web Workers for
+multi-threaded processing, a <code>SharedArrayBuffer</code> backing the
+<code>WebAssembly.Memory</code> allows multiple worker threads to access
+and edit identical frame regions simultaneously without copying.</li>
+</ul>
+<h3 id="3-pixel-manipulation-using-simd">3. Pixel Manipulation Using
+SIMD</h3>
+<p>Once the raw planar data (Y, U, and V channels) resides within Wasm
+memory, compiled C/C++ or Rust functions execute image processing
+routines:</p>
+<ul>
+<li><strong>Wasm SIMD (Single Instruction, Multiple Data):</strong>
+Modern browsers support 128-bit Wasm SIMD instructions. This allows a
+single instruction to process 16 8-bit pixel values simultaneously,
+speeding up operations like brightness adjustments, color grading,
+matrix transformations, and alpha compositing.</li>
+<li><strong>Color Space Conversion:</strong> Many effects (such as LUT
+application or blend modes) require conversion from YUV to RGBA and
+back. Wasm handles this planar conversion with vectorized integer or
+floating-point arithmetic.</li>
+<li><strong>Complex Spatial Filters:</strong> Algorithms like Gaussian
+blur, edge detection, chroma keying, and motion interpolation run inside
+Wasm to bypass JavaScript's runtime overhead and garbage collection
+pauses.</li>
+</ul>
+<h3 id="4-gpu-interoperability-and-preview">4. GPU Interoperability and
+Preview</h3>
+<p>For real-time playback, Wasm can hand off processed frame buffers to
+rendering APIs:</p>
+<ul>
+<li>The manipulated pixel buffers are bound as textures in
+<strong>WebGL</strong> or <strong>WebGPU</strong> contexts.</li>
+<li>By rendering to an <code>OffscreenCanvas</code>, the browser
+displays real-time playback at standard frame rates (30/60 fps) without
+blocking the main UI thread.</li>
+</ul>
+<h3 id="5-re-encoding-and-muxing">5. Re-Encoding and Muxing</h3>
+<p>After manipulation, the edited frame buffers must be converted back
+into a valid WebM format:</p>
+<ul>
+<li><strong>Encoding:</strong> The modified buffers are converted into a
+<code>VideoFrame</code> and passed to a native <code>VideoEncoder</code>
+configured for VP8, VP9, or AV1, or passed to a Wasm-compiled encoder
+like <code>libvpx</code>.</li>
+<li><strong>Multiplexing:</strong> The encoded chunks
+(<code>EncodedVideoChunk</code>) are combined with the audio tracks via
+a WebM muxer running in JavaScript or Wasm, producing a final WebM byte
+stream ready for download or streaming.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

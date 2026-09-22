@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How VP9 Segment Feature Maps Adjust Quantization - webm</title>
+    <meta name="description" content="The WebM VP9 video codec achieves localized, adaptive quality control by using a segmentation feature map to adjust quantization parameters on a block-by-block basis. Rather than applying a single uniform quantization index across an entire frame, VP9 pa">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-vp-9-segment-feature-maps-adjust-quantization">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How VP9 Segment Feature Maps Adjust Quantization - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-vp-9-segment-feature-maps-adjust-quantization" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM VP9 video codec achieves localized, adaptive quality control by using a segmentation feature map to adjust quantization parameters on a block-by-block basis. Rather than applying a single uniform quantization index across an entire frame, VP9 pa" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-vp9-segment-feature-maps-adjust-quantization">How VP9
+Segment Feature Maps Adjust Quantization</h1>
+<p>The WebM VP9 video codec achieves localized, adaptive quality control
+by using a segmentation feature map to adjust quantization parameters on
+a block-by-block basis. Rather than applying a single uniform
+quantization index across an entire frame, VP9 partitions frames into
+discrete segments, allowing the encoder to modulate visual quality and
+bitrate dynamically. This article details the structural mechanics of
+VP9 segmentation, how segment IDs are assigned to spatial blocks, and
+the mathematical application of quantization offsets at the macroblock
+level.</p>
+<h2 id="understanding-vp9-segmentation">Understanding VP9
+Segmentation</h2>
+<p>Segmentation in VP9 allows an encoder to divide a frame into up to
+eight distinct categories, labeled segment ID 0 through 7. Each segment
+can define custom parameters for specific coding tools, such as
+reference frames, loop filter strengths, and quantization indices.</p>
+<p>The segmentation engine operates via two core components:</p>
+<ol type="1">
+<li><strong>Frame-Level Segment Parameters:</strong> Defined in the
+frame uncompressed header, specifying which features are active for each
+segment and their corresponding values.</li>
+<li><strong>Block-Level Segment Map:</strong> A 2D spatial grid that
+assigns each superblock (down to 8x8 or 4x4 sub-blocks) a specific
+segment ID.</li>
+</ol>
+<h2 id="frame-level-quantization-signaling">Frame-Level Quantization
+Signaling</h2>
+<p>Quantization in VP9 is fundamentally controlled by a baseline frame
+index called <code>base_qindex</code>, which ranges from 0 (highest
+fidelity) to 255 (lowest fidelity/highest compression).</p>
+<p>When the segmentation feature map is enabled for quantization:</p>
+<ul>
+<li>The header enables the <code>SEG_LVL_ALT_Q</code> (alternative
+quantization) feature.</li>
+<li>For each active segment (0–7), the bitstream specifies a
+quantization value.</li>
+<li>This value can be flagged as an <strong>absolute</strong> value
+(replacing <code>base_qindex</code> directly) or a
+<strong>delta</strong> value (an offset added to or subtracted from
+<code>base_qindex</code>). Delta mode is the standard approach used in
+dynamic rate control.</li>
+</ul>
+<h2 id="block-level-segment-id-assignment">Block-Level Segment ID
+Assignment</h2>
+<p>Once the frame header configures the segment offsets, the encoder
+writes the spatial segment map into the bitstream:</p>
+<ul>
+<li><strong>Tree-Coded Segment IDs:</strong> During block parsing, the
+decoder determines the segment ID for each coding block using tree-coded
+syntax elements.</li>
+<li><strong>Temporal Prediction:</strong> To save bits, VP9 can predict
+segment IDs from the co-located block in the previous frame
+(<code>seg_id_predicted</code>). If the prediction is true, no new
+segment ID is read for that block.</li>
+<li><strong>Spatial Granularity:</strong> Although VP9 organizes data
+into 64x64 superblocks, segment IDs can be updated at the
+transform/prediction block level down to 8x8 boundaries, giving
+fine-grained spatial control over macroblocks.</li>
+</ul>
+<h2 id="deriving-the-final-quantization-parameter">Deriving the Final
+Quantization Parameter</h2>
+<p>When the decoder processes a spatial block, it calculates the block's
+effective quantization index (<span
+class="math inline">\(Q_{final}\)</span>) through the following
+steps:</p>
+<ol type="1">
+<li><strong>Read Segment ID:</strong> Determine the block's segment ID
+(0–7).</li>
+<li><strong>Retrieve Segment Feature:</strong> Read the configured
+offset or absolute value assigned to that segment ID.</li>
+<li><strong>Compute Effective Index:</strong>
+<ul>
+<li>If delta mode is active:<br />
+<span class="math display">\[Q_{final} = \text{clamp}(base\_qindex +
+segment\_delta, 0, 255)\]</span></li>
+<li>If absolute mode is active:<br />
+<span class="math display">\[Q_{final} = \text{clamp}(segment\_qindex,
+0, 255)\]</span></li>
+</ul></li>
+<li><strong>Transform to Dequantization Factors:</strong> The resulting
+<span class="math inline">\(Q_{final}\)</span> is fed into the codec’s
+lookup tables (<code>dc_qlookup</code> and <code>ac_qlookup</code>) to
+yield the actual scale factors applied to the discrete cosine transform
+(DCT) or asymmetric discrete sine transform (ADST) coefficients for
+luminance and chrominance planes.</li>
+</ol>
+<h2
+id="real-world-applications-of-segment-based-quantization">Real-World
+Applications of Segment-Based Quantization</h2>
+<p>Adjusting quantization per spatial block provides several encoding
+optimizations:</p>
+<ul>
+<li><strong>Region of Interest (ROI) Encoding:</strong> Important
+regions, such as human faces in a video call, are mapped to a segment
+with a negative delta (lower <span class="math inline">\(Q\)</span>,
+higher fidelity), while static or non-critical backgrounds are mapped to
+a segment with a positive delta (higher <span
+class="math inline">\(Q\)</span>, higher compression).</li>
+<li><strong>Variance-Adaptive Quantization:</strong> High-texture areas
+that naturally mask compression artifacts receive higher quantization,
+while flat areas prone to color banding (such as skies or walls) receive
+lower quantization to preserve smooth gradients.</li>
+<li><strong>Temporal Stability:</strong> Segments allow encoders to
+smooth out bitrate spikes across complex motion boundaries without
+degrading whole-frame sharpness.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

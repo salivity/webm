@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Encoding Detects Camera Pans and Zooms - webm</title>
+    <meta name="description" content="During WebM video encoding—primarily utilizing the VP8, VP9, or AV1 video codecs—motion estimation algorithms analyze pixel displacement across consecutive frames to detect complex camera movements like pans and zooms. By identifying consistent spati">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-encoding-detects-camera-pans-and-zooms">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Encoding Detects Camera Pans and Zooms - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-encoding-detects-camera-pans-and-zooms" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="During WebM video encoding—primarily utilizing the VP8, VP9, or AV1 video codecs—motion estimation algorithms analyze pixel displacement across consecutive frames to detect complex camera movements like pans and zooms. By identifying consistent spati" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-encoding-detects-camera-pans-and-zooms">How WebM
+Encoding Detects Camera Pans and Zooms</h1>
+<p>During WebM video encoding—primarily utilizing the VP8, VP9, or AV1
+video codecs—motion estimation algorithms analyze pixel displacement
+across consecutive frames to detect complex camera movements like pans
+and zooms. By identifying consistent spatial relationships and
+mathematical patterns within motion vector fields, these algorithms
+differentiate between localized object movements and global frame
+transformations. This process allows the encoder to describe massive
+visual shifts using compact mathematical parameters rather than
+redundant pixel data, dramatically optimizing compression
+efficiency.</p>
+<h2 id="the-role-of-block-based-motion-estimation">The Role of
+Block-Based Motion Estimation</h2>
+<p>Motion estimation begins by dividing a video frame into a grid of
+blocks (macroblocks in VP8, or variable-sized superblocks up to 64x64 or
+128x128 in VP9 and AV1).</p>
+<p>When encoding an inter-frame (P-frame or B-frame), the algorithm
+searches reference frames within a designated search window to locate
+the closest visual match for each block. The displacement between the
+current block and its matching reference block is stored as a Motion
+Vector (MV).</p>
+<p>When thousands of individual blocks are analyzed across a frame,
+their collective motion vectors form a Motion Vector Field (MVF). The
+encoder evaluates the structural characteristics of this field to detect
+panning and zooming.</p>
+<h2 id="detecting-camera-pans-translational-motion">Detecting Camera
+Pans (Translational Motion)</h2>
+<p>A camera pan creates uniform translational motion, where the entire
+visual field shifts horizontally, vertically, or diagonally. Motion
+estimation algorithms detect pans through the following mechanisms:</p>
+<ul>
+<li><strong>Motion Vector Homogeneity:</strong> When a pan occurs, the
+vast majority of motion vectors across the entire frame share nearly
+identical direction and magnitude.</li>
+<li><strong>Global Motion Estimation (GME):</strong> Instead of
+evaluating each block independently, GME calculates a dominant 2D
+translation parameter <span class="math inline">\((dx, dy)\)</span>
+across the whole frame. If a single translation vector significantly
+reduces the sum of absolute transformed differences (SATD) across most
+blocks, the algorithm classifies the movement as a pan.</li>
+<li><strong>Spatial Vector Clustering:</strong> Algorithms employ
+statistical filtering (such as RANSAC or median filtering) to discard
+outlier vectors caused by independently moving objects, isolating the
+dominant background vector generated by the camera.</li>
+</ul>
+<h2 id="detecting-camera-zooms-scale-and-affine-motion">Detecting Camera
+Zooms (Scale and Affine Motion)</h2>
+<p>Zooming in (magnification) or zooming out (minification) introduces
+non-translational, radial motion patterns that standard 2D vector
+searches struggle to represent efficiently. Advanced WebM codecs detect
+zooms using affine and parametric motion models:</p>
+<ul>
+<li><strong>Radial Vector Patterns:</strong> During a zoom-in, motion
+vectors point radially outward from the optical center (focus point) of
+the frame, with vector lengths increasing proportionally to their
+distance from the center. During a zoom-out, vectors point inward toward
+the focal center.</li>
+<li><strong>Affine Transformation Models:</strong> Modern WebM codecs
+(notably VP9 and AV1) support affine motion estimation. The algorithm
+solves for scaling parameters <span class="math inline">\((S_x,
+S_y)\)</span> and shear parameters using matrix transformations:</li>
+</ul>
+<p><span class="math display">\[\begin{bmatrix} x&#39; \\ y&#39;
+\end{bmatrix} = \begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix}
+\begin{bmatrix} x \\ y \end{bmatrix} + \begin{bmatrix} e \\ f
+\end{bmatrix}\]</span></p>
+<ul>
+<li><strong>Warped Motion Compensation:</strong> In codecs like AV1,
+once the zoom parameters are calculated, the encoder applies a global
+warp transform to the reference frame. Individual blocks then predict
+their contents directly from this scaled reference, eliminating the need
+to transmit large prediction residuals for every block.</li>
+</ul>
+<h2 id="hierarchical-and-multi-resolution-search">Hierarchical and
+Multi-Resolution Search</h2>
+<p>High-resolution frames (1080p, 4K) make full-search motion estimation
+computationally expensive. To detect large pans and zooms quickly,
+encoders use Hierarchical Motion Estimation (HME):</p>
+<ol type="1">
+<li><strong>Spatial Pyramids:</strong> The encoder creates downsampled,
+lower-resolution versions of the current and reference frames (e.g., 1/4
+and 1/16 scale).</li>
+<li><strong>Coarse-to-Fine Search:</strong> The algorithm detects the
+overarching pan or zoom trajectory at the lowest resolution where pixel
+count is small.</li>
+<li><strong>Refinement:</strong> The estimated global movement
+parameters are mapped back to higher resolutions, where the search is
+refined to sub-pixel (half-pel, quarter-pel, or eighth-pel)
+accuracy.</li>
+</ol>
+<h2 id="impact-on-bitrate-and-quality">Impact on Bitrate and
+Quality</h2>
+<p>Accurately detecting pans and zooms prevents the encoder from
+treating camera motion as new visual information. By converting complex
+frame transitions into compact global motion vectors or affine transform
+parameters, WebM encoders preserve fine image details, avoid blocky
+compression artifacts, and significantly reduce the output file
+size.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

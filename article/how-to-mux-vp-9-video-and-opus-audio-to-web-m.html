@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Mux VP9 Video and Opus Audio to WebM - webm</title>
+    <meta name="description" content="Muxing standalone VP9 video streams and Vorbis or Opus audio streams into a single WebM container allows you to create high-efficiency, royalty-free media files compatible with modern web browsers and media players. This process involves packaging the di">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-mux-vp-9-video-and-opus-audio-to-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Mux VP9 Video and Opus Audio to WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-mux-vp-9-video-and-opus-audio-to-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Muxing standalone VP9 video streams and Vorbis or Opus audio streams into a single WebM container allows you to create high-efficiency, royalty-free media files compatible with modern web browsers and media players. This process involves packaging the di" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-to-mux-vp9-video-and-opus-audio-to-webm">How to Mux VP9
+Video and Opus Audio to WebM</h1>
+<p>Muxing standalone VP9 video streams and Vorbis or Opus audio streams
+into a single WebM container allows you to create high-efficiency,
+royalty-free media files compatible with modern web browsers and media
+players. This process involves packaging the distinct video and audio
+streams together without re-encoding, preserving original quality while
+taking only seconds to complete. The most reliable tools for this task
+are FFmpeg and MKVToolNix.</p>
+<h3 id="muxing-with-ffmpeg">Muxing with FFmpeg</h3>
+<p>FFmpeg is the industry standard for command-line media manipulation.
+To combine your VP9 video file with an Opus or Vorbis audio track
+without re-encoding, use the stream copy (<code>-c copy</code>)
+command.</p>
+<p><strong>For Opus Audio:</strong></p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> video_input.vp9 <span class="at">-i</span> audio_input.opus <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<p><strong>For Vorbis Audio:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> video_input.vp9 <span class="at">-i</span> audio_input.ogg <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<p><strong>Command Breakdown:</strong></p>
+<ul>
+<li><code>-i video_input.vp9</code>: Specifies the source video file
+(can also be an <code>.ivf</code>, <code>.mkv</code>, or raw
+stream).</li>
+<li><code>-i audio_input.opus</code>: Specifies the source audio
+file.</li>
+<li><code>-c copy</code>: Tells FFmpeg to copy both audio and video
+streams directly without decoding or re-encoding.</li>
+<li><code>output.webm</code>: The target WebM file.</li>
+</ul>
+<p>If your input files have multiple tracks or metadata conflicts,
+explicitly map the desired streams:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> video_input.vp9 <span class="at">-i</span> audio_input.opus <span class="at">-map</span> 0:v:0 <span class="at">-map</span> 1:a:0 <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<h3 id="muxing-with-mkvtoolnix-mkvmerge">Muxing with MKVToolNix
+(mkvmerge)</h3>
+<p>Since WebM is a subset of the Matroska (MKV) container format,
+<code>mkvmerge</code> can natively assemble WebM files when given the
+appropriate output extension.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> output.webm video_input.vp9 audio_input.opus</span></code></pre></div>
+<p>For Vorbis streams:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> output.webm video_input.vp9 audio_input.ogg</span></code></pre></div>
+<h3 id="important-considerations">Important Considerations</h3>
+<ol type="1">
+<li><strong>Strict Codec Compliance:</strong> The WebM specification
+only officially supports VP8, VP9, and AV1 for video, and Vorbis and
+Opus for audio. Attempting to mux other codecs (like H.264 or AAC) into
+a <code>.webm</code> file will result in an invalid or non-standard
+container.</li>
+<li><strong>Audio-Video Synchronization:</strong> Ensure that your
+standalone streams share identical start timestamps. If the audio is
+delayed relative to the video, you can apply an offset in FFmpeg using
+the <code>-itsoffset</code> flag before the second input:
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> video_input.vp9 <span class="at">-itsoffset</span> 0.5 <span class="at">-i</span> audio_input.opus <span class="at">-c</span> copy output.webm</span></code></pre></div></li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

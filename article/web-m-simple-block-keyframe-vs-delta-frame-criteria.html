@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM SimpleBlock Keyframe vs Delta Frame Criteria - webm</title>
+    <meta name="description" content="Determining whether a WebM SimpleBlock contains a keyframe or a delta frame relies primarily on a specific 1-byte header flag defined at the container level. While the container-level flag provides decoders and demuxers with immediate frame classificatio">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-simple-block-keyframe-vs-delta-frame-criteria">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM SimpleBlock Keyframe vs Delta Frame Criteria - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-simple-block-keyframe-vs-delta-frame-criteria" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Determining whether a WebM SimpleBlock contains a keyframe or a delta frame relies primarily on a specific 1-byte header flag defined at the container level. While the container-level flag provides decoders and demuxers with immediate frame classificatio" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-simpleblock-keyframe-vs-delta-frame-criteria">WebM
+SimpleBlock Keyframe vs Delta Frame Criteria</h1>
+<p>Determining whether a WebM <code>SimpleBlock</code> contains a
+keyframe or a delta frame relies primarily on a specific 1-byte header
+flag defined at the container level. While the container-level flag
+provides decoders and demuxers with immediate frame classification
+without parsing the underlying video stream, bitstream-level data within
+formats such as VP8, VP9, or AV1 also contains explicit markers defining
+frame types.</p>
+<h3 id="the-container-level-flag-matroskaebml">The Container-Level Flag
+(Matroska/EBML)</h3>
+<p>In the WebM specification, which is a subset of the Matroska (MKV)
+format, frame data is packaged within a <code>SimpleBlock</code>
+element. The binary structure of a <code>SimpleBlock</code> header
+consists of three main metadata fields preceding the actual media
+payload:</p>
+<ol type="1">
+<li><strong>Track Number:</strong> Encoded as an EBML variable-length
+integer (VINT).</li>
+<li><strong>Timecode (Relative Timestamp):</strong> Stored as a signed
+16-bit integer (2 bytes).</li>
+<li><strong>Flags Byte:</strong> A single 8-bit field (1 byte)
+containing packet-level indicators.</li>
+</ol>
+<p>The determination of a keyframe versus a delta frame occurs at the
+container level by inspecting <strong>Bit 7</strong> (the most
+significant bit, or mask <code>0x80</code>) of this flags byte:</p>
+<ul>
+<li><strong>Keyframe:</strong> If Bit 7 is set to <code>1</code>
+(<code>flags &amp; 0x80 != 0</code>), the block represents an
+intra-frame (keyframe). This frame can be decoded independently without
+references to previous or future frames.</li>
+<li><strong>Delta Frame:</strong> If Bit 7 is set to <code>0</code>
+(<code>flags &amp; 0x80 == 0</code>), the block contains an inter-frame
+(delta frame) that depends on data from other reference frames.</li>
+</ul>
+<h3 id="codec-level-bitstream-confirmation">Codec-Level Bitstream
+Confirmation</h3>
+<p>While demuxers rely on the <code>SimpleBlock</code> flags byte for
+fast seeking and indexing, the payload itself also dictates whether the
+frame is a keyframe according to the video codec's specification:</p>
+<ul>
+<li><strong>VP8:</strong> The frame header begins with a 3-byte
+uncompressed tag. Bit 0 of the first byte specifies the frame type:
+<code>0</code> denotes a keyframe, and <code>1</code> denotes an
+inter-frame.</li>
+<li><strong>VP9:</strong> The uncompressed header contains a
+<code>frame_type</code> bit immediately following the frame marker and
+profile bits. A value of <code>0</code> denotes a
+<code>KEY_FRAME</code>, whereas other values signify non-keyframes such
+as <code>INTER_FRAME</code>.</li>
+<li><strong>AV1:</strong> The frame header within the Open Bitstream
+Unit (OBU) contains a <code>frame_type</code> syntax element. When set
+to <code>KEY_FRAME</code> (value <code>0</code>) or
+<code>INTRA_ONLY_FRAME</code> (value <code>2</code>), the frame provides
+intra-coded refresh functionality.</li>
+</ul>
+<p>Standards-compliant WebM encoders synchronize the
+<code>SimpleBlock</code> Bit 7 flag with the codec-level frame type. A
+disparity where the container marks a frame as a keyframe while the
+bitstream represents an inter-frame is considered malformed.</p>
+<h3 id="handling-audio-blocks">Handling Audio Blocks</h3>
+<p>For audio tracks contained in a <code>SimpleBlock</code>, Bit 7 is
+almost universally set to <code>1</code>. Because compressed audio
+packets (such as Opus or Vorbis) are typically independently decodable
+without temporal reference frames, they are treated as keyframes at the
+container level.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handling Full vs Limited Range in WebM Playback - webm</title>
+    <meta name="description" content="Color range mismatches in WebM playback occur when the source video's dynamic range (full vs. limited) does not align with the interpretation of the video decoder or display renderer. In digital video pipelines, WebM files—typically encoded using VP8,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/handling-full-vs-limited-range-in-web-m-playback">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Handling Full vs Limited Range in WebM Playback - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/handling-full-vs-limited-range-in-web-m-playback" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Color range mismatches in WebM playback occur when the source video's dynamic range (full vs. limited) does not align with the interpretation of the video decoder or display renderer. In digital video pipelines, WebM files—typically encoded using VP8," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="handling-full-vs-limited-range-in-webm-playback">Handling Full
+vs Limited Range in WebM Playback</h1>
+<p>Color range mismatches in WebM playback occur when the source video's
+dynamic range (full vs. limited) does not align with the interpretation
+of the video decoder or display renderer. In digital video pipelines,
+WebM files—typically encoded using VP8, VP9, or AV1 codecs—rely on
+container-level metadata and codec bitstream flags to communicate
+whether luma and chroma values use the standard broadcast range (16–235)
+or the full computer range (0–255). When these flags are missing,
+conflicting, or ignored, renderers produce visual artifacts such as
+crushed blacks, blown-out highlights, or washed-out, low-contrast
+images.</p>
+<h2 id="understanding-full-vs-limited-color-range">Understanding Full
+vs. Limited Color Range</h2>
+<p>In YUV color spaces commonly used by WebM:</p>
+<ul>
+<li><strong>Limited Range (Broadcast/TV Range):</strong> Luma (<span
+class="math inline">\(Y\)</span>) values are constrained between 16 and
+235, while chroma (<span class="math inline">\(U/V\)</span>) values span
+16 to 240. Values outside this window are reserved for
+headroom/footroom.</li>
+<li><strong>Full Range (PC Range):</strong> Luma and chroma values
+utilize the complete 8-bit spectrum from 0 to 255 (or 0–1023 in 10-bit
+color).</li>
+</ul>
+<p>To display a YUV video on an RGB display, the video renderer must
+convert YUV values to RGB using a matrix transformation. The matrix
+formula differs depending on whether the source is flagged as limited or
+full range.</p>
+<h2 id="how-the-webm-playback-pipeline-detects-color-range">How the WebM
+Playback Pipeline Detects Color Range</h2>
+<p>The playback pipeline detects color range through a hierarchy of
+metadata:</p>
+<ol type="1">
+<li><strong>Bitstream Headers:</strong> Modern codecs like VP9 (Color
+Config in the sequence header) and AV1 (Sequence Header OBU) contain
+native syntax elements explicitly defining <code>color_range</code> (0
+for Studio/Limited, 1 for Full).</li>
+<li><strong>WebM Container Metadata:</strong> The Matroska/WebM
+container specification includes the <code>Colour</code> element under
+the <code>Video</code> track, containing the <code>Range</code> field
+(<code>0: Unspecified</code>, <code>1: Broadcast/Limited</code>,
+<code>2: Full</code>, <code>3: Defined by Matrix</code>).</li>
+<li><strong>Renderer Heuristics &amp; Defaults:</strong> When both the
+bitstream and the container lack range metadata, renderers apply default
+fallback rules. By convention, standard-definition (BT.601) and
+high-definition (BT.709) YUV video streams are assumed to be limited
+range.</li>
+</ol>
+<h2 id="how-renderers-process-range-mismatches">How Renderers Process
+Range Mismatches</h2>
+<p>When metadata is misinterpreted or mismatched along the pipeline
+(Demuxer <span class="math inline">\(\to\)</span> Decoder <span
+class="math inline">\(\to\)</span> Video Processor/Renderer <span
+class="math inline">\(\to\)</span> Display), the conversion matrix fails
+to map the color values accurately.</p>
+<h3 id="scenario-1-full-range-source-treated-as-limited-range">Scenario
+1: Full Range Source Treated as Limited Range</h3>
+<p>If a full-range WebM video is flagged or interpreted as limited
+range:</p>
+<ul>
+<li><strong>The Operation:</strong> The renderer assumes the data sits
+between 16 and 235 and applies a standard expansion formula to map 16 to
+0 (pure black) and 235 to 255 (pure white).</li>
+<li><strong>The Artifact:</strong> Any input values between 0–15 are
+clipped directly to 0 (crushing shadow detail), and values between
+236–255 are clipped to 255 (blowing out highlights). The resulting video
+displays exaggerated contrast with severe loss of detail in dark and
+bright regions.</li>
+</ul>
+<h3 id="scenario-2-limited-range-source-treated-as-full-range">Scenario
+2: Limited Range Source Treated as Full Range</h3>
+<p>If a limited-range WebM video is flagged or interpreted as full
+range:</p>
+<ul>
+<li><strong>The Operation:</strong> The renderer maps the values
+directly without dynamic range expansion, assuming that 0 represents
+black and 255 represents white.</li>
+<li><strong>The Artifact:</strong> The lowest signal level (16) maps to
+a dark gray rather than pure black, and the highest signal level (235)
+maps to a light gray rather than pure white. This results in an elevated
+black floor, reduced dynamic range, and a hazy, washed-out image.</li>
+</ul>
+<h2 id="hardware-vs-software-rendering-implementations">Hardware vs.
+Software Rendering Implementations</h2>
+<p>Video renderers resolve or exacerbate mismatches depending on how
+they offload color conversions:</p>
+<ul>
+<li><strong>GPU Pixel Shaders (Software Compositing):</strong> Modern
+web browsers (Chrome, Firefox) and media players (mpv, VLC) pass YUV
+textures directly to custom pixel shaders (Direct3D, Vulkan, Metal, or
+OpenGL). The shader reads the decoded frame metadata and applies the
+appropriate <span class="math inline">\(YUV \to RGB\)</span> matrix
+mathematically. If the player overrides container metadata in favor of
+bitstream metadata, shader-based conversion accurately resolves
+container/codec conflicts.</li>
+<li><strong>Hardware Overlays and Media Foundations:</strong> When
+hardware acceleration (DirectX Video Acceleration, VA-API, Apple
+VideoToolbox) handles post-processing, the graphics driver determines
+the range conversion. Driver settings (such as NVIDIA Control Panel or
+Intel Graphics Command Center) can forcefully override video output
+range (0–255 vs 16–235), causing mismatches regardless of the WebM
+file's internal metadata.</li>
+<li><strong>Display Handshake (HDMI/DisplayPort):</strong> Even if the
+renderer handles the internal conversion to RGB correctly, the graphics
+card and display must agree on quantization ranges. Sending a full-range
+RGB signal to a display set to limited-range RGB triggers a secondary
+external mismatch identical to software clipping.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

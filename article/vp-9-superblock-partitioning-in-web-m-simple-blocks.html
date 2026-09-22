@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Superblock Partitioning in WebM SimpleBlocks - webm</title>
+    <meta name="description" content="This article explains how the VP9 video codec organizes, partitions, and signals its 64x64 superblocks within the data payload of a WebM SimpleBlock. It covers the path from container-level frame encapsulation in EBML down to the recursive quadtree parti">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-9-superblock-partitioning-in-web-m-simple-blocks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Superblock Partitioning in WebM SimpleBlocks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-9-superblock-partitioning-in-web-m-simple-blocks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how the VP9 video codec organizes, partitions, and signals its 64x64 superblocks within the data payload of a WebM SimpleBlock. It covers the path from container-level frame encapsulation in EBML down to the recursive quadtree parti" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp9-superblock-partitioning-in-webm-simpleblocks">VP9 Superblock
+Partitioning in WebM SimpleBlocks</h1>
+<p>This article explains how the VP9 video codec organizes, partitions,
+and signals its 64x64 superblocks within the data payload of a WebM
+<code>SimpleBlock</code>. It covers the path from container-level frame
+encapsulation in EBML down to the recursive quadtree partitioning syntax
+read by VP9’s boolean arithmetic entropy decoder.</p>
+<hr />
+<h3 id="1-the-webm-simpleblock-container-layer">1. The WebM SimpleBlock
+Container Layer</h3>
+<p>A WebM file uses the Extensible Binary Meta Language (EBML) format.
+Video frames are encapsulated inside <code>SimpleBlock</code> elements
+within a <code>Cluster</code>.</p>
+<p>A <code>SimpleBlock</code> has a compact header followed directly by
+the raw VP9 frame bitstream:</p>
+<ul>
+<li><strong>Track Number:</strong> EBML variable-length integer (VINT)
+indicating the video track.</li>
+<li><strong>Relative Timecode:</strong> Signed 16-bit integer relative
+to the parent <code>Cluster</code> timestamp.</li>
+<li><strong>Flags:</strong> An 8-bit field containing frame attributes
+(Keyframe flag, Discardable, Lacing, etc.).</li>
+<li><strong>Payload:</strong> The raw byte payload containing the VP9
+compressed frame.</li>
+</ul>
+<p>The container does not interpret the internal macroblock or
+superblock structure; it merely passes the raw payload directly to the
+VP9 decoder.</p>
+<hr />
+<h3 id="2-vp9-frame-structure-and-tiles">2. VP9 Frame Structure and
+Tiles</h3>
+<p>Once the payload is passed to the VP9 decoder, it is parsed into two
+main segments:</p>
+<ol type="1">
+<li><strong>Uncompressed Header:</strong> Contains global parameters
+such as frame dimensions, bit-depth, frame type (Keyframe or
+Interframe), and tile layout (column and row counts).</li>
+<li><strong>Compressed Header &amp; Tile Data:</strong> Contains
+entropy-coded probability updates followed by the actual tile data.</li>
+</ol>
+<p>A frame is split into independent <strong>tiles</strong>. Each tile
+processes a sequence of <strong>Superblocks (SBs)</strong> in
+raster-scan order.</p>
+<hr />
+<h3 id="3-superblock-64x64-hierarchy">3. Superblock (64x64)
+Hierarchy</h3>
+<p>The fundamental coding unit in VP9 is the <strong>Superblock
+(SB64)</strong>, which covers a <span class="math inline">\(64 \times
+64\)</span> luma pixel area (and corresponding chroma pixels based on
+the sub-sampling format).</p>
+<p>Each <span class="math inline">\(64 \times 64\)</span> block is
+recursively partitioned using a quadtree structure down to a minimum
+block size of <span class="math inline">\(8 \times 8\)</span> (which can
+further split into <span class="math inline">\(4 \times 4\)</span>
+sub-blocks for transform/prediction purposes).</p>
+<p>At each level of the tree (from <span class="math inline">\(64 \times
+64\)</span> down to <span class="math inline">\(16 \times 16\)</span>),
+the encoder can choose one of four partition modes:</p>
+<ul>
+<li><strong><code>PARTITION_NONE</code>:</strong> The block is coded as
+a single unit of the current size (e.g., <span class="math inline">\(64
+\times 64\)</span>).</li>
+<li><strong><code>PARTITION_HORZ</code>:</strong> The block is split
+horizontally into two equal rectangular blocks (e.g., two <span
+class="math inline">\(64 \times 32\)</span> blocks).</li>
+<li><strong><code>PARTITION_VERT</code>:</strong> The block is split
+vertically into two equal rectangular blocks (e.g., two <span
+class="math inline">\(32 \times 64\)</span> blocks).</li>
+<li><strong><code>PARTITION_SPLIT</code>:</strong> The block is split
+into four equal sub-quadrants (e.g., four <span class="math inline">\(32
+\times 32\)</span> blocks), triggering recursion for each
+sub-block.</li>
+</ul>
+<hr />
+<h3 id="4-signaling-partition-decisions-via-the-bool-coder">4. Signaling
+Partition Decisions via the Bool-Coder</h3>
+<p>VP9 encodes all superblock partition decisions using a custom
+non-binary arithmetic coder called the <strong>Bool-coder</strong>.</p>
+<h4 id="context-dependent-modeling">Context-Dependent Modeling</h4>
+<p>The partition mode is not encoded using fixed-length bits. Instead,
+it uses a 4-symbol probability context determined by the partition sizes
+of the <strong>above</strong> and <strong>left</strong> neighboring
+blocks:</p>
+<ul>
+<li>A context index is derived from whether the adjacent blocks are
+larger, smaller, or equal to the current block size.</li>
+<li>The decoder fetches the corresponding cumulative distribution /
+probability array (<code>partition_probs[context_index]</code>).</li>
+</ul>
+<h4 id="parsing-the-partition-tree">Parsing the Partition Tree</h4>
+<p>The syntax for partitioning at any given node <span
+class="math inline">\(N\)</span> proceeds as follows:</p>
+<ol type="1">
+<li><strong>Boundary Checks:</strong> If the current block extends
+beyond the frame edge (bottom or right boundary), the partition choice
+is restricted. If both horizontal and vertical boundaries are exceeded,
+a <code>PARTITION_SPLIT</code> is inferred automatically without reading
+bits from the stream. If only one edge is exceeded, the stream signals
+whether to split or adapt to the boundary without full 4-way
+signaling.</li>
+<li><strong>Standard Tree Reading:</strong> If completely inside the
+frame:
+<ul>
+<li>The bool-coder decodes a symbol <span class="math inline">\(S \in
+\{0, 1, 2, 3\}\)</span> mapping to <code>NONE</code>, <code>HORZ</code>,
+<code>VERT</code>, or <code>SPLIT</code>.</li>
+</ul></li>
+<li><strong>Recursive Descent:</strong>
+<ul>
+<li>If <code>PARTITION_SPLIT</code> is decoded and the current block
+size is larger than <span class="math inline">\(16 \times 16\)</span>,
+the decoder immediately recurses into the top-left, top-right,
+bottom-left, and bottom-right sub-blocks.</li>
+<li>If the block size reaches <span class="math inline">\(8 \times
+8\)</span>, a split produces four <span class="math inline">\(4 \times
+4\)</span> prediction sub-blocks.</li>
+</ul></li>
+</ol>
+<hr />
+<h3 id="5-decoding-execution-flow">5. Decoding Execution Flow</h3>
+<p>Inside the <code>SimpleBlock</code> payload, the complete signaling
+chain for superblocks operates as follows:</p>
+<pre><code>[WebM SimpleBlock Payload]
+   └─► [VP9 Frame Header]
+         └─► [Tile Data Segment]
+               └─► [Initialize Bool-Coder for Tile]
+                     └─► Loop over Superblocks (Raster Order):
+                           └─► Parse Partition Tree (Contextual Bool-Coder)
+                                 ├─ 64x64 -&gt; SPLIT
+                                 │    ├─ 32x32 Sub-block 0 -&gt; NONE
+                                 │    ├─ 32x32 Sub-block 1 -&gt; HORZ (two 32x16)
+                                 │    ├─ 32x32 Sub-block 2 -&gt; VERT (two 16x32)
+                                 │    └─ 32x32 Sub-block 3 -&gt; SPLIT ...
+                                 └─► Read Prediction Modes &amp; Transform Coefficients</code></pre>
+<p>Once a terminal block size is reached, the decoder immediately reads
+the prediction modes (Intra/Inter), motion vectors, and quantized
+DCT/ADST transform coefficients for that block before proceeding to the
+next block in the tree.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

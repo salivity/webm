@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Adjust Opus Volume Gain in WebM - webm</title>
+    <meta name="description" content="Adjusting the volume gain of an Opus audio track within a WebM container without re-encoding requires tools that can modify either the Opus header's internal gain value or the container's metadata tags. This guide highlights the most effective software o">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-adjust-opus-volume-gain-in-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Adjust Opus Volume Gain in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-adjust-opus-volume-gain-in-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Adjusting the volume gain of an Opus audio track within a WebM container without re-encoding requires tools that can modify either the Opus header's internal gain value or the container's metadata tags. This guide highlights the most effective software o" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-to-adjust-opus-volume-gain-in-webm">How to Adjust Opus
+Volume Gain in WebM</h1>
+<p>Adjusting the volume gain of an Opus audio track within a WebM
+container without re-encoding requires tools that can modify either the
+Opus header's internal gain value or the container's metadata tags. This
+guide highlights the most effective software options—including FFmpeg,
+MKVToolNix, and foobar2000—that allow you to alter the Opus output gain
+quickly and losslessly.</p>
+<h2 id="understanding-opus-gain-in-webm">Understanding Opus Gain in
+WebM</h2>
+<p>Opus audio includes an internal header field called
+<code>Output Gain</code> (stored inside <code>OpusHead</code>). When a
+player decodes the stream, it applies this gain factor automatically at
+playback. In WebM files, this data is encapsulated in the
+<code>CodecPrivate</code> element of the audio track. Additionally,
+standard ReplayGain tags can be written to the WebM metadata layer.
+Modifying these tags allows for non-destructive volume normalization
+without degrading audio quality.</p>
+<h2 id="top-software-for-adjusting-opus-gain-in-webm">Top Software for
+Adjusting Opus Gain in WebM</h2>
+<h3 id="1-ffmpeg">1. FFmpeg</h3>
+<p>FFmpeg is a powerful command-line tool capable of modifying the Opus
+stream gain during a stream copy (remux), ensuring no re-encoding takes
+place.</p>
+<ul>
+<li><strong>How it works:</strong> FFmpeg provides the
+<code>-opus_gain</code> option (or the Opus bitstream filter) to update
+the header gain value.</li>
+<li><strong>Usage Example:</strong>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-c:v</span> copy <span class="at">-c:a</span> copy <span class="at">-opus_gain</span> 256 output.webm</span></code></pre></div>
+<em>(Note: The Opus gain value is specified in units of 1/256th of a dB.
+A value of <code>256</code> represents a +1.0 dB gain, while
+<code>-512</code> represents a -2.0 dB decrease.)</em></li>
+</ul>
+<h3 id="2-mkvtoolnix-mkvpropedit">2. MKVToolNix (mkvpropedit)</h3>
+<p>Because WebM is a subset of the Matroska (MKV) format, the
+<code>mkvpropedit</code> utility from the MKVToolNix suite can modify
+track properties and metadata tags in-place without needing to remux or
+rewrite the entire file.</p>
+<ul>
+<li><strong>Capabilities:</strong> You can write standard Matroska
+ReplayGain tags (<code>REPLAYGAIN_TRACK_GAIN</code> and
+<code>REPLAYGAIN_TRACK_PEAK</code>) directly into the WebM file's track
+tags.</li>
+<li><strong>Best for:</strong> Batch updating container-level metadata
+tags on existing WebM files instantly.</li>
+</ul>
+<h3 id="3-foobar2000">3. foobar2000</h3>
+<p>For users who prefer a graphical user interface, foobar2000 is a
+versatile audio player and metadata editor for Windows that supports
+Opus and WebM.</p>
+<ul>
+<li><strong>Capabilities:</strong> foobar2000 can scan audio files for
+loudness using the EBU R128 standard and write ReplayGain metadata
+directly to WebM containers.</li>
+<li><strong>Opus Gain Application:</strong> foobar2000 also includes an
+option to apply ReplayGain values directly to the Opus stream header,
+making the volume adjustment compatible with players that ignore
+standard metadata tags.</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<ul>
+<li>Use <strong>FFmpeg</strong> if you want to alter the native Opus
+header gain via command line without re-encoding.</li>
+<li>Use <strong>MKVToolNix (<code>mkvpropedit</code>)</strong> for
+in-place tagging of ReplayGain metadata within WebM files.</li>
+<li>Use <strong>foobar2000</strong> for a desktop GUI workflow that
+calculates R128 loudness and applies gain tags automatically.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

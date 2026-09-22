@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM DRM Support via Encrypted Media Extensions - webm</title>
+    <meta name="description" content="Encrypted Media Extensions (EME) provide a standardized JavaScript API that enables web browsers to play encrypted audio and video content without third-party plugins. When paired with WebM containers, EME facilitates hardware- or software-level Digital">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-drm-support-via-encrypted-media-extensions">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM DRM Support via Encrypted Media Extensions - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-drm-support-via-encrypted-media-extensions" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Encrypted Media Extensions (EME) provide a standardized JavaScript API that enables web browsers to play encrypted audio and video content without third-party plugins. When paired with WebM containers, EME facilitates hardware- or software-level Digital" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-drm-support-via-encrypted-media-extensions">WebM DRM
+Support via Encrypted Media Extensions</h1>
+<p>Encrypted Media Extensions (EME) provide a standardized JavaScript
+API that enables web browsers to play encrypted audio and video content
+without third-party plugins. When paired with WebM containers, EME
+facilitates hardware- or software-level Digital Rights Management (DRM)
+by orchestrating communication between the HTML5 media element, the
+browser's Content Decryption Module (CDM), and the DRM license server,
+allowing protected VP8, VP9, or AV1 streams to be decrypted and rendered
+securely.</p>
+<h3 id="the-role-of-eme-and-cdms">The Role of EME and CDMs</h3>
+<p>EME does not implement DRM directly. Instead, it acts as an
+intermediary interface between the web application and the underlying
+DRM system via a Content Decryption Module (CDM), such as Google
+Widevine.</p>
+<p>The architecture consists of four main components:</p>
+<ol type="1">
+<li><strong>Web Application:</strong> Manages stream fetching (typically
+via Media Source Extensions), session handling, and communication with
+the license server.</li>
+<li><strong>EME API:</strong> Exposes methods like
+<code>navigator.requestMediaKeySystemAccess()</code> to request and
+configure DRM sessions.</li>
+<li><strong>CDM (Content Decryption Module):</strong> A secure,
+client-side module (often hardware-isolated) that handles key storage
+and decryption.</li>
+<li><strong>License Server:</strong> Authenticates playback requests and
+securely issues decryption keys.</li>
+</ol>
+<h3 id="encryption-within-the-webm-container">Encryption Within the WebM
+Container</h3>
+<p>WebM, based on the Matroska (MKV) container format, natively defines
+specifications for signaling encrypted content using Extensible Binary
+Meta Language (EBML) elements.</p>
+<ul>
+<li><strong>Encryption Algorithm:</strong> WebM typically utilizes
+AES-128 in Counter (CTR) mode or Subsample Encryption mode.</li>
+<li><strong>Header Metadata:</strong> The container includes a
+<code>ContentEncodings</code> element containing
+<code>ContentEncryption</code>. This metadata signals key parameters
+such as the encryption algorithm (<code>ContentEncAlgo</code>) and the
+Key ID (<code>ContentEncKeyID</code>).</li>
+<li><strong>Initialization Data (initData):</strong> When WebM content
+is encrypted, the container provides initialization data (often the Key
+ID or a WebM-specific initialization block) required by the CDM to
+identify which key is needed for decryption.</li>
+</ul>
+<h3 id="step-by-step-eme-and-webm-workflow">Step-by-Step EME and WebM
+Workflow</h3>
+<ol type="1">
+<li><strong>Media Loading:</strong> The web application feeds encrypted
+WebM media segments into the HTML5 <code>&lt;video&gt;</code> element
+using Media Source Extensions (MSE).</li>
+<li><strong>Encryption Detection:</strong> The browser parses the WebM
+header. Detecting the <code>ContentEncryption</code> element, the media
+pipeline fires an <code>encrypted</code> event containing the extracted
+<code>initData</code> and the <code>initDataType</code> (such as
+<code>"webm"</code> or <code>"cenc"</code>).</li>
+<li><strong>Access Request:</strong> The application calls
+<code>navigator.requestMediaKeySystemAccess()</code> to query browser
+support for the designated key system (e.g.,
+<code>com.widevine.alpha</code>) and WebM codecs.</li>
+<li><strong>Session Creation:</strong> The application creates a
+<code>MediaKeys</code> instance, attaches it to the HTMLMediaElement
+using <code>setMediaKeys()</code>, and creates a new
+<code>MediaKeySession</code>.</li>
+<li><strong>License Request:</strong> The session generates a license
+request by passing the <code>initData</code> into
+<code>session.generateRequest()</code>. The CDM packages this challenge
+into a <code>message</code> event.</li>
+<li><strong>License Exchange:</strong> The application sends the
+CDM-generated challenge to the DRM license server over HTTPS. The
+license server validates the request and returns an encrypted
+license.</li>
+<li><strong>Key Update and Playback:</strong> The application passes the
+license response to the CDM using <code>session.update()</code>. The CDM
+extracts the AES keys, decrypts the WebM block data in memory or secure
+hardware, and passes the raw video frames to the media rendering
+engine.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

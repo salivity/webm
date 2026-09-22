@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Paved the Way for the AV1 Codec - webm</title>
+    <meta name="description" content="The WebM project fundamentally reshaped internet video by proving that an open-source, royalty-free video format could compete with dominant proprietary standards. When Google open-sourced the VP8 codec and launched WebM in 2010, it initiated a continuou">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-paved-the-way-for-the-av-1-codec">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Paved the Way for the AV1 Codec - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-paved-the-way-for-the-av-1-codec" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM project fundamentally reshaped internet video by proving that an open-source, royalty-free video format could compete with dominant proprietary standards. When Google open-sourced the VP8 codec and launched WebM in 2010, it initiated a continuou" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-paved-the-way-for-the-av1-codec">How WebM Paved the Way
+for the AV1 Codec</h1>
+<p>The WebM project fundamentally reshaped internet video by proving
+that an open-source, royalty-free video format could compete with
+dominant proprietary standards. When Google open-sourced the VP8 codec
+and launched WebM in 2010, it initiated a continuous line of technical
+and architectural advancements that culminated in VP9. This
+technological lineage, combined with the legal frameworks established to
+protect open video delivery, served as the primary blueprint and code
+baseline for the Alliance for Open Media (AOMedia) when creating the AV1
+codec.</p>
+<h3 id="the-origin-of-webm-and-the-royalty-free-mandate">The Origin of
+WebM and the Royalty-Free Mandate</h3>
+<p>Prior to WebM, the web relied heavily on patented codecs like H.264,
+which required complex licensing agreements managed by patent pools like
+MPEG LA. Following its acquisition of On2 Technologies, Google released
+the VP8 codec under a royalty-free BSD license and introduced the WebM
+container—a profile of the open Matroska format.</p>
+<p>WebM demonstrated to the industry that royalty-free video compression
+could be deployed at global scale, particularly through integration in
+web browsers and YouTube. More importantly, it established the technical
+mechanisms required to innovate around entrenched video patents,
+creating a legally vetted path for open-source media algorithms.</p>
+<h3 id="technical-evolution-through-vp9">Technical Evolution Through
+VP9</h3>
+<p>While VP8 established the ecosystem, VP9 provided the direct
+algorithmic foundation for next-generation compression. Developed under
+the WebM umbrella and released in 2013, VP9 was designed to rival the
+efficiency of HEVC (H.265). It introduced several key architectural
+innovations that separated it from earlier codecs:</p>
+<ul>
+<li><strong>Flexible Partitioning:</strong> VP9 replaced static 16x16
+macroblocks with a hierarchical superblock structure (up to 64x64) that
+could be recursively split down to 4x4 partitions. This allowed the
+encoder to adapt efficiently to both smooth backgrounds and high-detail
+areas.</li>
+<li><strong>Expanded Prediction Modes:</strong> It expanded intra-frame
+prediction to 10 distinct directional modes, allowing much more accurate
+spatial prediction.</li>
+<li><strong>Asymmetric Discrete Cosine Transforms (DCT):</strong> VP9
+introduced non-square transform blocks (such as 32x8 or 8x32) alongside
+standard square transforms, greatly improving compression efficiency for
+directional edges.</li>
+<li><strong>Advanced Reference Frames:</strong> It allowed frames to
+reference up to three different past frames (the last frame, a golden
+frame, and an alternative reference frame), significantly improving
+temporal prediction.</li>
+</ul>
+<p>VP9 achieved approximately 50% better compression efficiency than
+VP8, proving that an open codec could deliver 4K streaming efficiently
+at scale without proprietary licensing overhead.</p>
+<h3 id="from-vp10-to-the-formation-of-aomedia">From VP10 to the
+Formation of AOMedia</h3>
+<p>By 2015, the video industry faced severe fragmentation due to the
+complicated, multi-pool licensing structure of HEVC. Google had already
+begun development on the next iteration of WebM, dubbed VP10.
+Simultaneously, other organizations were developing independent,
+open-source alternatives: Mozilla and the Xiph.Org Foundation were
+working on the Daala project, while Cisco was developing Thor to support
+video conferencing.</p>
+<p>Recognizing that competing open-source standards would split market
+adoption, these companies—along with Amazon, Netflix, Intel, and
+Microsoft—formed the Alliance for Open Media in September 2015. Google
+contributed the unfinished VP10 codebase as the foundational starting
+point for the new unified project: AV1.</p>
+<h3 id="integrating-webm-innovations-into-av1">Integrating WebM
+Innovations into AV1</h3>
+<p>AV1 was built directly on top of the VP10 codebase, absorbing
+technical contributions from Daala and Thor along the way. Several core
+components of AV1 directly reflect their WebM heritage:</p>
+<ul>
+<li><strong>Superblock Architecture:</strong> AV1 expanded VP9's
+superblock design, scaling the concept up to 128x128 blocks with a
+recursive quadtree-plus-split partitioning structure, directly evolving
+VP9’s tree-based partitioning logic.</li>
+<li><strong>Directional Intra-Prediction:</strong> AV1 took the
+directional prediction concepts refined in VP8 and VP9 and expanded them
+to 56 directional angles, complete with gradient smoothing and
+cross-component prediction.</li>
+<li><strong>Compound Reference Systems:</strong> The multi-reference
+frame system built for VP9 was expanded in AV1 to support up to seven
+reference frames, enabling advanced compound prediction modes.</li>
+<li><strong>Loop Restoration and Filtering:</strong> The in-loop
+deblocking filter originally refined in VP8 and VP9 remained
+fundamental, complemented by AV1's Constrained Directional Enhancement
+Filter (CDEF) and loop restoration stages.</li>
+</ul>
+<p>By supplying a mature, field-tested codebase in VP9/VP10, the WebM
+project significantly shortened the development cycle for AV1. It
+provided a reliable platform that allowed the working group to focus on
+adding cutting-edge coding tools rather than building a modern video
+codec from scratch.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

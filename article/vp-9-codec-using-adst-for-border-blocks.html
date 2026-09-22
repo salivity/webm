@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Codec: Using ADST for Border Blocks - webm</title>
+    <meta name="description" content="This article explores how the WebM VP9 video codec enhances compression performance by using the Asymmetric Discrete Sine Transform (ADST) alongside the traditional Discrete Cosine Transform (DCT). While conventional video codecs rely heavily on symmetri">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-9-codec-using-adst-for-border-blocks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Codec: Using ADST for Border Blocks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-9-codec-using-adst-for-border-blocks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores how the WebM VP9 video codec enhances compression performance by using the Asymmetric Discrete Sine Transform (ADST) alongside the traditional Discrete Cosine Transform (DCT). While conventional video codecs rely heavily on symmetri" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp9-codec-using-adst-for-border-blocks">VP9 Codec: Using ADST
+for Border Blocks</h1>
+<p>This article explores how the WebM VP9 video codec enhances
+compression performance by using the Asymmetric Discrete Sine Transform
+(ADST) alongside the traditional Discrete Cosine Transform (DCT). While
+conventional video codecs rely heavily on symmetric transforms, VP9 uses
+ADST to effectively model residual error signals adjacent to reference
+boundaries. The following sections break down the limitations of
+standard transforms at block borders, the mathematical rationale behind
+ADST, and how VP9 implements hybrid 2D transforms to eliminate artifacts
+and maximize rate-distortion efficiency.</p>
+<h3 id="the-limitation-of-dct-at-block-boundaries">The Limitation of DCT
+at Block Boundaries</h3>
+<p>In video coding, intra prediction predicts the pixel values of a
+target block using the reconstructed boundary pixels of neighboring
+causal blocks (typically the top and left edges). Subtracting this
+prediction from the original block yields the prediction residual, which
+must then be transformed and quantized.</p>
+<p>Historically, video codecs like H.264 used variants of the Type-II
+Discrete Cosine Transform (DCT) for all intra-residual blocks. The DCT
+implicitly assumes that the data extends symmetrically across both
+boundaries. However, intra-prediction residuals are fundamentally
+asymmetric. Because the prediction starts right at the edge of known
+reference pixels, the residual error is typically very close to zero
+directly adjacent to the reference boundary and increases as distance
+from that boundary grows.</p>
+<p>When a symmetric DCT is applied to an asymmetric, one-sided error
+signal, it produces significant high-frequency coefficients to account
+for the artificial discontinuities at the boundary. Quantizing these
+high-frequency components causes ringing artifacts and poor coding
+efficiency along block borders.</p>
+<h3 id="how-adst-works-on-border-blocks">How ADST Works on Border
+Blocks</h3>
+<p>To solve this asymmetry, VP9 integrates the Asymmetric Discrete Sine
+Transform (derived from the Type-VII Discrete Sine Transform).</p>
+<p>The ADST naturally enforces a boundary condition where the signal
+approaches zero at the starting edge (the reference boundary) and
+remains unconstrained at the opposite edge. Mathematically, the basis
+functions of the ADST emulate the statistical behavior of first-order
+Markov processes with fixed boundary conditions.</p>
+<p>By applying ADST to the axis adjacent to the reference samples:</p>
+<ul>
+<li><strong>Zero Boundary Alignment:</strong> The transform's basis
+functions taper to zero at the edge where the block touches the
+reference samples, precisely matching the behavior of the intra-residual
+signal.</li>
+<li><strong>Energy Compaction:</strong> Because the basis functions
+closely reflect the physical distribution of the residual errors, the
+transform packs signal energy into far fewer low-frequency coefficients
+compared to DCT.</li>
+<li><strong>Fewer Edge Artifacts:</strong> By properly modeling boundary
+decay, ADST drastically reduces the high-frequency ringing that often
+occurs near reconstructed edges.</li>
+</ul>
+<h3 id="hybrid-transform-combinations-in-vp9">Hybrid Transform
+Combinations in VP9</h3>
+<p>VP9 uses separable 2D transforms, which apply a 1D vertical transform
+followed by a 1D horizontal transform. VP9 adaptively pairs DCT and ADST
+depending on the directional nature of the intra prediction mode:</p>
+<ol type="1">
+<li><strong>Vertical Prediction Modes:</strong> When prediction is
+derived from the top reference row, residual error increases vertically
+from top to bottom, while remaining relatively uniform horizontally. VP9
+applies a vertical ADST and a horizontal DCT (ADST-DCT).</li>
+<li><strong>Horizontal Prediction Modes:</strong> When prediction is
+derived from the left reference column, error increases horizontally
+from left to right. VP9 applies a vertical DCT and a horizontal ADST
+(DCT-ADST).</li>
+<li><strong>Non-Directional or Diagonal Modes:</strong> For modes such
+as TM (TrueMotion) or diagonal directions where residuals originate from
+both the top and left edges, VP9 can apply an ADST along both dimensions
+(ADST-ADST).</li>
+<li><strong>Uniform/Flat Modes:</strong> When boundary correlation is
+weak or inapplicable, the standard symmetric transform (DCT-DCT) is
+used.</li>
+</ol>
+<h3 id="supported-block-sizes-and-performance">Supported Block Sizes and
+Performance</h3>
+<p>VP9 implements ADST for square transform sizes of 4x4, 8x8, and
+16x16. For larger block sizes, such as 32x32, the correlation between
+distant pixels and the reference boundary diminishes, making the
+standard DCT sufficient and avoiding additional hardware decoder
+complexity.</p>
+<p>By incorporating ADST for border blocks, VP9 achieves higher coding
+gains—often saving between 1% and 3% in overall bitrate for intra frames
+compared to DCT-only architectures—while generating visually cleaner,
+sharper edges across block boundaries.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

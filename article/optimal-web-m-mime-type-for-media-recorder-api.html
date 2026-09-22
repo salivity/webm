@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimal WebM mimeType for MediaRecorder API - webm</title>
+    <meta name="description" content="Capturing high-quality video using the browser's MediaRecorder API requires selecting the right container and codec combination. This guide outlines the optimal WebM mimeType configurations for maximum visual fidelity and compression efficiency, details">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/optimal-web-m-mime-type-for-media-recorder-api">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Optimal WebM mimeType for MediaRecorder API - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/optimal-web-m-mime-type-for-media-recorder-api" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Capturing high-quality video using the browser's MediaRecorder API requires selecting the right container and codec combination. This guide outlines the optimal WebM mimeType configurations for maximum visual fidelity and compression efficiency, details" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="optimal-webm-mimetype-for-mediarecorder-api">Optimal WebM
+mimeType for MediaRecorder API</h1>
+<p>Capturing high-quality video using the browser's MediaRecorder API
+requires selecting the right container and codec combination. This guide
+outlines the optimal WebM <code>mimeType</code> configurations for
+maximum visual fidelity and compression efficiency, details the best
+video and audio codec pairings, explains how to detect browser support
+dynamically, and highlights essential bitrate parameters needed to
+maximize output quality.</p>
+<hr />
+<h3
+id="recommended-mimetype-configurations-ranked-by-quality">Recommended
+mimeType Configurations Ranked by Quality</h3>
+<p>To achieve optimal quality in WebM exports, the choice of video and
+audio codecs passed into the <code>MediaRecorder</code> constructor is
+critical.</p>
+<h4 id="1-optimal-quality-and-compression-vp9--opus">1. Optimal Quality
+and Compression: VP9 + Opus</h4>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;video/webm;codecs=vp9,opus&#39;</span></span></code></pre></div>
+<ul>
+<li><strong>Video Codec:</strong> VP9 Profile 0 or Profile 2</li>
+<li><strong>Audio Codec:</strong> Opus</li>
+<li><strong>Why it is best:</strong> VP9 offers significantly better
+compression efficiency than VP8 (up to 50% bitrate reduction for
+equivalent visual quality). It handles high-resolution streams (1080p,
+2K, 4K) efficiently and avoids macroblocking in high-motion scenes.
+Paired with Opus—the industry standard for high-fidelity, low-latency
+audio—this is the top choice for WebM exports.</li>
+</ul>
+<h4 id="2-next-generation-quality-av1--opus">2. Next-Generation Quality:
+AV1 + Opus</h4>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;video/webm;codecs=av01,opus&#39;</span></span></code></pre></div>
+<ul>
+<li><strong>Video Codec:</strong> AV1 (<code>av01</code>)</li>
+<li><strong>Audio Codec:</strong> Opus</li>
+<li><strong>Why it is best:</strong> AV1 surpasses VP9 in compression
+efficiency, preserving finer details at lower bitrates. However,
+hardware encoding support across browsers and devices is currently
+limited, which can lead to higher CPU usage or dropped frames on
+unsupported hardware during real-time capture.</li>
+</ul>
+<h4 id="3-high-compatibility-fallback-vp8--opus">3. High Compatibility
+Fallback: VP8 + Opus</h4>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;video/webm;codecs=vp8,opus&#39;</span></span></code></pre></div>
+<ul>
+<li><strong>Video Codec:</strong> VP8</li>
+<li><strong>Audio Codec:</strong> Opus</li>
+<li><strong>Why it is best:</strong> VP8 has near-universal browser
+support for WebM recording and relies on mature hardware acceleration.
+While it requires a higher bitrate than VP9 to match visual fidelity, it
+serves as a reliable fallback when VP9 or AV1 are unavailable.</li>
+</ul>
+<hr />
+<h3 id="dynamic-detection-strategy">Dynamic Detection Strategy</h3>
+<p>Browsers vary in their supported codecs. Use
+<code>MediaRecorder.isTypeSupported()</code> to detect the best
+available configuration at runtime using a fallback array:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> candidateTypes <span class="op">=</span> [</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;video/webm;codecs=vp9,opus&#39;</span><span class="op">,</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;video/webm;codecs=vp9.0,opus&#39;</span><span class="op">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;video/webm;codecs=av01,opus&#39;</span><span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;video/webm;codecs=vp8,opus&#39;</span><span class="op">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;video/webm&#39;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>]<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">getOptimalMimeType</span>() {</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (<span class="kw">const</span> type <span class="kw">of</span> candidateTypes) {</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="bu">MediaRecorder</span><span class="op">.</span><span class="fu">isTypeSupported</span>(type)) {</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> type<span class="op">;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="st">&#39;&#39;</span><span class="op">;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<hr />
+<h3 id="combining-mimetype-with-bitrate-settings">Combining mimeType
+with Bitrate Settings</h3>
+<p>Specifying a <code>mimeType</code> determines the codec, but quality
+is ultimately bounded by the bitrate assigned to the recorder. If
+bitrates are omitted, browsers apply conservative defaults that can
+result in pixelation.</p>
+<p>To achieve optimal results, pass explicit bitrate parameters
+alongside the chosen <code>mimeType</code>:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mimeType <span class="op">=</span> <span class="fu">getOptimalMimeType</span>()<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> options <span class="op">=</span> {</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">mimeType</span><span class="op">:</span> mimeType<span class="op">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">videoBitsPerSecond</span><span class="op">:</span> <span class="dv">5000000</span><span class="op">,</span> <span class="co">// 5 Mbps for 1080p (adjust to 8–10 Mbps for 4K or 60fps)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">audioBitsPerSecond</span><span class="op">:</span> <span class="dv">128000</span>   <span class="co">// 128 kbps for high-fidelity stereo Opus audio</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> options)<span class="op">;</span></span></code></pre></div>
+<h3 id="summary-of-best-practices">Summary of Best Practices</h3>
+<ul>
+<li>Always pair <strong>VP9</strong> or <strong>AV1</strong> with
+<strong>Opus</strong> for WebM containers.</li>
+<li>Use <code>MediaRecorder.isTypeSupported()</code> to progressively
+fall back from VP9 to VP8.</li>
+<li>Explicitly define <code>videoBitsPerSecond</code> to match the
+resolution and frame rate of the source stream.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

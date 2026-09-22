@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8K WebM Playback: iGPU Memory Bandwidth Limits - webm</title>
+    <meta name="description" content="Playing 8K WebM video on integrated graphics processors (iGPUs) heavily taxes system memory bus bandwidth due to the massive volume of raw pixel data that must be decoded, processed, and displayed simultaneously. Because an iGPU lacks dedicated VRAM and">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/8-k-web-m-playback-i-gpu-memory-bandwidth-limits">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="8K WebM Playback: iGPU Memory Bandwidth Limits - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/8-k-web-m-playback-i-gpu-memory-bandwidth-limits" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Playing 8K WebM video on integrated graphics processors (iGPUs) heavily taxes system memory bus bandwidth due to the massive volume of raw pixel data that must be decoded, processed, and displayed simultaneously. Because an iGPU lacks dedicated VRAM and" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="8k-webm-playback-igpu-memory-bandwidth-limits">8K WebM Playback:
+iGPU Memory Bandwidth Limits</h1>
+<p>Playing 8K WebM video on integrated graphics processors (iGPUs)
+heavily taxes system memory bus bandwidth due to the massive volume of
+raw pixel data that must be decoded, processed, and displayed
+simultaneously. Because an iGPU lacks dedicated VRAM and shares the
+system RAM over a unified memory architecture, memory bus bottlenecks
+directly lead to frame drops, rendering stutter, and system latency.
+Understanding how memory bandwidth constraints impact this process
+requires analyzing frame buffer demands, hardware decoding traffic, and
+bus contention.</p>
+<h3 id="massive-raw-frame-buffer-throughput">Massive Raw Frame Buffer
+Throughput</h3>
+<p>An 8K frame measures 7680×4320 pixels, which translates to roughly
+33.2 million pixels per frame. Even though WebM files (typically encoded
+with VP9 or AV1) are heavily compressed during storage and transmission,
+the hardware decoder must decompress each frame into an uncompressed
+format (such as NV12 for 8-bit or P010 for 10-bit HDR) in system
+memory.</p>
+<p>At 60 frames per second with 10-bit color, the raw decoded frame data
+alone accounts for over 3.5 gigabytes per second (GB/s) of pure write
+traffic to system RAM. This bandwidth requirement is strictly for
+writing the newly decoded frames and does not account for reading them
+back out for rendering or post-processing.</p>
+<h3 id="inter-frame-reference-reading">Inter-Frame Reference
+Reading</h3>
+<p>Modern video codecs like VP9 and AV1 rely on inter-frame prediction
+to achieve high compression efficiency. To decode a single frame, the
+hardware video decoder must frequently read several previously decoded
+reference frames from memory while simultaneously writing the current
+reconstructed frame back into RAM.</p>
+<p>This bi-directional traffic multiplies the bandwidth demand on the
+memory bus:</p>
+<ul>
+<li><strong>Decoded Picture Buffer (DPB) Reads:</strong> The hardware
+decoder constantly pulls reference frame data from RAM.</li>
+<li><strong>Reconstructed Frame Writes:</strong> The newly decoded frame
+is written to the DPB in RAM.</li>
+<li><strong>Motion Vector &amp; Metadata Access:</strong> Additional
+metadata must be transferred continuously across the bus during
+parsing.</li>
+</ul>
+<p>In 8K playback, this read-write cycle can easily consume 10 to 15
+GB/s of sustained memory throughput solely dedicated to the decoding
+pipeline.</p>
+<h3 id="display-scanout-and-gpu-composition">Display Scanout and GPU
+Composition</h3>
+<p>Once decoded, the video frame must be presented to the display. The
+window compositor (such as Desktop Window Manager on Windows or
+Wayland/X11 on Linux) and the GPU shaders often perform color space
+conversion (YUV to RGB), scaling, and user interface blending.</p>
+<p>Each step requires additional passes over the memory bus:</p>
+<ol type="1">
+<li>The GPU reads the decoded YUV surface from RAM.</li>
+<li>The GPU writes the converted RGB frame back to the frame
+buffer.</li>
+<li>The display engine performs scanout, reading the final frame buffer
+at the display's native refresh rate (e.g., 60 Hz) to send the signal
+across HDMI 2.1 or DisplayPort.</li>
+</ol>
+<h3 id="unified-memory-contention">Unified Memory Contention</h3>
+<p>Because iGPUs share the same physical memory bus with the CPU, video
+playback creates continuous bus contention. While the dedicated video
+processing unit (VPU) and GPU execution units demand high bandwidth for
+video rendering, background CPU processes, operating system tasks, and
+audio pipelines compete for access to the same memory channels.</p>
+<p>If the memory controller reaches its saturation point, latency spikes
+occur. Because video playback has hard real-time deadlines (e.g., one
+frame every 16.6 milliseconds at 60 FPS), even momentary bus saturation
+causes the display engine or decoder to miss its timing window,
+resulting in dropped frames.</p>
+<h3 id="memory-configuration-impact">Memory Configuration Impact</h3>
+<p>The severity of memory bus constraints depends on the system's memory
+architecture:</p>
+<ul>
+<li><strong>Single-Channel Configurations:</strong> Single-channel DDR4
+(up to ~25.6 GB/s) or single-channel DDR5 (up to ~38.4–44.8 GB/s) often
+fail during 8K 60 FPS WebM playback because the combined requirements of
+decoding, rendering, display scanout, and OS operation exceed the
+real-world sustainable bandwidth.</li>
+<li><strong>Dual-Channel Configurations:</strong> Dual-channel DDR5 or
+LPDDR5/LPDDR5X configurations provide between 60 GB/s and 100+ GB/s of
+theoretical bandwidth, providing the necessary overhead to sustain 8K
+decoding and composition without starving the CPU or causing pipeline
+stalls.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

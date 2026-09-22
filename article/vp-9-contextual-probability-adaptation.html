@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Contextual Probability Adaptation - webm</title>
+    <meta name="description" content="This article provides an overview of how the VP9 video codec's entropy coder dynamically selects and updates symbol probabilities using contextual data from neighboring blocks. In VP9, arithmetic coding efficiency relies on context modeling, where the sp">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-9-contextual-probability-adaptation">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Contextual Probability Adaptation - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-9-contextual-probability-adaptation" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of how the VP9 video codec's entropy coder dynamically selects and updates symbol probabilities using contextual data from neighboring blocks. In VP9, arithmetic coding efficiency relies on context modeling, where the sp" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp9-contextual-probability-adaptation">VP9 Contextual
+Probability Adaptation</h1>
+<p>This article provides an overview of how the VP9 video codec's
+entropy coder dynamically selects and updates symbol probabilities using
+contextual data from neighboring blocks. In VP9, arithmetic coding
+efficiency relies on context modeling, where the spatial states of
+adjacent blocks (specifically the left and top neighbors) determine the
+probability distributions applied to syntax elements. Below, we examine
+the mechanics of context derivation, decision trees, and the frame-level
+adaptation process that allows VP9 to maximize compression
+efficiency.</p>
+<h2 id="the-role-of-spatial-neighbors-in-context-derivation">The Role of
+Spatial Neighbors in Context Derivation</h2>
+<p>VP9 utilizes a non-adaptive binary arithmetic coder during the
+decoding of a single frame, meaning that the probability values assigned
+to individual contexts remain static throughout that specific frame.
+However, the <em>selection</em> of which probability to use is highly
+dynamic and context-dependent.</p>
+<p>To determine the context index for a specific syntax element—such as
+partition sizes, intra-prediction modes, reference frames, or skip
+flags—the coder inspects the syntax elements of causal spatial
+neighbors:</p>
+<ul>
+<li><strong>Above Neighbor (A):</strong> The block immediately above the
+current block.</li>
+<li><strong>Left Neighbor (L):</strong> The block immediately to the
+left of the current block.</li>
+</ul>
+<p>The states of these two neighbors are combined to form a context
+index. For example, if both the left and above blocks use
+intra-prediction, the probability model selected for the current block's
+prediction mode will heavily bias toward intra-prediction. If one or
+neither neighbor uses intra-prediction, a different probability entry is
+chosen from the lookup table. If a neighbor is outside the current frame
+or tile boundary, a predefined default fallback context is used.</p>
+<h2 id="tree-based-binarization-and-context-lookup">Tree-Based
+Binarization and Context Lookup</h2>
+<p>Non-binary syntax elements in VP9 are converted into binary decision
+trees. Each node in the tree represents a binary decision (a "bin"), and
+each bin has an associated probability table.</p>
+<ol type="1">
+<li><strong>Context Index Calculation:</strong> The coder evaluates the
+neighboring blocks <span class="math inline">\((A \text{ and }
+L)\)</span> to produce an index offset.</li>
+<li><strong>Node-Specific Probabilities:</strong> As the arithmetic
+coder traverses the decision tree for a symbol, it retrieves a specific
+probability <span class="math inline">\(P\)</span> for each node using
+the calculated context index.</li>
+<li><strong>Entropy Coding:</strong> The boolean arithmetic coder reads
+or writes the bit based on this context-derived probability, minimizing
+bitrate for predictable neighbor patterns.</li>
+</ol>
+<h2 id="symbol-counting-and-backward-probability-adaptation">Symbol
+Counting and Backward Probability Adaptation</h2>
+<p>While probabilities do not change mid-frame, VP9 tracks symbol
+occurrences to adjust probabilities for subsequent frames. This process
+is called backward adaptation:</p>
+<ol type="1">
+<li><strong>Count Accumulation:</strong> Throughout the frame, the codec
+maintains internal counts of how often each symbol occurs within each
+specific neighbor-derived context.</li>
+<li><strong>Maximum Likelihood Estimation:</strong> At the end of the
+frame, the encoder and decoder use these accumulated counts to calculate
+new empirical probabilities for each context.</li>
+<li><strong>Weighting with Previous Probabilities:</strong> The newly
+calculated probability is blended with the previous frame’s probability
+using an adaptation factor. This smoothing prevents radical probability
+shifts caused by temporary anomalies.</li>
+<li><strong>Frame Context Selection:</strong> VP9 maintains four
+separate frame-level context models. The frame header specifies which of
+the four context buffers to use and whether the updated probabilities
+should be written back to update that context buffer for future
+frames.</li>
+</ol>
+<h2 id="forward-updates-via-the-frame-header">Forward Updates via the
+Frame Header</h2>
+<p>In cases where backward adaptation is too slow to respond to a major
+scene change, VP9 supports forward probability updates. The encoder
+directly transmits new probability values in the frame header for
+specific contexts. To minimize overhead, VP9 uses a 1-bit flag per
+probability to signal whether an explicit update is being transmitted,
+ensuring that only contexts with significant deviation from the baseline
+consume header bandwidth.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

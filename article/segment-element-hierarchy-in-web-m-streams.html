@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segment Element Hierarchy in WebM Streams - webm</title>
+    <meta name="description" content="This article provides an overview of how the Segment element is structured within a WebM multimedia stream. Derived from the Extensible Binary Meta Language (EBML) and the Matroska container format, WebM organizes all media data, track configurations, an">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/segment-element-hierarchy-in-web-m-streams">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Segment Element Hierarchy in WebM Streams - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/segment-element-hierarchy-in-web-m-streams" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of how the Segment element is structured within a WebM multimedia stream. Derived from the Extensible Binary Meta Language (EBML) and the Matroska container format, WebM organizes all media data, track configurations, an" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="segment-element-hierarchy-in-webm-streams">Segment Element
+Hierarchy in WebM Streams</h1>
+<p>This article provides an overview of how the Segment element is
+structured within a WebM multimedia stream. Derived from the Extensible
+Binary Meta Language (EBML) and the Matroska container format, WebM
+organizes all media data, track configurations, and playback metadata
+under a single top-level Segment container. Understanding this hierarchy
+reveals how media players parse, synchronize, and stream audio and video
+content efficiently.</p>
+<h3 id="the-webm-root-and-segment-foundation">The WebM Root and Segment
+Foundation</h3>
+<p>A WebM file begins with an <strong>EBML Header</strong>, which
+identifies the file format, EBML version, and doctype as "webm".
+Immediately following the EBML Header is the <strong>Segment
+Element</strong>. The Segment element acts as the root container for all
+actual media data and metadata in the stream. Everything required to
+decode and play the file resides inside this single wrapper.</p>
+<pre><code>[EBML Header]
+[Segment]
+ ├── SeekHead (Optional)
+ ├── Info
+ ├── Tracks
+ ├── Cluster (Repeated)
+ │    ├── Timestamp
+ │    └── SimpleBlock / BlockGroup
+ ├── Cues (Optional)
+ └── Tags (Optional)</code></pre>
+<h3 id="key-sub-elements-of-a-segment">Key Sub-Elements of a
+Segment</h3>
+<p>The Segment element contains several specific child elements,
+arranged in a structured parent-child relationship:</p>
+<h4 id="1-seekhead">1. SeekHead</h4>
+<p>The <code>SeekHead</code> acts as a table of contents. It contains
+references (<code>Seek</code> entries) that point to the exact byte
+offsets of other top-level elements within the Segment, such as
+<code>Info</code>, <code>Tracks</code>, <code>Clusters</code>, or
+<code>Cues</code>. This enables decoders to jump directly to necessary
+metadata without reading the entire file sequentially.</p>
+<h4 id="2-info-segment-information">2. Info (Segment Information)</h4>
+<p>The <code>Info</code> element provides global stream metadata,
+including:</p>
+<ul>
+<li><strong>TimestampScale:</strong> Defines the base unit of time
+(usually nanoseconds) for all timestamps in the file.</li>
+<li><strong>Duration:</strong> The total playback duration of the
+presentation.</li>
+<li><strong>MuxingApp / WritingApp:</strong> Software signatures used to
+create the stream.</li>
+</ul>
+<h4 id="3-tracks">3. Tracks</h4>
+<p>The <code>Tracks</code> element contains one or more
+<code>TrackEntry</code> elements. Each <code>TrackEntry</code> describes
+a single audio or video stream and defines:</p>
+<ul>
+<li><strong>TrackNumber and TrackUID:</strong> Unique identifiers for
+multiplexing.</li>
+<li><strong>TrackType:</strong> Specifies whether the track is video (1)
+or audio (2).</li>
+<li><strong>CodecID:</strong> The codec used (e.g., <code>V_VP8</code>,
+<code>V_VP9</code>, <code>V_AV1</code>, <code>A_OPUS</code>, or
+<code>A_VORBIS</code>).</li>
+<li><strong>Video/Audio Settings:</strong> Resolution, frame rate,
+sample rate, and channel count.</li>
+</ul>
+<h4 id="4-cluster">4. Cluster</h4>
+<p>The <code>Cluster</code> element is the data-bearing container that
+holds the raw audio and video frames. A Segment typically contains
+multiple sequential Cluster elements to support streaming and
+incremental playback. Inside each Cluster:</p>
+<ul>
+<li><strong>Timestamp:</strong> The base timestamp for all frames
+contained within the cluster.</li>
+<li><strong>SimpleBlock:</strong> Contains the raw codec data for a
+single frame, along with a relative timestamp, keyframe flags, and track
+assignment.</li>
+<li><strong>BlockGroup:</strong> An alternative container for frames
+requiring extra metadata, such as reference frames or duration
+limits.</li>
+</ul>
+<h4 id="5-cues">5. Cues</h4>
+<p>The <code>Cues</code> element provides an index of keyframes (seek
+points) mapped to their corresponding byte positions within the Segment.
+Video players use this element for fast and accurate seeking along the
+timeline without needing to parse every preceding frame.</p>
+<h4 id="6-tags">6. Tags</h4>
+<p>The <code>Tags</code> element contains custom user metadata, such as
+title, artist, encoder comments, or copyright information, structured
+into <code>Tag</code>, <code>Targets</code>, and <code>SimpleTag</code>
+entries.</p>
+<h3 id="structural-flow-in-streaming">Structural Flow in Streaming</h3>
+<p>In standard playback scenarios, the parser reads the
+<code>EBML Header</code>, enters the <code>Segment</code>, processes the
+<code>Info</code> and <code>Tracks</code> elements to initialize the
+decoders, and then continuously streams the sequence of
+<code>Cluster</code> elements. Indexing elements like
+<code>SeekHead</code> and <code>Cues</code> are placed either at the
+beginning of the Segment for local playback or appended to the end for
+live-streamed content.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

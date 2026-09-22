@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert WebM Blob to Downloadable File with JavaScript - webm</title>
+    <meta name="description" content="Converting a recorded WebM Blob into a downloadable file link is a common requirement when working with the MediaStream Recording API in JavaScript. This process involves generating a temporary DOM object URL from the binary Blob data, creating an HTML a">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/convert-web-m-blob-to-downloadable-file-with-java-script">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Convert WebM Blob to Downloadable File with JavaScript - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/convert-web-m-blob-to-downloadable-file-with-java-script" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Converting a recorded WebM Blob into a downloadable file link is a common requirement when working with the MediaStream Recording API in JavaScript. This process involves generating a temporary DOM object URL from the binary Blob data, creating an HTML a" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="convert-webm-blob-to-downloadable-file-with-javascript">Convert
+WebM Blob to Downloadable File with JavaScript</h1>
+<p>Converting a recorded WebM <code>Blob</code> into a downloadable file
+link is a common requirement when working with the MediaStream Recording
+API in JavaScript. This process involves generating a temporary DOM
+object URL from the binary Blob data, creating an HTML anchor element
+programmatically, setting the download attributes, and triggering a
+synthetic click event to initiate the browser download.</p>
+<h3 id="step-by-step-implementation">Step-by-Step Implementation</h3>
+<p>To turn a WebM Blob into a downloadable file link, follow these
+standard steps:</p>
+<ol type="1">
+<li><strong>Create an Object URL:</strong> Use
+<code>URL.createObjectURL()</code> to map the WebM Blob to a temporary
+URL string accessible by the browser.</li>
+<li><strong>Create an Anchor Tag:</strong> Create an
+<code>&lt;a&gt;</code> element in memory using
+<code>document.createElement('a')</code>.</li>
+<li><strong>Set Attributes:</strong> Assign the generated Object URL to
+the <code>href</code> attribute and assign your desired file name (e.g.,
+<code>recording.webm</code>) to the <code>download</code>
+attribute.</li>
+<li><strong>Trigger the Download:</strong> Programmatically call the
+<code>.click()</code> method on the anchor element.</li>
+<li><strong>Clean Up Memory:</strong> Call
+<code>URL.revokeObjectURL()</code> to release memory allocated to the
+temporary URL.</li>
+</ol>
+<h3 id="javascript-code-example">JavaScript Code Example</h3>
+<p>Below is a complete, reusable function to trigger a direct download
+from a WebM Blob:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">downloadWebMBlob</span>(blob<span class="op">,</span> fileName <span class="op">=</span> <span class="st">&#39;recording.webm&#39;</span>) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Ensure the blob is explicitly typed as WebM</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> webmBlob <span class="op">=</span> blob<span class="op">.</span><span class="at">type</span> <span class="op">===</span> <span class="st">&#39;video/webm&#39;</span> </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">?</span> blob </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> <span class="kw">new</span> <span class="bu">Blob</span>([blob]<span class="op">,</span> { <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;video/webm&#39;</span> })<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Step 1: Create a temporary Object URL</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> url <span class="op">=</span> URL<span class="op">.</span><span class="fu">createObjectURL</span>(webmBlob)<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Step 2: Create a hidden anchor element</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> anchor <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">&#39;a&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  anchor<span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">display</span> <span class="op">=</span> <span class="st">&#39;none&#39;</span><span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  anchor<span class="op">.</span><span class="at">href</span> <span class="op">=</span> url<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  anchor<span class="op">.</span><span class="at">download</span> <span class="op">=</span> fileName<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Step 3: Append, trigger click, and remove</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">appendChild</span>(anchor)<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  anchor<span class="op">.</span><span class="fu">click</span>()<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="bu">document</span><span class="op">.</span><span class="at">body</span><span class="op">.</span><span class="fu">removeChild</span>(anchor)<span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Step 4: Revoke the Object URL to free up memory</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="pp">setTimeout</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    URL<span class="op">.</span><span class="fu">revokeObjectURL</span>(url)<span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  }<span class="op">,</span> <span class="dv">100</span>)<span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="displaying-a-visible-download-link">Displaying a Visible
+Download Link</h3>
+<p>If you prefer to render a clickable link on the UI instead of
+triggering an automatic download, you can attach the URL directly to an
+existing anchor element on the page:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">createVisibleDownloadLink</span>(blob<span class="op">,</span> containerId<span class="op">,</span> fileName <span class="op">=</span> <span class="st">&#39;recording.webm&#39;</span>) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> url <span class="op">=</span> URL<span class="op">.</span><span class="fu">createObjectURL</span>(blob)<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> link <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">&#39;a&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  link<span class="op">.</span><span class="at">href</span> <span class="op">=</span> url<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  link<span class="op">.</span><span class="at">download</span> <span class="op">=</span> fileName<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  link<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> <span class="vs">`Download </span><span class="sc">${</span>fileName<span class="sc">}</span><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  link<span class="op">.</span><span class="at">className</span> <span class="op">=</span> <span class="st">&#39;download-btn&#39;</span><span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Revoke the object URL after the user clicks the link</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  link<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;click&#39;</span><span class="op">,</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="pp">setTimeout</span>(() <span class="kw">=&gt;</span> URL<span class="op">.</span><span class="fu">revokeObjectURL</span>(url)<span class="op">,</span> <span class="dv">1000</span>)<span class="op">;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(containerId)<span class="op">.</span><span class="fu">appendChild</span>(link)<span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="key-considerations">Key Considerations</h3>
+<ul>
+<li><strong>Memory Management:</strong> Always revoke the generated
+object URL with <code>URL.revokeObjectURL()</code> once the download
+starts. Failing to do so can cause memory leaks, especially when
+recording large video files.</li>
+<li><strong>MIME Types:</strong> Ensure the <code>Blob</code> includes
+<code>{ type: 'video/webm' }</code> or
+<code>{ type: 'audio/webm' }</code> so media players recognize the
+container format correctly upon download.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

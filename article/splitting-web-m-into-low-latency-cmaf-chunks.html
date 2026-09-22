@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splitting WebM into Low-Latency CMAF Chunks - webm</title>
+    <meta name="description" content="Modern live streaming workflows increasingly ingest WebM/WebRTC sources and repackage them for scalable distribution via Common Media Application Format (CMAF). This article explains the technical mechanics of how media processing engines ingest continuo">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/splitting-web-m-into-low-latency-cmaf-chunks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Splitting WebM into Low-Latency CMAF Chunks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/splitting-web-m-into-low-latency-cmaf-chunks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern live streaming workflows increasingly ingest WebM/WebRTC sources and repackage them for scalable distribution via Common Media Application Format (CMAF). This article explains the technical mechanics of how media processing engines ingest continuo" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="splitting-webm-into-low-latency-cmaf-chunks">Splitting WebM into
+Low-Latency CMAF Chunks</h1>
+<p>Modern live streaming workflows increasingly ingest WebM/WebRTC
+sources and repackage them for scalable distribution via Common Media
+Application Format (CMAF). This article explains the technical mechanics
+of how media processing engines ingest continuous WebM streams, demux
+their Matroska-based containers, process the underlying elementary
+streams, and dynamically package the media into fragmented MP4 (fMP4)
+chunks compatible with ultra-low-latency (ULL) delivery pipelines.</p>
+<h3 id="1-ingestion-and-ebml-demuxing">1. Ingestion and EBML
+Demuxing</h3>
+<p>WebM is a subset of the Matroska (MKV) container format built on
+Extensible Binary Meta Language (EBML). In a real-time ingestion
+pipeline, the streaming engine receives a continuous byte stream
+containing EBML elements:</p>
+<ul>
+<li><strong>Segment Information and Tracks:</strong> Identifies codecs,
+sample rates, and video resolutions.</li>
+<li><strong>Clusters and SimpleBlocks:</strong> Encapsulate compressed
+video frames and audio packets along with local timecodes.</li>
+</ul>
+<p>Unlike file-based demuxers that require an entire file index (Cues),
+streaming engines process EBML elements sequentially as a continuous
+stream. The demuxer extracts raw access units (encoded video frames and
+audio samples) and normalizes timestamps into continuous Presentation
+Time Stamps (PTS) and Decode Time Stamps (DTS).</p>
+<h3 id="2-codec-alignment-and-transmuxing">2. Codec Alignment and
+Transmuxing</h3>
+<p>WebM typically encapsulates VP8, VP9, or AV1 for video, and Opus for
+audio. CMAF is codec-agnostic but strictly standardized:</p>
+<ul>
+<li><strong>Passthrough (Transmuxing):</strong> If the WebM stream uses
+AV1 or VP9 video and Opus or AAC audio, the engine can pass the
+compressed packets directly into the CMAF container without re-encoding,
+preserving low processing latency.</li>
+<li><strong>Transcoding:</strong> If the target CMAF profile requires
+H.264/AVC (for broad Apple/HLS compatibility) or AAC audio, the engine
+routes raw frames through hardware-accelerated encoders (e.g., NVENC,
+QuickSync) with zero-latency buffer configurations and fixed Group of
+Pictures (GOP) lengths.</li>
+</ul>
+<h3 id="3-fmp4-fragmentation-and-cmaf-encapsulation">3. fMP4
+Fragmentation and CMAF Encapsulation</h3>
+<p>CMAF structures media into fragmented MP4 containers consisting of an
+initialization segment and a sequence of media fragments:</p>
+<ul>
+<li><strong>Initialization Segment (<code>init.mp4</code>):</strong>
+Contains the File Type Box (<code>ftyp</code>) and Movie Box
+(<code>moov</code>), defining track metadata and codec
+configurations.</li>
+<li><strong>Media Segments:</strong> Composed of Movie Fragment Boxes
+(<code>moof</code>) and Media Data Boxes (<code>mdat</code>). The
+<code>moof</code> box contains sample duration, size, flags, and byte
+offsets via <code>mfhd</code>, <code>traf</code>, and <code>trun</code>
+boxes, while the <code>mdat</code> contains the actual compressed media
+payload.</li>
+</ul>
+<h3 id="4-splitting-into-ultra-low-latency-cmaf-chunks">4. Splitting
+into Ultra-Low-Latency CMAF Chunks</h3>
+<p>To achieve sub-second latency, media engines do not wait for an
+entire media segment (typically 2–6 seconds) to finish encoding.
+Instead, they divide segments into smaller units called <strong>CMAF
+Chunks</strong>:</p>
+<ul>
+<li><strong>Chunk Composition:</strong> A CMAF chunk consists of an
+individual <code>moof</code> + <code>mdat</code> pair containing a
+subset of frames (often as short as a single frame or a 200–500ms slice
+of video/audio).</li>
+<li><strong>Chunk Generation:</strong> As soon as an encoder finishes a
+frame or small set of frames, the engine writes the relative timing into
+a <code>moof</code> header, appends the raw frame into
+<code>mdat</code>, and pushes the chunk directly to the HTTP
+server.</li>
+<li><strong>HTTP Chunked Transfer Encoding (CTE):</strong> The web
+server streams these individual fMP4 chunks using CTE
+(<code>Transfer-Encoding: chunked</code>). Downstream players can begin
+downloading and decoding parts of a segment before the full segment has
+finished broadcasting.</li>
+</ul>
+<h3 id="5-manifest-and-time-synchronization">5. Manifest and Time
+Synchronization</h3>
+<p>While chunks are continuously streamed over HTTP, the engine updates
+playlist files in real time:</p>
+<ul>
+<li><strong>LL-DASH:</strong> Uses availability time offsets to
+advertise the availability of partial segments.</li>
+<li><strong>LL-HLS:</strong> Advertises partial segments using the
+<code>EXT-X-PART</code> tag and sends preload hints
+(<code>EXT-X-PRELOAD-HINT</code>) so players can request upcoming chunks
+in advance.</li>
+</ul>
+<p>This combination of streaming EBML parsing, single-frame or
+sub-second fMP4 encapsulation, and chunked HTTP transport allows engines
+to bridge WebM sources into ultra-low-latency CMAF workflows with
+minimal overhead.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

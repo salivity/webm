@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA NVENC and NVDEC VP9 Support Explained - webm</title>
+    <meta name="description" content="NVIDIA provides hardware-accelerated video decoding (NVDEC) for WebM VP9 across multiple GPU generations, but it does not support VP9 hardware encoding (NVENC) on any GPU architecture. This article details the specific NVDEC decoding profiles and generat">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/nvidia-nvenc-and-nvdec-vp-9-support-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="NVIDIA NVENC and NVDEC VP9 Support Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/nvidia-nvenc-and-nvdec-vp-9-support-explained" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="NVIDIA provides hardware-accelerated video decoding (NVDEC) for WebM VP9 across multiple GPU generations, but it does not support VP9 hardware encoding (NVENC) on any GPU architecture. This article details the specific NVDEC decoding profiles and generat" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="nvidia-nvenc-and-nvdec-vp9-support-explained">NVIDIA NVENC and
+NVDEC VP9 Support Explained</h1>
+<p>NVIDIA provides hardware-accelerated video decoding (NVDEC) for WebM
+VP9 across multiple GPU generations, but it does not support VP9
+hardware encoding (NVENC) on any GPU architecture. This article details
+the specific NVDEC decoding profiles and generational capabilities for
+VP9, explains the absence of VP9 encoding in NVENC, and outlines the
+primary hardware-accelerated alternatives available for WebM
+workflows.</p>
+<h3 id="nvidia-nvdec-hardware-vp9-decoding-capabilities">NVIDIA NVDEC:
+Hardware VP9 Decoding Capabilities</h3>
+<p>NVIDIA includes dedicated fixed-function hardware decoding for VP9
+via the NVDEC engine. Support varies based on GPU architecture, profile,
+and bit depth.</p>
+<ul>
+<li><strong>VP9 Profile 0 (8-bit, 4:2:0):</strong> Full hardware
+decoding is supported on the Pascal generation (GeForce GTX 10-series,
+except GP108 which has partial limits) and all newer architectures,
+including Volta, Turing (GTX 16-series, RTX 20-series), Ampere (RTX
+30-series), and Ada Lovelace (RTX 40-series).</li>
+<li><strong>VP9 Profile 2 (10-bit and 12-bit, 4:2:0):</strong> Hardware
+decoding for 10-bit and 12-bit VP9 content was introduced with the Volta
+architecture and is fully supported on Turing, Ampere, and Ada Lovelace
+GPUs.</li>
+<li><strong>Resolution and Throughput:</strong> Pascal GPUs support VP9
+decoding up to 4K resolution at 60 FPS. Turing, Ampere, and Ada Lovelace
+architectures support VP9 decoding up to 8K resolution at 60 FPS.</li>
+</ul>
+<h3 id="nvidia-nvenc-hardware-vp9-encoding-capabilities">NVIDIA NVENC:
+Hardware VP9 Encoding Capabilities</h3>
+<p>NVIDIA NVENC does not support VP9 encoding on any consumer or
+enterprise GPU.</p>
+<ul>
+<li><strong>No Fixed-Function VP9 Encoder:</strong> NVIDIA never
+implemented a VP9 hardware encoder block in the NVENC silicon.</li>
+<li><strong>Supported NVENC Codecs:</strong> Depending on the
+architecture, NVENC supports H.264 (AVC), H.265 (HEVC), and AV1
+(starting with Ada Lovelace / RTX 40-series).</li>
+<li><strong>Encoding Alternatives:</strong> Systems requiring WebM VP9
+encoding must rely on CPU-based software encoding libraries (such as
+<code>libvpx-vp9</code>). For users seeking an open, royalty-free
+WebM-compatible format with NVIDIA hardware encoding, AV1 via NVENC on
+RTX 40-series or newer GPUs serves as the direct hardware-accelerated
+successor to VP9.</li>
+</ul>
+<h3 id="architecture-support-summary">Architecture Support Summary</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">GPU Architecture</th>
+<th style="text-align: left;">NVDEC VP9 Decode (8-bit)</th>
+<th style="text-align: left;">NVDEC VP9 Decode (10/12-bit)</th>
+<th style="text-align: left;">NVENC VP9 Encode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Maxwell (GM206)</strong></td>
+<td style="text-align: left;">Partial / Hybrid</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Pascal (GTX
+10-series)</strong></td>
+<td style="text-align: left;">Yes (up to 4K)</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Volta (GV100)</strong></td>
+<td style="text-align: left;">Yes (up to 8K)</td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Turing (RTX 20 / GTX
+16)</strong></td>
+<td style="text-align: left;">Yes (up to 8K)</td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Ampere (RTX
+30-series)</strong></td>
+<td style="text-align: left;">Yes (up to 8K)</td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Ada Lovelace (RTX
+40-series)</strong></td>
+<td style="text-align: left;">Yes (up to 8K)</td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">No</td>
+</tr>
+</tbody>
+</table></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

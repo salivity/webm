@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Older GPUs Drop Frames on 4K 60fps WebM Videos - webm</title>
+    <meta name="description" content="Playing 4K WebM video at 60 frames per second (fps) presents an immense computational workload that often causes older graphics processing units (GPUs) to stutter and drop frames. This article breaks down the technical reasons behind this performance bot">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/why-older-gp-us-drop-frames-on-4-k-60-fps-web-m-videos">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why Older GPUs Drop Frames on 4K 60fps WebM Videos - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/why-older-gp-us-drop-frames-on-4-k-60-fps-web-m-videos" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Playing 4K WebM video at 60 frames per second (fps) presents an immense computational workload that often causes older graphics processing units (GPUs) to stutter and drop frames. This article breaks down the technical reasons behind this performance bot" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="why-older-gpus-drop-frames-on-4k-60fps-webm-videos">Why Older
+GPUs Drop Frames on 4K 60fps WebM Videos</h1>
+<p>Playing 4K WebM video at 60 frames per second (fps) presents an
+immense computational workload that often causes older graphics
+processing units (GPUs) to stutter and drop frames. This article breaks
+down the technical reasons behind this performance bottleneck,
+explaining how missing hardware codecs, CPU fallback decoding, memory
+bandwidth limitations, and strict rendering timing windows impact older
+hardware.</p>
+<h3 id="lack-of-dedicated-vp9-and-av1-hardware-decoders">Lack of
+Dedicated VP9 and AV1 Hardware Decoders</h3>
+<p>The WebM container format primarily utilizes open-source codecs,
+specifically Google's VP9 and the newer AV1. Modern GPUs feature
+dedicated Application-Specific Integrated Circuits (ASICs) designed
+exclusively to decode these formats efficiently without straining the
+main graphics cores or the CPU.</p>
+<p>Older GPU architectures—such as Nvidia Kepler, early Maxwell, or AMD
+GCN architectures prior to Vega—do not possess dedicated hardware
+decoders for 4K VP9 or AV1. Without this specialized silicon, the GPU
+cannot natively process the compressed bitstream in real time.</p>
+<h3 id="cpu-fallback-and-high-processing-overhead">CPU Fallback and High
+Processing Overhead</h3>
+<p>When a GPU lacks dedicated decoding hardware for a specific codec,
+the operating system and web browser offload the decoding process to the
+CPU via software decoding.</p>
+<p>Decoding 4K video at 60fps requires the system to decompress
+3840x2160 pixels 60 times every second, which translates to roughly 497
+million pixels per second. Software-based decoding of complex VP9 or AV1
+compression algorithms at this volume demands massive multi-threaded CPU
+power. If the CPU cannot keep up with this throughput, frame drops occur
+before the video frames even reach the GPU for display.</p>
+<h3 id="memory-and-pcie-bus-bandwidth-saturation">Memory and PCIe Bus
+Bandwidth Saturation</h3>
+<p>In a software-decoding scenario, the CPU decodes the video frames in
+system RAM, and each uncompressed frame must then be transferred across
+the PCIe bus to the GPU’s VRAM for final rendering.</p>
+<p>Uncompressed 4K frames in standard YUV color formats require
+substantial data throughput. On older systems running PCIe 2.0 or early
+PCIe 3.0 configurations with slower DDR3 or early DDR4 system memory,
+transferring this volume of data at 60Hz creates a severe bus
+bottleneck, delaying frame presentation.</p>
+<h3 id="the-166-millisecond-rendering-window">The 16.6-Millisecond
+Rendering Window</h3>
+<p>To achieve smooth 60fps playback, the entire pipeline—demuxing,
+decoding, color space conversion, and rendering—must complete within a
+strict 16.6-millisecond window per frame.</p>
+<p>Because older GPUs must handle both the graphics rendering load and
+the transfer of large decoded frames without specialized hardware
+assistance, any minor latency spike in the pipeline causes the frame to
+miss its display deadline, resulting in an instantly noticeable dropped
+frame.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

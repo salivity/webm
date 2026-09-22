@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Origin Restrictions on WebM Media Recording - webm</title>
+    <meta name="description" content="Capturing cross-origin media into a WebM recording using browser APIs like the MediaStream Recording API and HTML5 Canvas is strictly controlled by modern web security architectures. This article explains the primary security restrictions—including the">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/cross-origin-restrictions-on-web-m-media-recording">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Cross-Origin Restrictions on WebM Media Recording - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/cross-origin-restrictions-on-web-m-media-recording" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Capturing cross-origin media into a WebM recording using browser APIs like the MediaStream Recording API and HTML5 Canvas is strictly controlled by modern web security architectures. This article explains the primary security restrictions—including the" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="cross-origin-restrictions-on-webm-media-recording">Cross-Origin
+Restrictions on WebM Media Recording</h1>
+<p>Capturing cross-origin media into a WebM recording using browser APIs
+like the MediaStream Recording API and HTML5 Canvas is strictly
+controlled by modern web security architectures. This article explains
+the primary security restrictions—including the Same-Origin Policy,
+canvas tainting, and Cross-Origin Resource Sharing (CORS) rules—that
+prevent client-side JavaScript from recording, extracting, or saving
+cross-origin audio and video streams into a WebM container.</p>
+<h3 id="the-same-origin-policy-and-canvas-tainting">The Same-Origin
+Policy and Canvas Tainting</h3>
+<p>The primary defense mechanism is the browser's Same-Origin Policy
+(SOP), which isolates resources loaded from different origins
+(combinations of protocol, domain, and port). When a web application
+draws cross-origin media (such as an external image or
+<code>&lt;video&gt;</code> element) onto an HTML5
+<code>&lt;canvas&gt;</code>, the browser immediately marks that canvas
+as "tainted."</p>
+<p>Once a canvas is tainted, its <code>origin-clean</code> flag is set
+to <code>false</code>. This state permanently locks down the canvas
+data, blocking APIs such as <code>canvas.toDataURL()</code>,
+<code>canvas.toBlob()</code>, and crucially,
+<code>canvas.captureStream()</code>. If a script attempts to capture a
+tainted canvas stream to pass it into a <code>MediaRecorder</code>
+instance for WebM encoding, the browser throws a
+<code>SecurityError</code> DOM exception and halts the process to
+prevent unauthorized pixel extraction.</p>
+<h3 id="cross-origin-resource-sharing-cors-requirements">Cross-Origin
+Resource Sharing (CORS) Requirements</h3>
+<p>To record media hosted on an external server, the resource must
+explicitly opt into sharing through CORS headers. Without appropriate
+server configuration and client declaration, capturing will fail:</p>
+<ol type="1">
+<li><strong>Client-Side Attribute:</strong> The HTML media element
+hosting the content must include the <code>crossorigin</code> attribute
+(e.g., <code>crossorigin="anonymous"</code> or
+<code>crossorigin="use-credentials"</code>).</li>
+<li><strong>Server-Side Header:</strong> The remote server must respond
+with the <code>Access-Control-Allow-Origin</code> HTTP header that
+matches the origin of the requesting page or uses a wildcard
+(<code>*</code>).</li>
+</ol>
+<p>If either condition is unmet, the browser treats the media as opaque.
+While the video may still play visually inside the DOM element, its raw
+binary data remains inaccessible to JavaScript, preventing
+<code>HTMLMediaElement.captureStream()</code> or canvas pipelines from
+capturing frames into a WebM file.</p>
+<h3
+id="htmlmediaelementcapturestream-direct-restrictions">HTMLMediaElement.captureStream()
+Direct Restrictions</h3>
+<p>When attempting to bypass the canvas pipeline by directly invoking
+<code>captureStream()</code> on a <code>&lt;video&gt;</code> or
+<code>&lt;audio&gt;</code> element, browsers enforce identical
+cross-origin barriers. If the media source points to a different origin
+without verified CORS headers, the resulting <code>MediaStream</code>
+will either:</p>
+<ul>
+<li>Throw a <code>SecurityError</code> immediately upon creation.</li>
+<li>Produce muted audio tracks and black video tracks that output no
+readable data to the <code>MediaRecorder</code>.</li>
+</ul>
+<h3 id="encrypted-media-extensions-eme-and-drm">Encrypted Media
+Extensions (EME) and DRM</h3>
+<p>Media protected by Digital Rights Management (DRM) through Encrypted
+Media Extensions (EME) imposes hardware- and browser-level capture
+restrictions. Even if the hosting page and the media originate from the
+same domain, DRM-protected streams block direct stream capture entirely.
+Browsers prevent <code>MediaRecorder</code> from intercepting decrypted
+frames, rendering it impossible to encode protected playback into a WebM
+or any other unlocked container format.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

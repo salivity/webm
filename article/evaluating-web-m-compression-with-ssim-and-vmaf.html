@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluating WebM Compression With SSIM and VMAF - webm</title>
+    <meta name="description" content="Automated video quality metrics like the Structural Similarity Index Measure (SSIM) and Video Multi-Method Assessment Fusion (VMAF) evaluate WebM video compression by comparing compressed video frames against the uncompressed reference source. This artic">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/evaluating-web-m-compression-with-ssim-and-vmaf">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Evaluating WebM Compression With SSIM and VMAF - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/evaluating-web-m-compression-with-ssim-and-vmaf" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Automated video quality metrics like the Structural Similarity Index Measure (SSIM) and Video Multi-Method Assessment Fusion (VMAF) evaluate WebM video compression by comparing compressed video frames against the uncompressed reference source. This artic" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="evaluating-webm-compression-with-ssim-and-vmaf">Evaluating WebM
+Compression With SSIM and VMAF</h1>
+<p>Automated video quality metrics like the Structural Similarity Index
+Measure (SSIM) and Video Multi-Method Assessment Fusion (VMAF) evaluate
+WebM video compression by comparing compressed video frames against the
+uncompressed reference source. This article explains the underlying
+mechanics of SSIM and VMAF, how they quantify visual degradation caused
+by WebM codecs like VP8, VP9, and AV1, and why these automated
+measurements are critical for modern video encoding pipelines.</p>
+<h2 id="the-challenge-of-evaluating-webm-compression">The Challenge of
+Evaluating WebM Compression</h2>
+<p>WebM is an open, royalty-free media file format primarily using VP8,
+VP9, or AV1 video codecs. These codecs use lossy compression
+techniques—such as spatial intra-prediction, temporal inter-frame motion
+compensation, transform coding, and quantization—to reduce file
+size.</p>
+<p>While lossy compression saves bandwidth, it introduces visual
+artifacts including:</p>
+<ul>
+<li><strong>Blocking:</strong> Grid patterns resulting from block-based
+discrete cosine or directional transforms.</li>
+<li><strong>Blurring:</strong> Loss of high-frequency detail due to
+heavy quantization.</li>
+<li><strong>Ringing:</strong> Halos around sharp edges.</li>
+<li><strong>Temporal flickering:</strong> Inconsistencies between
+consecutive frames in low-bitrate scenes.</li>
+</ul>
+<p>Traditional mathematical metrics like Peak Signal-to-Noise Ratio
+(PSNR) only measure absolute pixel error (Mean Squared Error), often
+failing to reflect how humans actually perceive these artifacts. SSIM
+and VMAF address this limitation by modeling human visual
+perception.</p>
+<h2 id="how-ssim-evaluates-webm-compression">How SSIM Evaluates WebM
+Compression</h2>
+<p>SSIM evaluates quality based on the premise that the human visual
+system (HVS) is highly adapted to extract structural information from a
+visual scene, rather than measuring absolute pixel brightness.</p>
+<h3 id="mechanics-of-ssim">Mechanics of SSIM</h3>
+<p>SSIM compares corresponding local pixel windows (<span
+class="math inline">\(N \times N\)</span>) between the original
+reference frame and the compressed WebM frame across three distinct
+components:</p>
+<ol type="1">
+<li><strong>Luminance (<span class="math inline">\(l\)</span>):</strong>
+Measures the closeness of the mean pixel intensities.</li>
+<li><strong>Contrast (<span class="math inline">\(c\)</span>):</strong>
+Measures the closeness of the standard deviations (variances) of pixel
+intensities.</li>
+<li><strong>Structure (<span class="math inline">\(s\)</span>):</strong>
+Measures the correlation coefficient between the two windows after
+removing luminance and contrast variations.</li>
+</ol>
+<p>The combined formula yields a score between -1 and 1 (typically 0 to
+1 for video), where 1 indicates an exact duplicate of the source.</p>
+<h3 id="application-to-webm">Application to WebM</h3>
+<p>When applied to WebM files, SSIM effectively flags spatial
+distortions. For example, if VP9's adaptive quantization aggressively
+compresses flat backgrounds, SSIM detects the loss of texture and
+contrast in those local blocks. Advanced variations, such as Multi-Scale
+SSIM (MS-SSIM), evaluate images across multiple resolutions to better
+simulate viewing distances.</p>
+<h2 id="how-vmaf-evaluates-webm-compression">How VMAF Evaluates WebM
+Compression</h2>
+<p>Developed by Netflix, VMAF is an advanced, perceptual full-reference
+metric designed specifically for video streaming. Unlike SSIM, which
+only assesses static spatial properties, VMAF combines multiple quality
+features with machine learning to predict subjective Mean Opinion Scores
+(MOS).</p>
+<h3 id="core-components-of-vmaf">Core Components of VMAF</h3>
+<p>VMAF computes multiple elementary metrics per frame and fuses them
+using a Support Vector Machine (SVM) regressor:</p>
+<ul>
+<li><strong>Visual Information Fidelity (VIF):</strong> Measures
+information loss at multiple spatial scales, capturing how quantization
+in WebM codecs alters edge details and texture.</li>
+<li><strong>Detail Loss Metric (DLM):</strong> Measures the loss of
+details that distract the viewer, as well as the introduction of
+impairments that draw visual attention.</li>
+<li><strong>Motion:</strong> Measures temporal differences between
+adjacent luminance frames to account for motion perception and temporal
+artifacts.</li>
+</ul>
+<p>VMAF outputs a score from 0 to 100, where higher scores represent
+higher perceived quality (a score around 93–95 is generally considered
+visually lossless to the typical viewer).</p>
+<h3 id="application-to-webm-1">Application to WebM</h3>
+<p>VMAF is particularly effective for evaluating VP9 and AV1 encodes
+within WebM because it accurately penalizes:</p>
+<ul>
+<li>Motion-prediction errors and ghosting artifacts during high-motion
+scenes.</li>
+<li>Text smoothing and grain loss, common in high-efficiency AV1
+encoding.</li>
+<li>Temporal instability caused by aggressive keyframe intervals.</li>
+</ul>
+<h2 id="ssim-vs-vmaf-for-webm-optimization">SSIM vs. VMAF for WebM
+Optimization</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">SSIM / MS-SSIM</th>
+<th style="text-align: left;">VMAF</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Analysis Scope</strong></td>
+<td style="text-align: left;">Purely spatial (per-frame)</td>
+<td style="text-align: left;">Spatial and temporal</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>HVS Correlation</strong></td>
+<td style="text-align: left;">Moderate to high for static frames</td>
+<td style="text-align: left;">Very high for continuous video
+playback</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Computational Cost</strong></td>
+<td style="text-align: left;">Low</td>
+<td style="text-align: left;">High</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Score Range</strong></td>
+<td style="text-align: left;">0 to 1.0</td>
+<td style="text-align: left;">0 to 100</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Best Use Case</strong></td>
+<td style="text-align: left;">Fast encoder tuning and basic
+benchmarking</td>
+<td style="text-align: left;">Production encoding, rate-control
+optimization, ladder generation</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-automated-evaluation-workflow">The Automated Evaluation
+Workflow</h2>
+<p>To evaluate a WebM file using SSIM or VMAF:</p>
+<ol type="1">
+<li><strong>Decoding:</strong> Both the original uncompressed source and
+the compressed WebM file are decoded to raw YUV pixel formats.</li>
+<li><strong>Frame Alignment:</strong> Frames are synchronized temporally
+and spatially. If the WebM video was downscaled during encoding, it must
+be upscaled back to the source resolution using a standard filter (such
+as bicubic) before metric calculation.</li>
+<li><strong>Computation:</strong> Metrics are calculated on the
+luminance (<span class="math inline">\(Y\)</span>) channel
+frame-by-frame.</li>
+<li><strong>Aggregation:</strong> Frame scores are aggregated into
+statistical summaries (mean, harmonic mean, 1st percentile) to identify
+both overall video quality and momentary quality drops.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

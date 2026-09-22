@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preventing Pre-Echo Artifacts in WebM Audio - webm</title>
+    <meta name="description" content="WebM audio, powered primarily by the Opus codec and legacy Vorbis formats, relies on psychoacoustic temporal masking models coupled with adaptive window switching and dynamic Time-Frequency (TF) resolution to prevent pre-echo artifacts. Pre-echo is a com">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/preventing-pre-echo-artifacts-in-web-m-audio">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Preventing Pre-Echo Artifacts in WebM Audio - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/preventing-pre-echo-artifacts-in-web-m-audio" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM audio, powered primarily by the Opus codec and legacy Vorbis formats, relies on psychoacoustic temporal masking models coupled with adaptive window switching and dynamic Time-Frequency (TF) resolution to prevent pre-echo artifacts. Pre-echo is a com" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="preventing-pre-echo-artifacts-in-webm-audio">Preventing Pre-Echo
+Artifacts in WebM Audio</h1>
+<p>WebM audio, powered primarily by the Opus codec and legacy Vorbis
+formats, relies on psychoacoustic temporal masking models coupled with
+adaptive window switching and dynamic Time-Frequency (TF) resolution to
+prevent pre-echo artifacts. Pre-echo is a common distortion in
+transform-based audio codecs where quantization noise bleeds temporally
+ahead of sharp percussive sounds, such as castanets, snare hits, or pick
+attacks. This article details the acoustic psycho-filtering
+mechanisms—chiefly backward masking optimization and transient-driven
+block switching—that modern WebM audio encoders use to eliminate this
+artifact.</p>
+<h3 id="the-psychoacoustic-cause-of-pre-echo">The Psychoacoustic Cause
+of Pre-Echo</h3>
+<p>In transform audio codecs using the Modified Discrete Cosine
+Transform (MDCT), audio is analyzed in discrete time blocks (typically
+20 milliseconds). When quantization noise is introduced, it distributes
+evenly across the entire time block.</p>
+<p>Under normal psychoacoustic conditions, the human ear experiences two
+forms of temporal masking:</p>
+<ul>
+<li><strong>Forward masking (post-masking):</strong> A loud sound masks
+quieter subsequent sounds for 50 to 200 milliseconds.</li>
+<li><strong>Backward masking (pre-masking):</strong> A loud sound masks
+quieter preceding sounds, but only for a window of roughly 2 to 5
+milliseconds.</li>
+</ul>
+<p>When a transient occurs late inside an MDCT block, the quantization
+noise spreads across the entire 20 ms window. Because human backward
+masking is limited to under 5 ms, the quantization noise that precedes
+the transient by 10 to 15 ms falls outside the auditory masking
+threshold, producing an audible, pre-transient hiss known as
+pre-echo.</p>
+<h3
+id="the-psychoacoustic-filtering-solution-transient-detection-and-window-switching">The
+Psychoacoustic Filtering Solution: Transient Detection and Window
+Switching</h3>
+<p>To counteract this limitation, WebM audio encoders employ a
+multi-stage psychoacoustic process:</p>
+<h4 id="1-perceptual-transient-detection">1. Perceptual Transient
+Detection</h4>
+<p>The encoder’s psychoacoustic model continuously analyzes incoming
+pulse-code modulation (PCM) signals for sudden energy surges,
+particularly in upper-frequency sub-bands. The acoustic filter
+calculates the derivative of short-term spectral energy; if the energy
+rise exceeds the backward masking threshold within a specific band, a
+transient flag is triggered.</p>
+<h4 id="2-adaptive-transform-window-switching">2. Adaptive Transform
+Window Switching</h4>
+<p>Once a transient is flagged, the encoder dynamically breaks the
+standard frame into smaller MDCT windows. For instance, the Opus codec
+splits a standard 20 ms frame into eight 2.5 ms sub-frames:</p>
+<ul>
+<li>By restricting the transform to 2.5 ms, the quantization noise is
+physically confined to that narrower time slice.</li>
+<li>The noise preceding the transient now falls entirely within the
+ear’s natural 2-to-5 ms backward masking window, rendering the noise
+imperceptible to human hearing.</li>
+</ul>
+<h4 id="3-dynamic-time-frequency-tf-resolution">3. Dynamic
+Time-Frequency (TF) Resolution</h4>
+<p>In the CELT layer of the Opus codec used in WebM, the psychoacoustic
+engine uses dynamic Time-Frequency resolution adaptation. Instead of
+forcing the entire frequency spectrum into short temporal windows (which
+degrades frequency resolution for steady-state low tones), the encoder
+selectively alters the TF resolution of individual critical bands.
+High-frequency bands containing the sharp transient shift to high
+temporal resolution, while lower frequency bands retain higher frequency
+resolution.</p>
+<h3 id="temporal-noise-shaping-tns">Temporal Noise Shaping (TNS)</h3>
+<p>In addition to window switching, psychoacoustic filtering shapes
+quantization noise across the temporal envelope. By applying linear
+prediction filtering in the frequency domain, the encoder forces the
+time-domain quantization noise to mirror the actual energy profile of
+the transient. The noise is pushed underneath the transient peak rather
+than lingering ahead of it, ensuring all residual distortion stays below
+the ear's dynamic hearing threshold.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

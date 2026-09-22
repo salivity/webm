@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Demuxers Fix Audio Clock Drift - webm</title>
+    <meta name="description" content="Streaming WebM media over asynchronous networks inherently exposes media pipelines to clock drift caused by differences between the sender's capture clock, network transport variations, and the receiver's local digital-to-analog audio converter (DAC). To">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-demuxers-fix-audio-clock-drift">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Demuxers Fix Audio Clock Drift - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-demuxers-fix-audio-clock-drift" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Streaming WebM media over asynchronous networks inherently exposes media pipelines to clock drift caused by differences between the sender's capture clock, network transport variations, and the receiver's local digital-to-analog audio converter (DAC). To" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-demuxers-fix-audio-clock-drift">How WebM Demuxers Fix
+Audio Clock Drift</h1>
+<p>Streaming WebM media over asynchronous networks inherently exposes
+media pipelines to clock drift caused by differences between the
+sender's capture clock, network transport variations, and the receiver's
+local digital-to-analog audio converter (DAC). To prevent lip-sync
+errors, buffer underruns, or buffer bloat, WebM demuxers and associated
+downstream audio engines inspect presentation timestamps, compare them
+against a reference clock, and employ adaptive techniques such as
+dynamic audio resampling, timestamp re-basing, and packet insertion or
+drop.</p>
+<h3 id="the-root-cause-of-clock-drift-in-webm-streaming">The Root Cause
+of Clock Drift in WebM Streaming</h3>
+<p>In an asynchronous network environment, packet delivery times
+fluctuate due to jitter, congestion, and packet loss. More critically,
+the hardware crystal oscillators driving the sender's encoding clock and
+the receiver's audio playback hardware run at slightly different speeds,
+even if both are calibrated to standard rates like 48 kHz. In a WebM
+container—which is based on the Extensible Binary Meta Language (EBML)
+specification—time is tracked through discrete <code>Timestamp</code>
+elements within <code>Cluster</code> and <code>Block</code> elements,
+scaled by the track's <code>TimestampScale</code>. When the receiver’s
+hardware clock consumes audio samples faster or slower than the incoming
+WebM timestamps dictate, the audio clock drifts away from both the video
+timeline and the real-time stream.</p>
+<h3 id="timestamp-extraction-and-timeline-reconstruction">Timestamp
+Extraction and Timeline Reconstruction</h3>
+<p>When a WebM demuxer processes incoming data chunks, it parses EBML
+headers to obtain the <code>TimestampScale</code> (typically defaulting
+to 1,000,000 nanoseconds, or 1 millisecond). As it parses
+<code>SimpleBlock</code> or <code>BlockGroup</code> elements containing
+audio payloads (typically Opus or Vorbis), it reconstructs the absolute
+Presentation Timestamp (PTS) for each packet:</p>
+<p><span class="math display">\[\text{PTS} = (\text{Cluster Timestamp} +
+\text{Block Timecode}) \times \text{TimestampScale}\]</span></p>
+<p>The demuxer then passes these packets to a playback synchronizer or
+jitter buffer. Rather than relying on arrival time, the pipeline
+compares the demuxed PTS against a chosen master clock—most commonly the
+system's high-resolution monotonic clock or the hardware audio output
+device.</p>
+<h3 id="dynamic-audio-resampling">Dynamic Audio Resampling</h3>
+<p>The primary method for correcting gradual clock skew without creating
+audible artifacts is dynamic audio resampling. When the demuxer detects
+that audio PTS values are gradually lagging behind or pulling ahead of
+the hardware playback clock:</p>
+<ol type="1">
+<li><strong>Drift Detection:</strong> The audio sink measures buffer
+occupancy over a moving average window to filter out transient network
+jitter.</li>
+<li><strong>Rate Adjustment:</strong> If the buffer is slowly filling up
+(playback is slower than the incoming stream), the downstream resampler
+slightly accelerates consumption. If the buffer is draining, it
+decelerates consumption.</li>
+<li><strong>Pitch Preservation:</strong> Algorithms like Waveform
+Similarity Overlap-Add (WSOLA) or polyphase filter banks dynamically
+resample the decoded PCM stream by fractions of a percent (e.g., <span
+class="math inline">\(\pm0.1\%\)</span>). This smooths the drift
+completely imperceptibly to human ears, avoiding pitch shifts while
+maintaining strict synchronization with the WebM stream's
+timestamps.</li>
+</ol>
+<h3 id="handling-severe-drift-dropping-and-padding">Handling Severe
+Drift: Dropping and Padding</h3>
+<p>When clock divergence is abrupt—such as following a network drop,
+packet burst, or stream pause—resampling cannot compensate quickly
+enough without causing audible pitch artifacts. In these scenarios, the
+demuxer or the immediate downstream audio sink takes discrete corrective
+actions based on predefined drift thresholds:</p>
+<ul>
+<li><strong>Silence Insertion (Underflow Recovery):</strong> If the
+demuxer encounters a gap between expected and received block timestamps
+that exceeds a specific tolerance (often 10–20 milliseconds), it injects
+silence or comfort noise frames into the decoder queue to bridge the gap
+and keep the audio timeline aligned with the video timeline.</li>
+<li><strong>Sample/Packet Dropping (Overflow Recovery):</strong> If
+incoming timestamps lag significantly behind the current playback
+position, the demuxer drops non-essential audio frames entirely, seeking
+forward to the next valid keyframe or timestamp block that matches the
+current master clock.</li>
+</ul>
+<h3 id="cross-track-synchronization">Cross-Track Synchronization</h3>
+<p>WebM demuxers typically enforce audio as the master clock for video
+presentation because the human ear is far more sensitive to audio
+discontinuities (clicks, pops, pitch changes) than the eye is to dropped
+or duplicated video frames. When clock drift occurs, the demuxer
+coordinates with the video pipeline: the audio is smoothly adjusted via
+the hardware clock and subtle resampling, while the video renderer
+adjusts its frame presentation intervals (dropping or delaying video
+frames) to remain synchronized with the demuxed audio timestamps.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

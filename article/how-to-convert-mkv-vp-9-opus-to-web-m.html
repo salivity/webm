@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Convert MKV VP9 Opus to WebM - webm</title>
+    <meta name="description" content="Converting a Matroska (MKV) file containing VP9 video and Opus audio to a compliant WebM container does not require re-encoding, because VP9 and Opus are the native video and audio codecs designed for the WebM format. The conversion process is called rem">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-convert-mkv-vp-9-opus-to-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Convert MKV VP9 Opus to WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-convert-mkv-vp-9-opus-to-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Converting a Matroska (MKV) file containing VP9 video and Opus audio to a compliant WebM container does not require re-encoding, because VP9 and Opus are the native video and audio codecs designed for the WebM format. The conversion process is called rem" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-to-convert-mkv-vp9-opus-to-webm">How to Convert MKV VP9 Opus
+to WebM</h1>
+<p>Converting a Matroska (MKV) file containing VP9 video and Opus audio
+to a compliant WebM container does not require re-encoding, because VP9
+and Opus are the native video and audio codecs designed for the WebM
+format. The conversion process is called remuxing, which simply changes
+the container structure without altering the compressed stream data.
+This article explains how to quickly change the container format to
+standard WebM using simple command-line tools without losing video or
+audio quality.</p>
+<h3 id="why-you-do-not-need-to-re-encode">Why You Do Not Need to
+Re-encode</h3>
+<p>WebM is a restricted subset of the Matroska format. It officially
+supports only VP8 and VP9 for video, and Vorbis and Opus for audio.
+Because your MKV file already contains VP9 and Opus, you only need to
+copy the streams into the new file container. Remuxing takes only a few
+seconds and results in zero quality degradation.</p>
+<h3 id="method-1-using-ffmpeg-recommended">Method 1: Using FFmpeg
+(Recommended)</h3>
+<p>FFmpeg is the most reliable tool to remux MKV to WebM while ensuring
+container compliance.</p>
+<ol type="1">
+<li><p><strong>Basic Conversion</strong> Open your command prompt or
+terminal and run the following command:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mkv <span class="at">-c</span> copy output.webm</span></code></pre></div></li>
+<li><p><strong>Selecting Specific Streams</strong> MKV files often
+contain additional elements that WebM does not support, such as multiple
+audio tracks, chapter markers, or unsupported subtitle formats. To
+ensure strict compliance, map only the first video stream and the first
+audio stream:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mkv <span class="at">-map</span> 0:v:0 <span class="at">-map</span> 0:a:0 <span class="at">-c</span> copy output.webm</span></code></pre></div></li>
+<li><p><strong>Handling Subtitles (Optional)</strong> WebM only supports
+WebVTT subtitles. If your MKV has text-based subtitles (such as SRT)
+that you want to include, convert them to WebVTT while copying the audio
+and video:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mkv <span class="at">-c:v</span> copy <span class="at">-c:a</span> copy <span class="at">-c:s</span> webvtt output.webm</span></code></pre></div></li>
+</ol>
+<h3 id="method-2-using-mkvtoolnix-mkvmerge">Method 2: Using MKVToolNix
+(<code>mkvmerge</code>)</h3>
+<p>If you prefer using MKVToolNix, you can use the <code>mkvmerge</code>
+command-line utility. <code>mkvmerge</code> automatically creates a
+WebM-compliant file when you specify a <code>.webm</code> output
+extension:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> output.webm input.mkv</span></code></pre></div>
+<p><em>Note: If the input file contains codecs or tracks unsupported by
+WebM, <code>mkvmerge</code> will display an error and require you to
+drop the unsupported tracks using command-line flags.</em></p>
+<h3 id="verifying-webm-compliance">Verifying WebM Compliance</h3>
+<p>After converting, you can check that the output file strictly
+complies with the WebM standard using <code>ffprobe</code>:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-show_format</span> <span class="at">-show_streams</span> output.webm</span></code></pre></div>
+<p>The output should confirm <code>format_name=matroska,webm</code>,
+with the video stream listed as <code>vp9</code> and the audio stream
+listed as <code>opus</code>.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

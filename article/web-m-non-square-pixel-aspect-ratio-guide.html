@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Non-Square Pixel Aspect Ratio Guide - webm</title>
+    <meta name="description" content="WebM players determine the correct aspect ratio for video containing non-square pixels primarily by reading the display dimensions embedded in the container's metadata and scaling the decoded frame accordingly. Because digital displays use square pixels,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-non-square-pixel-aspect-ratio-guide">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Non-Square Pixel Aspect Ratio Guide - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-non-square-pixel-aspect-ratio-guide" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM players determine the correct aspect ratio for video containing non-square pixels primarily by reading the display dimensions embedded in the container's metadata and scaling the decoded frame accordingly. Because digital displays use square pixels," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-non-square-pixel-aspect-ratio-guide">WebM Non-Square Pixel
+Aspect Ratio Guide</h1>
+<p>WebM players determine the correct aspect ratio for video containing
+non-square pixels primarily by reading the display dimensions embedded
+in the container's metadata and scaling the decoded frame accordingly.
+Because digital displays use square pixels, content originally recorded
+or mastered with anamorphic (non-square) pixels must be rescaled during
+playback. This article details the container elements, bitstream
+headers, calculation formulas, and precedence rules WebM players use to
+render the correct Display Aspect Ratio (DAR).</p>
+<h3 id="container-level-signaling">Container-Level Signaling</h3>
+<p>WebM is a restricted subset of the Matroska (MKV) container format.
+The container metadata provides the primary instructions for handling
+pixel geometry through specific elements within the
+<code>TrackEntry</code> -&gt; <code>Video</code> master element:</p>
+<ul>
+<li><strong>PixelWidth &amp; PixelHeight:</strong> These define the raw,
+coded video dimensions (Storage Aspect Ratio or SAR), representing the
+actual matrix of pixels stored in the video frames.</li>
+<li><strong>DisplayWidth &amp; DisplayHeight:</strong> These specify the
+intended dimensions on screen. If non-square pixels are present, these
+values will not share the same ratio as <code>PixelWidth</code> and
+<code>PixelHeight</code>.</li>
+<li><strong>DisplayUnit:</strong> Indicates the measurement unit for
+<code>DisplayWidth</code> and <code>DisplayHeight</code> (default is
+<code>0</code>, representing pixels).</li>
+</ul>
+<p>When a WebM player demuxes the file, it extracts these values before
+initializing the video renderer.</p>
+<h3 id="codec-bitstream-signaling">Codec Bitstream Signaling</h3>
+<p>WebM supports video codecs such as VP8, VP9, and AV1. These codecs
+can also carry Sample Aspect Ratio (SAR) or Pixel Aspect Ratio (PAR)
+information inside their sequence headers:</p>
+<ul>
+<li><strong>VP8:</strong> Contains horizontal and vertical scale factors
+within the frame header.</li>
+<li><strong>VP9:</strong> Includes a render size field in the frame
+header that indicates the desired output resolution independent of the
+coded resolution.</li>
+<li><strong>AV1:</strong> Supports explicit <code>render_width</code>
+and <code>render_height</code> syntax, or sample aspect ratio flags
+within the sequence header.</li>
+</ul>
+<h3 id="order-of-precedence-in-webm-players">Order of Precedence in WebM
+Players</h3>
+<p>Standard WebM compliant players (including web browsers like Chromium
+and Firefox, as well as media frameworks like FFmpeg and GStreamer)
+follow a specific hierarchy when determining the aspect ratio:</p>
+<ol type="1">
+<li><strong>Container Metadata (Matroska Level):</strong>
+<code>DisplayWidth</code> and <code>DisplayHeight</code> in the Matroska
+header take highest precedence. If set, the player uses these to
+determine the output geometry.</li>
+<li><strong>Bitstream Headers (Codec Level):</strong> If the container
+does not specify distinct display dimensions, or if they match the pixel
+dimensions by default, the player inspects the codec's internal header
+flags (e.g., VP9 render size).</li>
+<li><strong>Square Pixel Fallback (1:1 PAR):</strong> If neither the
+container nor the codec specifies non-square pixel metadata, the player
+assumes a 1:1 Pixel Aspect Ratio, displaying the video at
+<code>PixelWidth:PixelHeight</code>.</li>
+</ol>
+<h3 id="the-aspect-ratio-calculation">The Aspect Ratio Calculation</h3>
+<p>To render the video accurately on a standard display, the player
+calculates the scaling factor using the relationship between the Storage
+Aspect Ratio (SAR), Pixel Aspect Ratio (PAR), and Display Aspect Ratio
+(DAR):</p>
+<p><span class="math display">\[\text{DAR} =
+\frac{\text{DisplayWidth}}{\text{DisplayHeight}}\]</span></p>
+<p><span class="math display">\[\text{PAR} = \frac{\text{DisplayWidth}
+\times \text{PixelHeight}}{\text{DisplayHeight} \times
+\text{PixelWidth}}\]</span></p>
+<p>During rendering, the player decodes the raw frame into a pixel
+buffer of size <code>PixelWidth</code> <span
+class="math inline">\(\times\)</span> <code>PixelHeight</code>. The
+graphics subsystem then maps this texture to an output viewport sized
+according to the calculated <span
+class="math inline">\(\text{DAR}\)</span>, applying horizontal or
+vertical interpolation (scaling) to correct for the non-square
+pixels.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

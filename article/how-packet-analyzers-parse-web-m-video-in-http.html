@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Packet Analyzers Parse WebM Video in HTTP - webm</title>
+    <meta name="description" content="This article explains how network packet analyzers identify, extract, and parse WebM video streams transmitted over HTTP traffic. Modern packet inspection tools achieve this through a multi-stage process involving TCP stream reassembly, HTTP metadata ins">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-packet-analyzers-parse-web-m-video-in-http">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Packet Analyzers Parse WebM Video in HTTP - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-packet-analyzers-parse-web-m-video-in-http" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how network packet analyzers identify, extract, and parse WebM video streams transmitted over HTTP traffic. Modern packet inspection tools achieve this through a multi-stage process involving TCP stream reassembly, HTTP metadata ins" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-packet-analyzers-parse-webm-video-in-http">How Packet
+Analyzers Parse WebM Video in HTTP</h1>
+<p>This article explains how network packet analyzers identify, extract,
+and parse WebM video streams transmitted over HTTP traffic. Modern
+packet inspection tools achieve this through a multi-stage process
+involving TCP stream reassembly, HTTP metadata inspection, EBML
+(Extensible Binary Meta Language) container signature validation, and
+the structural decoding of video and audio tracks.</p>
+<h3 id="1-tcp-reassembly-and-protocol-decapsulation">1. TCP Reassembly
+and Protocol Decapsulation</h3>
+<p>Before inspecting media data, a packet analyzer must reconstruct the
+underlying transport layer. WebM content delivered over standard
+HTTP/1.1 or HTTP/2 relies on TCP.</p>
+<ul>
+<li><strong>Reassembly:</strong> Packet analyzers track TCP sequence
+numbers, handle retransmissions, and reassemble out-of-order packets
+into a contiguous byte stream.</li>
+<li><strong>TLS Decryption:</strong> If the traffic is encrypted
+(HTTPS), the analyzer requires the session pre-master secret keys (via
+SSLKEYLOGFILE) or the server's private key to decrypt the payload before
+inspection.</li>
+</ul>
+<h3 id="2-http-layer-detection">2. HTTP Layer Detection</h3>
+<p>The analyzer monitors HTTP requests and responses to detect media
+streaming sessions. It inspects key HTTP headers:</p>
+<ul>
+<li><strong><code>Content-Type</code> Header:</strong> The presence of
+<code>video/webm</code> or <code>audio/webm</code> signals the MIME type
+of the payload.</li>
+<li><strong>Range Requests:</strong> Media streaming often utilizes HTTP
+Range requests (<code>Range: bytes=X-Y</code> and
+<code>206 Partial Content</code>) for seeking or chunked delivery. The
+analyzer aggregates these ranges to map out the complete container or
+specific media segments.</li>
+<li><strong>Transfer-Encoding:</strong> If chunked transfer encoding is
+used, the analyzer strips the chunk size markers to rebuild the raw
+payload.</li>
+</ul>
+<h3 id="3-payload-identification-via-ebml-signatures">3. Payload
+Identification via EBML Signatures</h3>
+<p>If HTTP headers are missing, spoofed, or stripped, analyzers fall
+back on Deep Packet Inspection (DPI) by checking the raw byte stream for
+magic numbers.</p>
+<p>WebM is a restricted subset of the Matroska (MKV) container format,
+which utilizes EBML. An analyzer scans the start of the payload for the
+EBML Header ID:</p>
+<ul>
+<li><strong>EBML Header Byte Marker:</strong>
+<code>0x1A 0x45 0xDF 0xA3</code></li>
+</ul>
+<p>Upon locating this sequence, the parser checks the
+<code>DocType</code> element within the EBML header. If the
+<code>DocType</code> string equals <code>"webm"</code>, the stream is
+officially classified as WebM rather than generic Matroska.</p>
+<h3 id="4-parsing-the-webm-container-hierarchy">4. Parsing the WebM
+Container Hierarchy</h3>
+<p>Once confirmed, the analyzer’s dissector reads the binary stream
+hierarchically. EBML encodes data using Variable-Length Integers (VINTs)
+for element IDs and data lengths.</p>
+<ol type="1">
+<li><strong>EBML Header:</strong> Identifies the EBML version, DocType,
+and read compatibility.</li>
+<li><strong>Segment (<code>0x18 0x53 0x80 0x67</code>):</strong> The
+root container holding all other metadata and media data.</li>
+<li><strong>Info:</strong> Contains general segment information, such as
+the timestamp scale and stream duration.</li>
+<li><strong>Tracks (<code>0x16 0x54 0xAE 0x6B</code>):</strong> Contains
+media stream parameters:
+<ul>
+<li><strong>Video Track:</strong> Codec ID (e.g., <code>V_VP8</code>,
+<code>V_VP9</code>, <code>V_AV1</code>), pixel resolution, and frame
+rates.</li>
+<li><strong>Audio Track:</strong> Codec ID (e.g., <code>A_OPUS</code>,
+<code>A_VORBIS</code>), sampling rate, and channel count.</li>
+</ul></li>
+<li><strong>Clusters (<code>0x1F 0x43 0xB6 0x75</code>):</strong> The
+groupings of actual media payloads. Within clusters, the analyzer
+decodes:
+<ul>
+<li><strong>SimpleBlock / BlockGroup:</strong> Individual elementary
+stream packets containing timestamps, keyframe flags, and raw compressed
+frames for the target video or audio decoders.</li>
+</ul></li>
+</ol>
+<h3 id="5-handling-dynamic-and-segmented-streaming">5. Handling Dynamic
+and Segmented Streaming</h3>
+<p>For adaptive streaming implementations such as DASH over WebM, media
+files are split into an Initialization Segment and multiple Media
+Segments.</p>
+<p>The analyzer parses the Initialization Segment to extract the EBML
+Header, <code>Segment Info</code>, and <code>Tracks</code> elements,
+caching this configuration context. When subsequent HTTP requests
+deliver discrete media fragments (containing only <code>Cluster</code>
+elements), the analyzer correlates them with the cached track data to
+seamlessly interpret timestamps, frame boundaries, and bitrates across
+the entire session.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM HDR10 Metadata Preserves Dynamic Range - webm</title>
+    <meta name="description" content="High Dynamic Range (HDR10) video relies on precise color and luminance instructions to display realistic visuals without losing details in extreme lighting conditions. In the open WebM container format, HDR10 metadata is embedded alongside video streams">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-hdr-10-metadata-preserves-dynamic-range">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM HDR10 Metadata Preserves Dynamic Range - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-hdr-10-metadata-preserves-dynamic-range" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="High Dynamic Range (HDR10) video relies on precise color and luminance instructions to display realistic visuals without losing details in extreme lighting conditions. In the open WebM container format, HDR10 metadata is embedded alongside video streams" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-hdr10-metadata-preserves-dynamic-range">How WebM HDR10
+Metadata Preserves Dynamic Range</h1>
+<p>High Dynamic Range (HDR10) video relies on precise color and
+luminance instructions to display realistic visuals without losing
+details in extreme lighting conditions. In the open WebM container
+format, HDR10 metadata is embedded alongside video streams (typically
+encoded with VP9 or AV1) to define peak brightness levels, color
+primaries, and tone mapping parameters. This article explains how WebM
+implements static HDR10 metadata—specifically SMPTE ST 2086, MaxCLL, and
+MaxFALL—to preserve dynamic range and prevent highlight clipping across
+diverse display hardware.</p>
+<h3 id="webm-container-architecture-for-hdr">WebM Container Architecture
+for HDR</h3>
+<p>The WebM container, based on the Matroska (MKV) specification,
+includes dedicated data structures within its <code>Colour</code>
+element to store HDR signaling parameters. Instead of discarding
+luminance information during compression or playback, the container
+carries specific metadata payloads:</p>
+<ul>
+<li><strong>SMPTE ST 2084 (Perceptual Quantizer / PQ):</strong> The
+electro-optical transfer function (EOTF) mapped inside WebM’s
+<code>TransferCharacteristics</code> element. It replaces legacy gamma
+curves to encode luminance levels up to 10,000 nits, allowing direct
+mapping of bright highlights.</li>
+<li><strong>ITU-R BT.2020:</strong> Designated in the
+<code>MatrixCoefficients</code> and <code>Primaries</code> elements to
+define the wide color gamut necessary for rendering saturated,
+high-luminance colors.</li>
+<li><strong>Mastering Display Color Volume (SMPTE ST 2086):</strong>
+Stored in the <code>MasteringMetadata</code> sub-elements, defining the
+chromaticity coordinates and the minimum/maximum luminance of the
+monitor used during mastering.</li>
+</ul>
+<h3 id="content-light-level-metadata-maxcll-and-maxfall">Content Light
+Level Metadata: MaxCLL and MaxFALL</h3>
+<p>To manage extreme highlights across displays with varying peak
+brightness capabilities, WebM embeds two critical static metadata values
+defined by CTA-861.3:</p>
+<ol type="1">
+<li><strong>MaxCLL (Maximum Content Light Level):</strong> Specifies the
+luminance value (in nits) of the brightest single pixel in the entire
+video stream.</li>
+<li><strong>MaxFALL (Maximum Frame-Average Light Level):</strong>
+Specifies the highest average luminance across any single frame in the
+stream.</li>
+</ol>
+<p>When a WebM file is decoded, the display reads <code>MaxCLL</code> to
+identify the absolute ceiling of the content's highlight values. If a
+video contains specular highlights (such as direct sunlight, chrome
+reflections, or fire) mastered at 1,000 nits, the <code>MaxCLL</code>
+explicitly registers this peak.</p>
+<h3 id="preserving-dynamic-range-via-tone-mapping">Preserving Dynamic
+Range via Tone Mapping</h3>
+<p>Consumer displays rarely match the theoretical maximum brightness of
+HDR mastering monitors. When a display's peak brightness is lower than
+the content's <code>MaxCLL</code>, the display engine must perform tone
+mapping to compress the dynamic range:</p>
+<ul>
+<li><strong>Hard Clipping vs. Soft Roll-Off:</strong> Without metadata,
+a display capped at 400 nits would simply clip all luminance data
+between 400 and 1,000 nits to pure white, flattening textures in bright
+areas.</li>
+<li><strong>Metadata-Guided Knee Points:</strong> Using WebM's HDR10
+metadata, the display processor calculates a "knee point" in the
+luminance transfer curve. Luminance values below this point remain
+untouched, while values above it are smoothly compressed into the
+display's available headroom.</li>
+</ul>
+<p>This calculation ensures that fine textures inside bright areas—such
+as details in clouds or gradient transitions around light sources—remain
+visible rather than blown out.</p>
+<h3 id="bitstream-and-container-synchronization">Bitstream and Container
+Synchronization</h3>
+<p>WebM achieves robust HDR delivery by supporting metadata at both the
+container level (Matroska elements) and the codec bitstream level (VP9
+color config headers or AV1 Sequence Headers / Metadata OBUs).</p>
+<p>Decoders and rendering pipelines parse the container-level parameters
+during demuxing to configure the display pipeline before playback
+begins, while bitstream-level metadata ensures frame-accurate color
+space handling during decoding. This dual-layer delivery minimizes
+parsing errors and guarantees that the target display correctly
+interprets the intended dynamic range across all bright scenes.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

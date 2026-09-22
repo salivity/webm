@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Caching Headers for WebM Background Videos - webm</title>
+    <meta name="description" content="Static WebM background videos can quickly consume substantial bandwidth and degrade page load speeds if not cached properly. This article outlines the most effective HTTP headers to configure for static WebM video assets, ensuring minimal server load, se">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/best-caching-headers-for-web-m-background-videos">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Best Caching Headers for WebM Background Videos - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/best-caching-headers-for-web-m-background-videos" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Static WebM background videos can quickly consume substantial bandwidth and degrade page load speeds if not cached properly. This article outlines the most effective HTTP headers to configure for static WebM video assets, ensuring minimal server load, se" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="best-caching-headers-for-webm-background-videos">Best Caching
+Headers for WebM Background Videos</h1>
+<p>Static WebM background videos can quickly consume substantial
+bandwidth and degrade page load speeds if not cached properly. This
+article outlines the most effective HTTP headers to configure for static
+WebM video assets, ensuring minimal server load, seamless byte-range
+streaming, and maximum performance across browsers and Content Delivery
+Networks (CDNs).</p>
+<h3 id="1-cache-control">1. Cache-Control</h3>
+<p>The <code>Cache-Control</code> header defines how long and where the
+video file should be stored. Because background videos are typically
+large and rarely change, long-term caching is recommended.</p>
+<ul>
+<li><p><strong>For Versioned/Hashed Filenames (Recommended):</strong> If
+your build pipeline appends a unique hash to the video URL (e.g.,
+<code>hero-background.v1.a8f2d.webm</code>):</p>
+<pre class="http"><code>Cache-Control: public, max-age=31536000, immutable</code></pre>
+<ul>
+<li><code>public</code>: Allows browsers, proxies, and CDNs to cache the
+response.</li>
+<li><code>max-age=31536000</code>: Caches the file for one year (in
+seconds).</li>
+<li><code>immutable</code>: Tells the browser the file will never
+change, eliminating conditional revalidation requests on page
+refreshes.</li>
+</ul></li>
+<li><p><strong>For Fixed/Unversioned Filenames:</strong> If the file URL
+remains static (e.g., <code>background.webm</code>), use a shorter TTL
+paired with revalidation:</p>
+<pre class="http"><code>Cache-Control: public, max-age=604800, stale-while-revalidate=86400</code></pre>
+<ul>
+<li><code>max-age=604800</code>: Caches the asset for 7 days.</li>
+<li><code>stale-while-revalidate=86400</code>: Allows serving a stale
+version for an extra day while the browser asynchronously fetches the
+newest version in the background.</li>
+</ul></li>
+</ul>
+<hr />
+<h3 id="2-accept-ranges">2. Accept-Ranges</h3>
+<p>Browsers load video files progressively using HTTP range requests
+rather than downloading the entire asset at once.</p>
+<pre class="http"><code>Accept-Ranges: bytes</code></pre>
+<ul>
+<li>Explicitly informs the browser that the server supports partial
+content requests (HTTP <code>206 Partial Content</code>).</li>
+<li>Crucial for video rendering; without it, browsers must download the
+entire video before playing it.</li>
+</ul>
+<hr />
+<h3 id="3-etag-and-last-modified">3. ETag and Last-Modified</h3>
+<p>Validation headers enable conditional requests when a cached item
+expires, allowing the server to return a lightweight
+<code>304 Not Modified</code> status rather than re-transmitting the
+entire video.</p>
+<pre class="http"><code>ETag: &quot;63a8f-5b12345678900&quot;
+Last-Modified: Wed, 21 Oct 2023 07:28:00 GMT</code></pre>
+<ul>
+<li><strong>ETag:</strong> A unique hash representing the current
+version of the file.</li>
+<li><strong>Last-Modified:</strong> The timestamp of when the file was
+last updated on the origin server.</li>
+</ul>
+<hr />
+<h3 id="4-content-type-and-compression">4. Content-Type and
+Compression</h3>
+<p>Ensure the server identifies the MIME type correctly and avoids
+redundant compression:</p>
+<ul>
+<li><strong>MIME Type:</strong>
+<pre class="http"><code>Content-Type: video/webm</code></pre></li>
+<li><strong>Avoid Compression:</strong> Do not apply Gzip or Brotli
+compression to WebM files. WebM is already heavily compressed; enabling
+gzip or brotli adds CPU overhead and can break byte-range streaming
+without providing meaningful size reductions.</li>
+</ul>
+<hr />
+<h3 id="example-production-header-set">Example Production Header
+Set</h3>
+<p>A complete header response for an immutable, static WebM background
+video:</p>
+<pre class="http"><code>HTTP/1.1 200 OK
+Content-Type: video/webm
+Content-Length: 2458901
+Accept-Ranges: bytes
+Cache-Control: public, max-age=31536000, immutable
+ETag: &quot;video-hash-7890abc&quot;
+Last-Modified: Mon, 15 Jan 2024 12:00:00 GMT</code></pre></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

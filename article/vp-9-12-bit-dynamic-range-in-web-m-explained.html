@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 12-Bit Dynamic Range in WebM Explained - webm</title>
+    <meta name="description" content="This article details how the WebM VP9 bitstream architecture signals and specifies dynamic range expansion for 12-bit video tracks. It covers the required VP9 profiles, the exact syntax elements within the uncompressed frame header that designate 12-bit">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-9-12-bit-dynamic-range-in-web-m-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 12-Bit Dynamic Range in WebM Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-9-12-bit-dynamic-range-in-web-m-explained" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article details how the WebM VP9 bitstream architecture signals and specifies dynamic range expansion for 12-bit video tracks. It covers the required VP9 profiles, the exact syntax elements within the uncompressed frame header that designate 12-bit" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp9-12-bit-dynamic-range-in-webm-explained">VP9 12-Bit Dynamic
+Range in WebM Explained</h1>
+<p>This article details how the WebM VP9 bitstream architecture signals
+and specifies dynamic range expansion for 12-bit video tracks. It covers
+the required VP9 profiles, the exact syntax elements within the
+uncompressed frame header that designate 12-bit depth, how color range
+and color space flags scale signal levels, and how container-level WebM
+metadata works in tandem with the codec to define high dynamic range
+(HDR) transfer curves and peak luminance.</p>
+<h3 id="profile-selection-for-12-bit-video">Profile Selection for 12-Bit
+Video</h3>
+<p>VP9 divides its capabilities into four profiles (0 through 3).
+Dynamic range expansion to 10-bit and 12-bit depths is restricted to
+Profiles 2 and 3:</p>
+<ul>
+<li><strong>Profile 2:</strong> Supports 10-bit and 12-bit color depth
+with 4:2:0 chroma subsampling.</li>
+<li><strong>Profile 3:</strong> Supports 10-bit and 12-bit color depth
+with 4:2:2 and 4:4:4 chroma subsampling, as well as an optional alpha
+channel.</li>
+</ul>
+<p>The bitstream initiates every VP9 frame with an uncompressed header
+where the profile is read via two syntax bits:
+<code>profile_low_bit</code> and <code>profile_high_bit</code>. A
+decoder must identify Profile 2 (<code>10</code> binary) or Profile 3
+(<code>11</code> binary) before it can parse 12-bit data structures.</p>
+<h3 id="uncompressed-header-syntax-for-bit-depth">Uncompressed Header
+Syntax for Bit Depth</h3>
+<p>Once Profile 2 or Profile 3 is established, the VP9 uncompressed
+frame header exposes the <code>bit_depth</code> syntax element.</p>
+<p>The bitstream reads a single bit (<code>bit_depth_flag</code>):</p>
+<ul>
+<li>A value of <code>0</code> denotes <strong>10-bit</strong> sample
+precision.</li>
+<li>A value of <code>1</code> denotes <strong>12-bit</strong> sample
+precision.</li>
+</ul>
+<p>When set to <code>1</code>, the internal pixel representation,
+transformation pipelines, and prediction residue calculations are mapped
+to a 12-bit integer grid, expanding the quantization lattice from the
+standard 256 discrete code values (8-bit) to 4,096 discrete code values
+(<span class="math inline">\(2^{12}\)</span>).</p>
+<h3 id="dynamic-range-and-quantization-scaling-color_range">Dynamic
+Range and Quantization Scaling (<code>color_range</code>)</h3>
+<p>Dynamic range expansion depends on how quantization values map to
+black and white reference levels. The VP9 uncompressed header signals
+this via the single-bit <code>color_range</code> flag:</p>
+<ul>
+<li><strong>Studio Swing (<code>color_range = 0</code>):</strong> Limits
+the dynamic range to standardized broadcast envelopes:
+<ul>
+<li><strong>Luma (<span class="math inline">\(Y\)</span>):</strong>
+<span class="math inline">\(16 \times 2^{(12 - 8)} = 256\)</span> to
+<span class="math inline">\(235 \times 2^{(12 - 8)} = 3760\)</span></li>
+<li><strong>Chroma (<span
+class="math inline">\(Cb/Cr\)</span>):</strong> <span
+class="math inline">\(16 \times 2^{(12 - 8)} = 256\)</span> to <span
+class="math inline">\(240 \times 2^{(12 - 8)} = 3840\)</span></li>
+</ul></li>
+<li><strong>Full Swing (<code>color_range = 1</code>):</strong> Expands
+the code values across the entire 12-bit range from <span
+class="math inline">\(0\)</span> to <span
+class="math inline">\(4095\)</span> for both luma and chroma
+channels.</li>
+</ul>
+<p>Selecting full swing maximizes numeric precision, preserving specular
+highlights and deep shadow details without clipping near the nominal
+range boundaries.</p>
+<h3 id="color-space-syntax-element">Color Space Syntax Element</h3>
+<p>Adjacent to the range flag, the bitstream reads a 3-bit
+<code>color_space</code> field that defines the color primaries and
+matrix coefficients:</p>
+<ul>
+<li><code>0</code>: Unknown / Unspecified</li>
+<li><code>1</code>: Rec. ITU-R BT.601-7</li>
+<li><code>2</code>: Rec. ITU-R BT.709-6</li>
+<li><code>3</code>: SMPTE-170</li>
+<li><code>4</code>: SMPTE-240</li>
+<li><code>5</code>: Rec. ITU-R BT.2020-2 (Non-constant luminance)</li>
+<li><code>6</code>: Reserved</li>
+<li><code>7</code>: sRGB / IEC 61966-2-1 (Chroma is treated as RGB full
+range)</li>
+</ul>
+<p>To support wide color gamuts and dynamic range associated with 12-bit
+pipelines, the bitstream typically specifies value <code>5</code>
+(BT.2020).</p>
+<h3 id="webm-container-integration-matroska-level-metadata">WebM
+Container Integration (Matroska Level Metadata)</h3>
+<p>While the VP9 bitstream establishes the 12-bit allocation (<span
+class="math inline">\(2^{12}\)</span> levels) and color matrix, the
+physical optical dynamic range (converting code values to scene
+luminance or nits) is specified at the container level within the
+WebM/Matroska <code>Colour</code> element:</p>
+<ol type="1">
+<li><strong>TransferCharacteristics:</strong> Defines the non-linear
+transfer function. For HDR dynamic range expansion, this is set to:
+<ul>
+<li><code>16</code>: SMPTE ST 2084 (Perceptual Quantizer / PQ), mapping
+code values up to 10,000 <span
+class="math inline">\(cd/m^2\)</span>.</li>
+<li><code>18</code>: ARIB STD-B67 (Hybrid Log-Gamma / HLG).</li>
+</ul></li>
+<li><strong>BitsPerChannel:</strong> Explicitly set to <code>12</code>
+in the container track header to match the VP9 uncompressed header bit
+depth.</li>
+<li><strong>MasteringMetadata:</strong> Supplies static metadata for
+high dynamic range mastering displays, including
+<code>PrimaryRChromaticity</code>, <code>PrimaryGChromaticity</code>,
+<code>PrimaryBChromaticity</code>, <code>WhitePointChromaticity</code>,
+<code>LuminanceMax</code>, and <code>LuminanceMin</code>.</li>
+<li><strong>MaxCLL and MaxFALL:</strong> Specifies the Maximum Content
+Light Level and Maximum Frame-Average Light Level, enabling consumer
+display tone-mapping algorithms to scale the 12-bit signal accurately to
+physical panel capabilities.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opus Loudness Normalization in WebM Containers - webm</title>
+    <meta name="description" content="This article examines the loudness normalization metadata mechanisms available for Opus audio streams encapsulated within WebM containers. It details the intrinsic header gain values defined by the Opus format, the supplementary ReplayGain and ITU-R BS.1">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/opus-loudness-normalization-in-web-m-containers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Opus Loudness Normalization in WebM Containers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/opus-loudness-normalization-in-web-m-containers" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article examines the loudness normalization metadata mechanisms available for Opus audio streams encapsulated within WebM containers. It details the intrinsic header gain values defined by the Opus format, the supplementary ReplayGain and ITU-R BS.1" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="opus-loudness-normalization-in-webm-containers">Opus Loudness
+Normalization in WebM Containers</h1>
+<p>This article examines the loudness normalization metadata mechanisms
+available for Opus audio streams encapsulated within WebM containers. It
+details the intrinsic header gain values defined by the Opus format, the
+supplementary ReplayGain and ITU-R BS.1770 / EBU R 128 container tags
+supported by WebM, and how media players apply this metadata during
+decoding and playback.</p>
+<h3 id="opus-head-output-gain">Opus Head Output Gain</h3>
+<p>The primary loudness adjustment mechanism for Opus in WebM is the
+<strong>Output Gain</strong> field embedded in the <code>OpusHead</code>
+structure. When Opus is encapsulated in WebM (which is a subset of the
+Matroska container format), the <code>OpusHead</code> is placed inside
+the <code>CodecPrivate</code> element of the audio track.</p>
+<ul>
+<li><strong>Field Definition:</strong> A 16-bit signed integer
+representing a gain offset in <span
+class="math inline">\(1/256\,\text{dB}\)</span> units (Q7.8
+format).</li>
+<li><strong>Application:</strong> Decoders are required by the Opus
+specification to apply this gain directly during the decoding pipeline
+unless explicitly instructed otherwise by a player interface.</li>
+<li><strong>Intended Use:</strong> Normalizing the stream to a reference
+level (typically -23 LUFS / -24 LUFS for broadcast or custom targets for
+streaming) without modifying or re-encoding the compressed audio
+frames.</li>
+</ul>
+<h3 id="matroska--webm-tag-based-loudness-metadata">Matroska / WebM
+Tag-Based Loudness Metadata</h3>
+<p>In addition to the bitstream header gain, WebM inherits Matroska's
+tagging system (<code>&lt;Tags&gt;</code> element), which allows
+non-destructive, non-mandatory loudness metadata to be carried at the
+container level. These tags are useful when a player wants to apply
+loudness adjustments selectively (e.g., applying album gain instead of
+track gain, or leaving dynamic range untouched).</p>
+<h4 id="replaygain-standard-tags">ReplayGain Standard Tags</h4>
+<p>WebM supports standard ReplayGain tags stored within
+<code>SimpleTag</code> elements:</p>
+<ul>
+<li><code>REPLAYGAIN_TRACK_GAIN</code>: Stored as a floating-point
+string specifying the decibel gain relative to the target level (e.g.,
+<code>-3.20 dB</code>).</li>
+<li><code>REPLAYGAIN_TRACK_PEAK</code>: A floating-point number
+representing the maximum sample or true-peak value normalized to 1.0
+(e.g., <code>0.985432</code>).</li>
+<li><code>REPLAYGAIN_ALBUM_GAIN</code>: The decibel gain required to
+normalize an entire collection of tracks together.</li>
+<li><code>REPLAYGAIN_ALBUM_PEAK</code>: The highest peak value across
+the entire album.</li>
+</ul>
+<h4 id="itu-r-bs1770-and-ebu-r-128-tags">ITU-R BS.1770 and EBU R 128
+Tags</h4>
+<p>Modern distribution workflows often include explicit loudness metrics
+defined by ITU-R BS.1770 and EBU R 128:</p>
+<ul>
+<li><code>LOUDNESS_INTEGRATED</code> / <code>EBU_R128_INTEGRATED</code>:
+The measured integrated loudness of the track in LUFS (e.g.,
+<code>-14.0 LUFS</code>).</li>
+<li><code>LOUDNESS_RANGE</code> / <code>EBU_R128_LRA</code>: The
+statistical loudness range of the track in LU.</li>
+<li><code>TRUE_PEAK</code>: The maximum inter-sample peak level in
+dBTP.</li>
+</ul>
+<h3 id="processing-and-precedence">Processing and Precedence</h3>
+<p>Players and playback frameworks (such as FFmpeg, Chromium, and
+libavformat) handle these loudness values according to their
+implementation:</p>
+<ol type="1">
+<li><strong>Decoder Level:</strong> The Opus decoder automatically reads
+the <code>CodecPrivate</code> gain from the <code>OpusHead</code> and
+scales the output PCM samples.</li>
+<li><strong>Player/Renderer Level:</strong> If container tags (such as
+ReplayGain or R128 metadata) exist, a player can calculate additional
+scaling at the audio mixing stage to match a custom target (such as -14
+LUFS for web streaming) or to prevent clipping identified by peak
+tags.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

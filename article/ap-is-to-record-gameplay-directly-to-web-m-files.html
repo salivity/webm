@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APIs to Record Gameplay Directly to WebM Files - webm</title>
+    <meta name="description" content="Recording gameplay directly to WebM files on disk requires APIs that handle frame capturing, video encoding (primarily VP8, VP9, or AV1), audio encoding (typically Opus or Vorbis), and container multiplexing. This article examines the primary APIs and so">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/ap-is-to-record-gameplay-directly-to-web-m-files">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="APIs to Record Gameplay Directly to WebM Files - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/ap-is-to-record-gameplay-directly-to-web-m-files" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Recording gameplay directly to WebM files on disk requires APIs that handle frame capturing, video encoding (primarily VP8, VP9, or AV1), audio encoding (typically Opus or Vorbis), and container multiplexing. This article examines the primary APIs and so" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="apis-to-record-gameplay-directly-to-webm-files">APIs to Record
+Gameplay Directly to WebM Files</h1>
+<p>Recording gameplay directly to WebM files on disk requires APIs that
+handle frame capturing, video encoding (primarily VP8, VP9, or AV1),
+audio encoding (typically Opus or Vorbis), and container multiplexing.
+This article examines the primary APIs and software development kits
+(SDKs) game developers use to capture in-game rendering buffers and
+write them to <code>.webm</code> files with minimal performance
+overhead.</p>
+<h3 id="ffmpeg-libraries-libavcodec-libavformat-and-libavutil">FFmpeg
+Libraries (libavcodec, libavformat, and libavutil)</h3>
+<p>The FFmpeg C libraries provide the most flexible and widely used
+solution for writing gameplay to WebM files.</p>
+<ul>
+<li><strong>libavcodec:</strong> Handles the compression of raw RGB or
+YUV frames using VP8, VP9, or AV1 encoders (such as
+<code>libvpx-vp8</code>, <code>libvpx-vp9</code>, or
+<code>libsvtav1</code>).</li>
+<li><strong>libavformat:</strong> Handles multiplexing the encoded video
+and audio streams directly into the WebM (<code>.webm</code>) container
+format on disk.</li>
+</ul>
+<p>Developers feed raw frame pointers retrieved from DirectX, Vulkan, or
+OpenGL directly into <code>AVFrame</code> structures, encode them via
+<code>avcodec_send_frame()</code> /
+<code>avcodec_receive_packet()</code>, and flush the output packets to
+disk using <code>av_interleaved_write_frame()</code>.</p>
+<h3 id="the-native-webm-project-apis-libvpx-and-libwebm">The Native WebM
+Project APIs (libvpx and libwebm)</h3>
+<p>For developers seeking a lightweight implementation without the
+footprint of full multimedia frameworks, the WebM Project maintains
+official, purpose-built C++ libraries:</p>
+<ul>
+<li><strong>libvpx:</strong> The reference software encoder library for
+VP8 and VP9 video codecs. It offers fine-grained control over real-time
+encoding parameters, such as multi-threading, deadline settings, and
+rate control modes suited for gameplay capturing.</li>
+<li><strong>libwebm:</strong> A lightweight C++ library designed
+specifically to read and write WebM containers based on the Matroska
+(EBML) specification. It features the <code>mkvmuxer</code> interface,
+which allows developers to write video and audio packets directly to a
+file stream on disk.</li>
+</ul>
+<p>Using <code>libvpx</code> alongside <code>libwebm</code> provides
+complete control over memory allocation and multithreading, making it an
+ideal choice for custom game engines.</p>
+<h3 id="gstreamer-core-api">GStreamer Core API</h3>
+<p>GStreamer is a cross-platform, pipeline-based multimedia framework.
+Game engines can integrate GStreamer via its C API using the
+<code>appsrc</code> element to push raw frame buffers into an encoding
+pipeline.</p>
+<p>A typical runtime GStreamer pipeline for WebM capture looks like:
+<code>appsrc ! videoconvert ! vp8enc (or vp9enc) ! webmmux ! filesink location=gameplay.webm</code></p>
+<p>By utilizing the pipeline architecture, GStreamer manages encoding
+threads and disk I/O automatically off the main rendering thread.</p>
+<h3 id="hardware-acceleration-apis-with-webm-muxing">Hardware
+Acceleration APIs with WebM Muxing</h3>
+<p>Software encoders like standard <code>libvpx</code> can introduce CPU
+bottlenecks during intense gameplay. To mitigate this, developers use
+GPU-accelerated encoding APIs combined with a WebM container muxer:</p>
+<ul>
+<li><strong>NVIDIA Video Codec SDK (NVENC):</strong> Modern NVIDIA GPUs
+support hardware-accelerated AV1 encoding. Developers capture render
+targets directly from DirectX or Vulkan, encode them via the NVENC API,
+and write the resulting bitstream to disk using <code>libwebm</code> or
+<code>libavformat</code>.</li>
+<li><strong>Intel oneVPL (formerly Media SDK):</strong> Provides
+hardware-accelerated encoding for VP9 and AV1 on compatible Intel
+graphics hardware.</li>
+<li><strong>AMD Advanced Media Framework (AMF):</strong> Offers
+low-level access to AMD GPU video encoders with support for AV1
+compression on modern architectures.</li>
+</ul>
+<h3 id="engine-specific-integration-approaches">Engine-Specific
+Integration Approaches</h3>
+<ul>
+<li><strong>Unity:</strong> Developers commonly interact with the
+<code>Unity.Media.MediaEncoder</code> API (when available for targeted
+platforms) or integrate native C++ plugins wrapping <code>libvpx</code>
+or FFmpeg to capture render textures through
+<code>AsyncGPUReadback</code>.</li>
+<li><strong>Unreal Engine:</strong> Developers utilize the Movie Render
+Queue or Pixel Streaming subsystem backends, often extending them via
+native third-party plugins that route the rendering viewport into a
+<code>libwebm</code> or FFmpeg pipeline on a background task graph.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

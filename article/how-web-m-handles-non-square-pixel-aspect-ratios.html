@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Handles Non-Square Pixel Aspect Ratios - webm</title>
+    <meta name="description" content="This article explains how the WebM media container format handles non-square pixel aspect ratios (PAR) during rendering. Built on a subset of the Matroska (MKV) container profile, WebM separates the encoded pixel dimensions from the final display dimensi">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-handles-non-square-pixel-aspect-ratios">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Handles Non-Square Pixel Aspect Ratios - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-handles-non-square-pixel-aspect-ratios" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how the WebM media container format handles non-square pixel aspect ratios (PAR) during rendering. Built on a subset of the Matroska (MKV) container profile, WebM separates the encoded pixel dimensions from the final display dimensi" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-handles-non-square-pixel-aspect-ratios">How WebM
+Handles Non-Square Pixel Aspect Ratios</h1>
+<p>This article explains how the WebM media container format handles
+non-square pixel aspect ratios (PAR) during rendering. Built on a subset
+of the Matroska (MKV) container profile, WebM separates the encoded
+pixel dimensions from the final display dimensions using metadata tags.
+By reading these container-level parameters, video players and web
+browsers can stretch or compress non-square pixels to display anamorphic
+video correctly without altering the underlying encoded stream.</p>
+<h2 id="storage-resolution-vs-display-resolution">Storage Resolution vs.
+Display Resolution</h2>
+<p>In video encoding, non-square pixels—often referred to as Sample
+Aspect Ratio (SAR) or Pixel Aspect Ratio (PAR)—occur when the shape of
+an individual pixel is rectangular rather than square. Common examples
+include anamorphic widescreen formats and digitized standard-definition
+media (such as PAL or NTSC).</p>
+<p>WebM manages this distinction by declaring two separate sets of video
+dimensions within its EBML (Extensible Binary Meta Language) track
+headers:</p>
+<ul>
+<li><strong>PixelWidth and PixelHeight:</strong> Define the raw storage
+resolution (the actual number of coded pixels in the video stream, such
+as 720x480).</li>
+<li><strong>DisplayWidth and DisplayHeight:</strong> Define the target
+rendering resolution (the intended dimensions when presented to the
+viewer, such as 853x480 for a 16:9 aspect ratio).</li>
+</ul>
+<h2 id="the-rendering-process">The Rendering Process</h2>
+<p>When a media player or browser engine (such as Chromium or Gecko)
+loads a WebM file, the rendering pipeline follows these steps to resolve
+non-square pixels:</p>
+<ol type="1">
+<li><strong>Header Parsing:</strong> The demuxer reads the
+<code>TrackEntry</code> element within the WebM container, extracting
+<code>PixelWidth</code>, <code>PixelHeight</code>,
+<code>DisplayWidth</code>, and <code>DisplayHeight</code>.</li>
+<li><strong>Decoding:</strong> The video decoder (handling VP8, VP9, or
+AV1) decodes the frames at their native storage resolution.</li>
+<li><strong>Aspect Ratio Calculation:</strong> The player calculates the
+intended display aspect ratio (DAR) using the formula: <span
+class="math display">\[\text{DAR} =
+\frac{\text{DisplayWidth}}{\text{DisplayHeight}}\]</span> The resulting
+Pixel Aspect Ratio (PAR) is derived by comparing the display aspect
+ratio against the storage aspect ratio: <span
+class="math display">\[\text{PAR} =
+\left(\frac{\text{DisplayWidth}}{\text{PixelWidth}}\right) \div
+\left(\frac{\text{DisplayHeight}}{\text{PixelHeight}}\right)\]</span></li>
+<li><strong>Hardware Scaling and Composition:</strong> Rather than
+re-sampling the raw video data on the CPU, the rendering engine passes
+the decoded frame to the GPU alongside a transformation matrix. The GPU
+scales the texture non-uniformly to match the calculated display aspect
+ratio before presenting it on the screen.</li>
+</ol>
+<h2 id="container-vs-bitstream-metadata">Container vs. Bitstream
+Metadata</h2>
+<p>WebM video codecs (VP8, VP9, and AV1) can also store aspect ratio
+metadata directly inside their sequence headers. However, WebM
+specification standards dictate that container-level metadata
+(<code>DisplayWidth</code> and <code>DisplayHeight</code>) takes
+precedence or must match the bitstream headers.</p>
+<p>Most modern rendering engines rely primarily on the container-level
+values to allocate the layout space (such as the HTML5
+<code>&lt;video&gt;</code> element's bounding box) before decoding
+begins, ensuring seamless playback without layout shifts.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

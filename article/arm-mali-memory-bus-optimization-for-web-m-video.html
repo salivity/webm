@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARM Mali Memory Bus Optimization for WebM Video - webm</title>
+    <meta name="description" content="High-resolution WebM video—typically encoded with modern VP9 or AV1 codecs—presents massive memory bandwidth challenges for mobile and embedded systems. Processing 4K or 8K video requires transferring gigabytes of pixel data per second between memory">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/arm-mali-memory-bus-optimization-for-web-m-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ARM Mali Memory Bus Optimization for WebM Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/arm-mali-memory-bus-optimization-for-web-m-video" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="High-resolution WebM video—typically encoded with modern VP9 or AV1 codecs—presents massive memory bandwidth challenges for mobile and embedded systems. Processing 4K or 8K video requires transferring gigabytes of pixel data per second between memory" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="arm-mali-memory-bus-optimization-for-webm-video">ARM Mali Memory
+Bus Optimization for WebM Video</h1>
+<p>High-resolution WebM video—typically encoded with modern VP9 or AV1
+codecs—presents massive memory bandwidth challenges for mobile and
+embedded systems. Processing 4K or 8K video requires transferring
+gigabytes of pixel data per second between memory and compute blocks.
+ARM Mali GPUs alleviate memory bus congestion when handling WebM content
+by combining Tile-Based Deferred Rendering (TBDR), ARM Frame Buffer
+Compression (AFBC), hardware-level Transaction Elimination, and
+zero-copy unified memory architectures. Together, these systems keep
+high-throughput pixel manipulation within ultra-fast on-chip caches and
+eliminate redundant write-backs to external LPDDR system memory.</p>
+<h3 id="arm-frame-buffer-compression-afbc">ARM Frame Buffer Compression
+(AFBC)</h3>
+<p>The primary mechanism for reducing bus traffic during video playback
+is ARM Frame Buffer Compression (AFBC). WebM decoding involves a
+hardware video processing unit (VPU) outputting decoded YUV frames,
+which the Mali GPU must sample, convert to RGB, and composite into the
+system UI.</p>
+<p>Instead of writing uncompressed, raw pixel streams over the system
+bus, the VPU compresses the decoded WebM frames using AFBC before
+writing them to DRAM. The Mali GPU natively reads and decompresses these
+AFBC buffers on the fly. Because AFBC is mathematically lossless and
+maintains fine-grained random access to image blocks, it reduces the
+volume of data moving across the external memory bus by up to 50% or
+more, depending on image complexity.</p>
+<h3 id="tile-based-deferred-rendering-tbdr">Tile-Based Deferred
+Rendering (TBDR)</h3>
+<p>Mali’s Tile-Based Deferred Rendering architecture processes frames in
+small, local sections—typically 16x16 pixel tiles. When applying
+post-processing shaders, color grading, or UI compositing over
+high-resolution WebM video:</p>
+<ul>
+<li>The GPU loads the required geometry and compressed frame data into
+local on-chip SRAM caches.</li>
+<li>All depth, stencil, blending, and color-space conversion operations
+are executed entirely within this on-chip memory.</li>
+<li>External memory bus access is only required once: when the
+completed, rendered tile is written back to main memory.</li>
+</ul>
+<p>This approach bypasses the continuous, high-frequency
+read-modify-write cycles to external RAM that traditional immediate-mode
+renderers require.</p>
+<h3 id="transaction-elimination-te">Transaction Elimination (TE)</h3>
+<p>High-resolution video content often contains sequences where sections
+of the screen remain static across consecutive frames (such as letterbox
+bars, fixed UI overlays, or low-motion backgrounds). Mali GPUs utilize
+Transaction Elimination to further minimize bus writes.</p>
+<p>During the tile-write phase, the GPU calculates a CRC (cyclic
+redundancy check) signature for the rendered tile and compares it with
+the signature of the same tile from the previous frame. If the
+signatures match, the GPU skips writing that tile to external DRAM
+entirely. In video playback scenarios with static elements, Transaction
+Elimination can reduce frame buffer write bandwidth by an additional 20%
+to 30%.</p>
+<h3 id="zero-copy-inter-process-pipelines">Zero-Copy Inter-Process
+Pipelines</h3>
+<p>Transferring large 4K WebM frames between user-space applications,
+multimedia frameworks, and graphics drivers can introduce significant
+memory duplication. Mali GPUs leverage Linux <code>dma-buf</code> and
+Android Hardware Buffer subsystems to implement zero-copy memory
+transfers.</p>
+<p>The VPU decodes the VP9/AV1 stream directly into a shared physical
+memory allocation. The Mali driver imports this buffer as an external
+texture (via <code>EGLImage</code> or Vulkan external memory
+extensions). The GPU processes the video data directly from the
+decoder's output buffer without intermediate CPU-driven copies, ensuring
+data traverses the system bus only when strictly required for compute
+operations.</p>
+<h3 id="coherent-interconnects-and-system-level-caches">Coherent
+Interconnects and System-Level Caches</h3>
+<p>Modern implementations of ARM Mali GPUs work in tandem with ARM
+CoreLink system interconnects and shared System-Level Caches (SLC). When
+a WebM frame is decoded and scheduled for rendering, the pixel data
+frequently resides in the system cache rather than physical LPDDR
+memory. The Mali GPU accesses this coherent cache directly, drastically
+reducing latency, memory bus contention, and thermal output on
+memory-constrained mobile devices.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

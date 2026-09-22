@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM End-of-Stream Signaling in Live Broadcasts - webm</title>
+    <meta name="description" content="In live broadcast environments, WebM handles end-of-stream (EOS) signaling through a combination of container-level EBML formatting, network protocol terminations, and client-side media pipeline management. Because live broadcasts cannot define total dur">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-end-of-stream-signaling-in-live-broadcasts">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM End-of-Stream Signaling in Live Broadcasts - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-end-of-stream-signaling-in-live-broadcasts" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In live broadcast environments, WebM handles end-of-stream (EOS) signaling through a combination of container-level EBML formatting, network protocol terminations, and client-side media pipeline management. Because live broadcasts cannot define total dur" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-end-of-stream-signaling-in-live-broadcasts">WebM
+End-of-Stream Signaling in Live Broadcasts</h1>
+<p>In live broadcast environments, WebM handles end-of-stream (EOS)
+signaling through a combination of container-level EBML formatting,
+network protocol terminations, and client-side media pipeline
+management. Because live broadcasts cannot define total duration in
+advance, WebM relies on indefinite container sizes and sequential data
+clusters. Signalling the end of the stream requires clean termination of
+these data structures alongside network-layer notifications to ensure
+player clients flush remaining buffers and terminate playback gracefully
+without stalling.</p>
+<h3 id="ebml-segment-sizing-and-indefinite-lengths">EBML Segment Sizing
+and Indefinite Lengths</h3>
+<p>WebM is a restricted subset of the Matroska (MKV) container format,
+structured using Extensible Binary Meta Language (EBML). In standard
+on-demand files, the top-level <code>Segment</code> element contains a
+fixed byte-length header that tells the demuxer exactly when the media
+payload ends.</p>
+<p>In a live broadcast, the total duration and file size are unknown at
+initialization. WebM accommodates this by setting the EBML
+<code>Segment</code> size field to an "unknown" length (where all data
+size bits are set to <code>1</code>). Because the demuxer does not look
+for a predefined byte boundary to end playback, it continuously
+processes sequential <code>Cluster</code> elements containing audio and
+video blocks until an explicit end condition is reached.</p>
+<h3 id="container-level-end-signaling">Container-Level End
+Signaling</h3>
+<p>To signal an end-of-stream at the container layer:</p>
+<ol type="1">
+<li><strong>Cluster Finalization:</strong> The encoder or live packager
+finishes writing the active <code>Cluster</code> element by finalizing
+its internal <code>SimpleBlock</code> or <code>BlockGroup</code>
+data.</li>
+<li><strong>Zero-Byte Clusters and EBML Void Elements:</strong> An
+encoder can append an empty <code>Cluster</code> or standard EBML
+<code>Void</code> padding element to signal that no further media frames
+will follow.</li>
+<li><strong>Multi-Segment Boundary:</strong> In chunked broadcasting,
+the encoder may close the current <code>Segment</code> entirely. A
+parser encountering the close of an EBML <code>Segment</code> treats it
+as a natural stream completion unless a new initialization segment is
+provided.</li>
+</ol>
+<h3 id="protocol-and-transport-level-handling">Protocol and
+Transport-Level Handling</h3>
+<p>Because container-level markers can be lost or omitted in continuous
+network streams, transport protocols provide explicit signaling:</p>
+<ul>
+<li><strong>HTTP Chunked Transfer Encoding:</strong> When delivering
+WebM over standard HTTP, the server concludes the broadcast by sending a
+final zero-length chunk (<code>0\r\n\r\n</code>). This signals to the
+receiving client that the HTTP payload is complete, prompting the
+demuxer to process the end of the data stream.</li>
+<li><strong>HLS and MPEG-DASH Packaging:</strong> When WebM is delivered
+via fragmented streaming protocols, the manifest or playlist handles EOS
+signaling. In MPEG-DASH, the manifest (<code>MPD</code>) type is
+transitioned from <code>dynamic</code> to <code>static</code>. In HLS,
+the <code>#EXT-X-ENDLIST</code> tag is appended to the playlist,
+informing the client player that no more WebM media initialization or
+data chunks will be published.</li>
+<li><strong>TCP Connection Termination:</strong> In simple direct-socket
+or continuous HTTP live streams, closing the server-side TCP connection
+(sending a <code>FIN</code> packet) acts as the physical transport
+boundary for the stream.</li>
+</ul>
+<h3 id="media-source-extensions-mse-integration">Media Source Extensions
+(MSE) Integration</h3>
+<p>Modern web browsers processing live WebM video through the W3C Media
+Source Extensions (MSE) API rely on JavaScript-level coordination. The
+browser's native WebM demuxer parses incoming WebM byte streams appended
+to a <code>SourceBuffer</code>.</p>
+<p>When the live broadcast source terminates—detected either via an
+empty manifest, closed WebSocket, or finished fetch request—the client
+application calls <code>MediaSource.endOfStream()</code>. This method
+transitions the player's internal state machine from open to ended,
+flushes pending decode pipelines, and triggers the <code>ended</code>
+event on the HTML5 media element.</p>
+<h3 id="webrtc-and-rtp-broadcasts">WebRTC and RTP Broadcasts</h3>
+<p>For ultra-low-latency WebM broadcasts transported via WebRTC, the
+container abstraction is separated from network packetization. Rather
+than transmitting raw WebM container bytes over the wire, media frames
+(such as VP8/VP9 and Opus) are extracted and sent over the Real-time
+Transport Protocol (RTP). In this context, end-of-stream signaling
+bypasses container-level indicators entirely and is managed through RTCP
+<code>BYE</code> packets, WebRTC DataChannel messages, or peer
+connection state transitions (<code>closed</code> or
+<code>disconnected</code>).</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

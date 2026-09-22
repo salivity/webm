@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Target VMAF Scores for WebM Background Videos - webm</title>
+    <meta name="description" content="Web-optimized background videos require a delicate balance between visual fidelity and page loading performance. While traditional streaming platforms target Video Multi-Method Assessment Fusion (VMAF) scores in the 90s, web-optimized WebM background vid">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/target-vmaf-scores-for-web-m-background-videos">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Target VMAF Scores for WebM Background Videos - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/target-vmaf-scores-for-web-m-background-videos" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Web-optimized background videos require a delicate balance between visual fidelity and page loading performance. While traditional streaming platforms target Video Multi-Method Assessment Fusion (VMAF) scores in the 90s, web-optimized WebM background vid" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="target-vmaf-scores-for-webm-background-videos">Target VMAF
+Scores for WebM Background Videos</h1>
+<p>Web-optimized background videos require a delicate balance between
+visual fidelity and page loading performance. While traditional
+streaming platforms target Video Multi-Method Assessment Fusion (VMAF)
+scores in the 90s, web-optimized WebM background videos function under
+different user attention constraints. For these looped, non-primary
+media elements, an objective VMAF score between 70 and 80 is considered
+acceptable and optimal for production environments.</p>
+<h3 id="the-standard-vmaf-range-for-background-videos">The Standard VMAF
+Range for Background Videos</h3>
+<p>VMAF measures video quality on a scale from 0 to 100, where higher
+scores correlate with human perception of pristine video. Because
+background videos are rarely the main focal point of a webpage, the
+acceptable quality threshold is lower than that of primary video
+content:</p>
+<ul>
+<li><strong>VMAF 75 to 80 (Standard Baseline):</strong> This is the
+ideal target for high-traffic landing pages. Compression artifacts
+remain mostly imperceptible under normal browsing conditions, and the
+video retains clean gradients and motion clarity.</li>
+<li><strong>VMAF 65 to 74 (Aggressive Optimization):</strong> Acceptable
+for background videos covered by dark overlays, CSS blur filters, or
+heavy UI elements. The background visual context remains intact while
+significantly cutting file weight.</li>
+<li><strong>VMAF Below 65:</strong> Generally unacceptable unless the
+video is heavily obscured. At this level, blocking, color banding, and
+temporal flickering become noticeable even when viewing the video
+peripherally.</li>
+<li><strong>VMAF Above 85:</strong> Usually inefficient for web
+delivery. The file size increase required to move from 80 to 90+ VMAF
+harms Largest Contentful Paint (LCP) and mobile bandwidth without
+delivering noticeable user-facing value.</li>
+</ul>
+<h3 id="why-background-webm-videos-tolerate-lower-scores">Why Background
+WebM Videos Tolerate Lower Scores</h3>
+<p>Background videos typically run muted on loop and sit behind text,
+buttons, and design elements. Viewers process this visual information
+through peripheral vision rather than direct gaze. Consequently, subtle
+compression artifacts that would fail quality assurance on standard
+video streams go unnoticed in a background container.</p>
+<p>Additionally, background assets heavily influence Core Web Vitals.
+Excessively high-bitrate WebM files increase initial page payload, slow
+down DOM rendering, and cause dropped frames on lower-end mobile
+hardware. Aiming for a VMAF range of 70 to 80 preserves smooth decoding
+performance while keeping asset sizes within standard web performance
+budgets.</p>
+<h3 id="achieving-target-scores-with-webm-vp9av1">Achieving Target
+Scores with WebM (VP9/AV1)</h3>
+<p>When encoding WebM files using modern codecs like VP9 or AV1,
+achieving a target VMAF of 70–80 generally involves:</p>
+<ul>
+<li><strong>Constant Rate Factor (CRF):</strong> Set CRF values between
+32 and 40 for VP9, or 36 and 45 for AV1, depending on the spatial and
+temporal complexity of the source footage.</li>
+<li><strong>Resolution Capping:</strong> Cap background videos at 1080p
+for desktop and deliver a responsive 720p or 540p variant to mobile
+devices.</li>
+<li><strong>Frame Rate Adjustment:</strong> Lowering the frame rate from
+60fps to 24fps or 30fps drastically reduces bitrate while maintaining
+acceptable motion smoothness, allowing higher per-frame VMAF without
+increasing total file size.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

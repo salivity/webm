@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Hardware Acceleration APIs for WebM - webm</title>
+    <meta name="description" content="Hardware acceleration on Linux enables the graphics processing unit (GPU) to offload video decoding and encoding tasks from the CPU, significantly improving performance and power efficiency. WebM is an open-source media container that relies on the VP8,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/linux-hardware-acceleration-ap-is-for-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Linux Hardware Acceleration APIs for WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/linux-hardware-acceleration-ap-is-for-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Hardware acceleration on Linux enables the graphics processing unit (GPU) to offload video decoding and encoding tasks from the CPU, significantly improving performance and power efficiency. WebM is an open-source media container that relies on the VP8," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="linux-hardware-acceleration-apis-for-webm">Linux Hardware
+Acceleration APIs for WebM</h1>
+<p>Hardware acceleration on Linux enables the graphics processing unit
+(GPU) to offload video decoding and encoding tasks from the CPU,
+significantly improving performance and power efficiency. WebM is an
+open-source media container that relies on the VP8, VP9, and AV1 video
+codecs. On Linux, support for hardware-accelerated WebM varies widely
+across different video APIs, with VA-API serving as the primary standard
+for open-source drivers, while legacy APIs like VDPAU lack support for
+modern WebM codecs.</p>
+<h3 id="va-api-video-acceleration-api">VA-API (Video Acceleration
+API)</h3>
+<p>VA-API is the standard and most widely supported video acceleration
+framework on Linux. Developed initially by Intel and maintained by the
+open-source community, VA-API offers extensive support for the WebM
+container's underlying video codecs.</p>
+<ul>
+<li><strong>VP8 Support:</strong> Supported for decoding on Intel
+(Haswell and newer) and AMD (via Mesa’s <code>radeonsi</code>
+driver).</li>
+<li><strong>VP9 Support:</strong> Fully supported for 8-bit (Profile 0)
+and 10-bit (Profile 2) decoding on Intel (Kaby Lake and newer) and AMD
+(Raven Ridge / Vega and newer).</li>
+<li><strong>AV1 Support:</strong> Supported for decoding on modern
+hardware, including Intel Tiger Lake (Gen12) and newer, and AMD RDNA2
+(RX 6000 series) and newer.</li>
+<li><strong>Ecosystem Integration:</strong> VA-API is the default API
+used by Linux web browsers (Chromium and Firefox) and media players
+(VLC, MPV) for hardware-accelerated WebM playback.</li>
+</ul>
+<h3 id="vdpau-video-decode-and-presentation-api-for-unix">VDPAU (Video
+Decode and Presentation API for Unix)</h3>
+<p>VDPAU was developed by NVIDIA for Unix-like systems to accelerate
+video decoding and presentation.</p>
+<ul>
+<li><strong>WebM Support:</strong> VDPAU does <strong>not</strong>
+support WebM codecs (VP8, VP9, or AV1).</li>
+<li><strong>Current Status:</strong> The API was designed primarily for
+older video standards such as MPEG-1/2, MPEG-4 ASP, H.264, and VC-1.
+Development on VDPAU is largely stagnant, and it has not been updated to
+support modern open video formats.</li>
+</ul>
+<h3 id="nvdec--nvenc-nvidia-video-codec-sdk">NVDEC / NVENC (NVIDIA Video
+Codec SDK)</h3>
+<p>For proprietary NVIDIA drivers, hardware acceleration is handled via
+NVDEC (decoding) and NVENC (encoding) through CUDA rather than
+VDPAU.</p>
+<ul>
+<li><strong>VP8 Support:</strong> Supported for decoding on GeForce GTX
+750 (Maxwell) and newer.</li>
+<li><strong>VP9 Support:</strong> Supported for 8-bit and 10/12-bit
+decoding on Pascal (GTX 10-series), Turing, Ampere, and Ada Lovelace
+architectures.</li>
+<li><strong>AV1 Support:</strong> Supported for decoding starting with
+Ampere (RTX 30-series) and encoding with Ada Lovelace (RTX
+40-series).</li>
+<li><strong>Bridge to VA-API:</strong> Tools such as
+<code>nvidia-vaapi-driver</code> map NVDEC functionality to the standard
+VA-API interface, allowing Linux browsers and media players to use
+NVIDIA hardware decoding for WebM content.</li>
+</ul>
+<h3 id="v4l2-video4linux2-request-api">V4L2 (Video4Linux2 Request
+API)</h3>
+<p>V4L2 is the standard kernel interface for video capture and output
+devices on Linux, increasingly used for hardware video decoding on
+System-on-Chip (SoC) platforms.</p>
+<ul>
+<li><strong>WebM Support:</strong> V4L2 Stateful and Stateless (Request
+API) video decoders support VP8, VP9, and AV1 depending on the specific
+hardware driver.</li>
+<li><strong>Platform Availability:</strong> Commonly used on ARM-based
+Linux platforms, such as Raspberry Pi, Allwinner, and Rockchip SoCs, to
+provide hardware decoding in lightweight media players and
+Chromium-based embedded browsers.</li>
+</ul>
+<h3 id="vulkan-video">Vulkan Video</h3>
+<p>Vulkan Video is a cross-platform API extension designed to
+standardize hardware-accelerated video decoding and encoding directly
+within Vulkan.</p>
+<ul>
+<li><strong>WebM Support:</strong> Initial specifications focused
+primarily on H.264 and H.265. Extensions for AV1 decode
+(<code>VK_KHR_video_decode_av1</code>) have been finalized and are
+supported in modern drivers (Intel ANV, AMD RADV, and NVIDIA). VP8 and
+VP9 are not the primary focus of Vulkan Video standardization.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

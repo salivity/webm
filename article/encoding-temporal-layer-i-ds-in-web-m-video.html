@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encoding Temporal Layer IDs in WebM Video - webm</title>
+    <meta name="description" content="The WebM container format does not feature a dedicated container-level element to encode temporal layer IDs (TIDs) directly in video packets. Instead, WebM delegates temporal scalability signaling to the underlying video bitstream payloads—such as VP8,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/encoding-temporal-layer-i-ds-in-web-m-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Encoding Temporal Layer IDs in WebM Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/encoding-temporal-layer-i-ds-in-web-m-video" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format does not feature a dedicated container-level element to encode temporal layer IDs (TIDs) directly in video packets. Instead, WebM delegates temporal scalability signaling to the underlying video bitstream payloads—such as VP8," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="encoding-temporal-layer-ids-in-webm-video">Encoding Temporal
+Layer IDs in WebM Video</h1>
+<p>The WebM container format does not feature a dedicated
+container-level element to encode temporal layer IDs (TIDs) directly in
+video packets. Instead, WebM delegates temporal scalability signaling to
+the underlying video bitstream payloads—such as VP8, VP9, and AV1—while
+providing container-level cues through the <code>Discardable</code> flag
+in standard <code>SimpleBlock</code> structures.</p>
+<h3 id="container-level-signaling-via-simpleblock">Container-Level
+Signaling via SimpleBlock</h3>
+<p>WebM stores compressed video frames inside Matroska
+<code>Cluster</code> elements using <code>SimpleBlock</code> structures.
+A standard <code>SimpleBlock</code> consists of:</p>
+<ul>
+<li>A variable-length integer indicating the Track Number.</li>
+<li>A 2-byte signed relative timestamp.</li>
+<li>An 8-bit flags byte.</li>
+<li>The raw codec frame payload.</li>
+</ul>
+<p>The 8-bit flags byte includes a <code>Discardable</code> flag located
+at Bit 0. While this flag does not convey an explicit temporal layer
+number (such as Layer 0, 1, or 2), muxers set this bit to <code>1</code>
+for frames that are not referenced by any other frames in the dependency
+chain. In standard temporal scalability models, frames residing in the
+highest temporal layer are non-reference frames. Demuxers and playback
+engines use this flag to drop highest-layer packets without decoding the
+payload when system resources or bandwidth are constrained.</p>
+<h3 id="codec-specific-bitstream-encoding">Codec-Specific Bitstream
+Encoding</h3>
+<p>Because WebM itself omits a discrete temporal ID header, temporal
+layer indexing is resolved directly within the video codec bitstream
+encapsulated inside the <code>SimpleBlock</code>:</p>
+<h4 id="1-av1-aomedia-video-1">1. AV1 (AOMedia Video 1)</h4>
+<p>AV1 provides native, explicit temporal layer signaling within its
+bitstream syntax. An AV1 payload consists of Open Bitstream Units
+(OBUs). When temporal scalability is enabled:</p>
+<ul>
+<li>The <code>obu_extension_flag</code> in the general OBU header is set
+to <code>1</code>.</li>
+<li>This exposes the 1-byte <code>obu_extension_header</code>.</li>
+<li>The first 3 bits of the <code>obu_extension_header</code> represent
+the <code>temporal_id</code>.</li>
+</ul>
+<p>The <code>temporal_id</code> explicitly assigns the packet to a
+temporal layer ranging from 0 to 7.</p>
+<h4 id="2-vp9">2. VP9</h4>
+<p>In VP9, temporal scalability is managed within the uncompressed frame
+header:</p>
+<ul>
+<li>Unlike the WebRTC RTP payload format (which uses an explicit 3-bit
+TID in the VP9 descriptor), WebM strips the transport-level RTP headers
+upon file muxing.</li>
+<li>WebM decoders deduce temporal layers by parsing the frame header to
+evaluate reference buffer indices and refresh masks
+(<code>last_frame</code>, <code>golden_frame</code>, and
+<code>altref_frame</code>).</li>
+<li>When scalability structure (SS) data is included in keyframes, the
+bitstream outlines the entire temporal layering pattern, allowing the
+demuxer to track the layer ID of subsequent frames based on frame count
+and reference patterns.</li>
+</ul>
+<h4 id="3-vp8">3. VP8</h4>
+<p>VP8 does not feature an explicit temporal layer syntax inside its raw
+bitstream. Temporal scalability in VP8 is implemented through strict
+reference frame update patterns (targeting the Golden Frame and
+Alternate Reference Frame buffers). Applications reading WebM must parse
+the uncompressed VP8 frame tag to evaluate which reference buffers are
+updated, thereby determining the frame's temporal layer status
+mathematically.</p>
+<h3 id="streaming-vs-file-encapsulation">Streaming vs. File
+Encapsulation</h3>
+<p>In real-time network transport, protocols like WebRTC explicitly
+define temporal layer IDs in the RTP payload specification. When these
+streams are muxed into a standard WebM file or byte stream, the RTP
+payload headers are discarded. To identify temporal layers inside a WebM
+file, a demuxer must parse the codec-level frame headers directly,
+relying only on the WebM <code>Discardable</code> flag for
+container-level layer pruning.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

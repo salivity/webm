@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict High-Frequency Luminance Loss in WebM - webm</title>
+    <meta name="description" content="Predicting high-frequency luminance loss during WebM compression requires mathematical models that evaluate how fine spatial details and sharp edges degrade under transform coding and quantization. WebM codecs—primarily VP8, VP9, and AV1—compress vid">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/predict-high-frequency-luminance-loss-in-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Predict High-Frequency Luminance Loss in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/predict-high-frequency-luminance-loss-in-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Predicting high-frequency luminance loss during WebM compression requires mathematical models that evaluate how fine spatial details and sharp edges degrade under transform coding and quantization. WebM codecs—primarily VP8, VP9, and AV1—compress vid" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="predict-high-frequency-luminance-loss-in-webm">Predict
+High-Frequency Luminance Loss in WebM</h1>
+<p>Predicting high-frequency luminance loss during WebM compression
+requires mathematical models that evaluate how fine spatial details and
+sharp edges degrade under transform coding and quantization. WebM
+codecs—primarily VP8, VP9, and AV1—compress video by mapping pixel
+blocks into the frequency domain and discarding subtle visual data.
+Engineers and quality assessment pipelines rely on specific algorithmic
+frameworks, including frequency-domain energy metrics, Contrast
+Sensitivity Function (CSF) weighting, Visual Information Fidelity (VIF),
+and Lagrangian rate-distortion models, to calculate and forecast this
+loss before or during encoding.</p>
+<h3
+id="transform-domain-energy-and-quantization-modeling">Transform-Domain
+Energy and Quantization Modeling</h3>
+<p>WebM codecs split luminance (<span class="math inline">\(Y\)</span>)
+channels into discrete blocks and apply spatial transforms, such as the
+Discrete Cosine Transform (DCT) or the Asymmetric Discrete Sine
+Transform (ADST). High-frequency luminance information resides in the
+higher-order transform coefficients (<span
+class="math inline">\(C_{u,v}\)</span> where spatial frequencies <span
+class="math inline">\(u\)</span> and <span
+class="math inline">\(v\)</span> are large).</p>
+<p>The most direct algorithm for predicting loss calculates the spectral
+energy attenuation caused by uniform or non-uniform scalar
+quantization:</p>
+<p><span class="math display">\[\Delta E_{HF} = \sum_{u+v &gt; T} \left(
+|C_{u,v}| - Q(C_{u,v}, q) \right)^2\]</span></p>
+<p>Where:</p>
+<ul>
+<li><span class="math inline">\(C_{u,v}\)</span> represents the
+pre-quantization transform coefficient.</li>
+<li><span class="math inline">\(Q(C_{u,v}, q) =
+\text{round}\left(\frac{C_{u,v}}{\Delta(q)}\right) \cdot
+\Delta(q)\)</span> denotes the quantization function governed by the
+quantization parameter <span class="math inline">\(q\)</span>.</li>
+<li><span class="math inline">\(T\)</span> is the spatial frequency
+threshold separating low-frequency structural components from
+high-frequency fine details.</li>
+</ul>
+<p>When the step size <span class="math inline">\(\Delta(q)\)</span>
+exceeds <span class="math inline">\(2 \cdot |C_{u,v}|\)</span>, the
+coefficient truncates to zero, resulting in complete high-frequency
+luminance elimination.</p>
+<h3
+id="psnr-hvs-and-contrast-sensitivity-function-csf-algorithms">PSNR-HVS
+and Contrast Sensitivity Function (CSF) Algorithms</h3>
+<p>Standard Peak Signal-to-Noise Ratio (PSNR) treats all errors
+uniformly across frequencies, making it insufficient for predicting
+perceived detail loss. The PSNR-HVS and PSNR-HVS-M algorithms address
+this by weighting errors with the human visual system's Contrast
+Sensitivity Function (CSF), such as the Mannos-Sakrison model:</p>
+<p><span class="math display">\[A(f) = 2.6 \cdot (0.0192 + 0.114f) \cdot
+e^{-(0.114f)^{1.1}}\]</span></p>
+<p>Where <span class="math inline">\(f\)</span> represents the radial
+spatial frequency in cycles per degree of visual angle.</p>
+<p>PSNR-HVS applies this transfer function directly to the DCT
+coefficients of the luminance channel:</p>
+<p><span class="math display">\[\text{MSE}_{HVS} = \frac{1}{N} \sum_{u}
+\sum_{v} \left( (C_{u,v}^{\text{orig}} - C_{u,v}^{\text{comp}}) \cdot
+A\left(\sqrt{u^2 + v^2}\right) \right)^2\]</span></p>
+<p>Because <span class="math inline">\(A(f)\)</span> rapidly decays at
+high spatial frequencies, this algorithm accurately isolates whether
+loss of high-frequency luminance will be imperceptible or cause visible
+blurriness.</p>
+<h3
+id="visual-information-fidelity-vif-and-detail-loss-metric-dlm">Visual
+Information Fidelity (VIF) and Detail Loss Metric (DLM)</h3>
+<p>Visual Information Fidelity treats the compression process as a
+distortion channel within an information-theoretic framework.
+Implemented via Gaussian Scale Mixtures (GSM) in the steerable pyramid
+wavelet domain, VIF models the source luminance signal as an information
+transmitter. High-frequency loss is computed by evaluating the mutual
+information between the original subbands and the quantized
+subbands:</p>
+<p><span class="math display">\[\text{VIF} = \frac{\sum_{k} I(C^k; F^k |
+s^k)}{\sum_{k} I(C^k; E^k | s^k)}\]</span></p>
+<p>Where <span class="math inline">\(I\)</span> denotes mutual
+information, <span class="math inline">\(C^k\)</span> represents
+original coefficients in subband <span class="math inline">\(k\)</span>,
+<span class="math inline">\(E^k\)</span> represents the perceived
+original signal, and <span class="math inline">\(F^k\)</span> is the
+decoded signal corrupted by quantization noise and channel
+attenuation.</p>
+<p>A subset metric specifically used in video analysis is the Detail
+Loss Metric (DLM). DLM separates global impairment (such as color shifts
+or broad luminance offsets) from high-frequency structural dropouts by
+evaluating edge preservation along high-contrast boundaries.</p>
+<h3 id="multi-scale-structural-similarity-ms-ssim">Multi-Scale
+Structural Similarity (MS-SSIM)</h3>
+<p>While basic SSIM measures luminance, contrast, and structure at a
+single resolution, Multi-Scale SSIM (MS-SSIM) iteratively downsamples
+the luminance channel over <span class="math inline">\(M\)</span> scales
+using a low-pass filter and decimation:</p>
+<p><span class="math display">\[\text{MS-SSIM}(x, y) = [l_M(x,
+y)]^{\alpha_M} \cdot \prod_{j=1}^{M} [c_j(x, y)]^{\beta_j} [s_j(x,
+y)]^{\gamma_j}\]</span></p>
+<ul>
+<li><span class="math inline">\(l_M\)</span> calculates baseline
+luminance comparison at the lowest resolution.</li>
+<li><span class="math inline">\(c_j\)</span> and <span
+class="math inline">\(s_j\)</span> measure contrast and structural
+correlation at scale <span class="math inline">\(j\)</span>.</li>
+</ul>
+<p>High-frequency luminance loss manifests primarily at the finest
+scales (<span class="math inline">\(j = 1\)</span> and <span
+class="math inline">\(j = 2\)</span>). A drop in <span
+class="math inline">\(c_1\)</span> and <span
+class="math inline">\(s_1\)</span> with stable metrics at <span
+class="math inline">\(j \ge 3\)</span> indicates that high-frequency
+textures are being stripped while low-frequency image structure remains
+intact.</p>
+<h3 id="lagrangian-rate-distortion-optimization-rdo">Lagrangian
+Rate-Distortion Optimization (RDO)</h3>
+<p>Within WebM encoders like <code>libvpx</code> (VP9) and
+<code>libaom</code> (AV1), internal prediction of luminance degradation
+is calculated in real time using the Lagrangian cost function:</p>
+<p><span class="math display">\[J = D + \lambda \cdot R\]</span></p>
+<p>To account for spatial detail, encoders calculate distortion <span
+class="math inline">\(D\)</span> using variance-adaptive sum of squared
+differences (SSD). The local spatial variance <span
+class="math inline">\(\sigma^2\)</span> acts as an algorithm for
+estimating high-frequency content:</p>
+<p><span class="math display">\[\sigma^2 = \frac{1}{N} \sum_{i=1}^N (Y_i
+- \mu)^2\]</span></p>
+<p>In flat blocks (low <span class="math inline">\(\sigma^2\)</span>),
+high-frequency luminance loss is immediately obvious as banding or
+ringing artifacts. In complex textures (high <span
+class="math inline">\(\sigma^2\)</span>), masking effects permit the
+encoder to increase quantization without perceptible degradation. The
+mathematical relationship between <span
+class="math inline">\(\sigma^2\)</span> and the chosen quantization step
+size <span class="math inline">\(\Delta(q)\)</span> serves as the
+encoder's internal predictor for luminance fidelity.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoC Memory Bus Width: Concurrent 4K WebM Performance - webm</title>
+    <meta name="description" content="System-on-Chip (SoC) memory bus width directly determines the maximum data transfer rate between processing units and system RAM, making it a critical factor in multimedia multitasking. When running concurrent 4K WebM streams—which typically rely on ba">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/so-c-memory-bus-width-concurrent-4-k-web-m-performance">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SoC Memory Bus Width: Concurrent 4K WebM Performance - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/so-c-memory-bus-width-concurrent-4-k-web-m-performance" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="System-on-Chip (SoC) memory bus width directly determines the maximum data transfer rate between processing units and system RAM, making it a critical factor in multimedia multitasking. When running concurrent 4K WebM streams—which typically rely on ba" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="soc-memory-bus-width-concurrent-4k-webm-performance">SoC Memory
+Bus Width: Concurrent 4K WebM Performance</h1>
+<p>System-on-Chip (SoC) memory bus width directly determines the maximum
+data transfer rate between processing units and system RAM, making it a
+critical factor in multimedia multitasking. When running concurrent 4K
+WebM streams—which typically rely on bandwidth-heavy codecs like VP9 or
+AV1—a narrow memory bus quickly introduces bottlenecks. This article
+explores how memory bus width dictates throughput, manages contention
+among hardware blocks, and prevents frame drops during simultaneous
+high-resolution video decoding.</p>
+<h3 id="understanding-soc-memory-bus-width">Understanding SoC Memory Bus
+Width</h3>
+<p>The memory bus width refers to the number of physical traces or data
+lines connecting the SoC's memory controller to the Dynamic
+Random-Access Memory (DRAM). Common configurations include 32-bit,
+64-bit, 128-bit, and 256-bit interfaces.</p>
+<p>Theoretical memory bandwidth is calculated as:</p>
+<p><span class="math display">\[\text{Bandwidth (GB/s)} =
+\frac{\text{Bus Width (bits)} \times \text{DDR Clock Frequency (MHz)}
+\times \text{Data Transfers per Clock}}{8}\]</span></p>
+<p>A wider bus allows the SoC to move larger blocks of data per clock
+cycle. While memory frequency can be increased to compensate for a
+narrower bus, higher frequencies increase power consumption and heat. A
+wider bus remains the most efficient method for achieving the high
+sustained bandwidth required for intensive workloads.</p>
+<h3 id="the-memory-demands-of-4k-webm-video">The Memory Demands of 4K
+WebM Video</h3>
+<p>WebM files typically encapsulate VP9 or AV1 video streams. Decoding a
+single 4K stream (3840x2160) at 60 frames per second is
+resource-intensive. Running multiple streams concurrently multiplies
+these demands across several key operations:</p>
+<ol type="1">
+<li><strong>Compressed Bitstream Fetching:</strong> The hardware Video
+Processing Unit (VPU) continuously pulls compressed video chunks from
+system RAM.</li>
+<li><strong>Reference Frame Storage and Retrieval:</strong> Modern
+codecs rely on inter-frame prediction. The VPU must write reconstructed
+frames to RAM and repeatedly read multiple prior reference frames to
+decode the current frame.</li>
+<li><strong>Uncompressed Frame Output:</strong> Decoded raw frames
+(often 10-bit YUV 4:2:0 or 4:2:2) must be written back to the frame
+buffer in system memory.</li>
+<li><strong>Display and Composition:</strong> The display processing
+engine or GPU reads these raw frames from memory to scale, composite,
+and render them to the screen.</li>
+</ol>
+<p>A single 4K 10-bit uncompressed frame requires approximately 15 to 20
+megabytes of storage. At 60 frames per second, simply writing and
+reading the uncompressed frames can consume several gigabytes per second
+of raw bandwidth per stream, excluding the overhead of reference frames
+and codec operations.</p>
+<h3 id="how-bus-width-impacts-concurrent-playback">How Bus Width Impacts
+Concurrent Playback</h3>
+<p>When multiple 4K WebM streams play at the same time, memory access
+requests surge. Bus width impacts this environment in three distinct
+ways:</p>
+<h4 id="1-bandwidth-saturation">1. Bandwidth Saturation</h4>
+<p>On SoCs with a 64-bit bus (common in entry-level and mid-range mobile
+chips), theoretical bandwidth often sits between 17 GB/s and 34 GB/s. A
+single 4K stream may consume 3 to 6 GB/s of sustained bandwidth. When
+scaling to two, three, or four concurrent streams, video decoding alone
+can monopolize the bus. A 128-bit or 256-bit bus doubles or quadruples
+this throughput ceiling, providing the headroom needed to sustain
+multiple streams without saturating the bus.</p>
+<h4 id="2-latency-and-contention">2. Latency and Contention</h4>
+<p>In an SoC, the memory bus is a shared resource. The VPU, CPU, GPU,
+neural engine, and display controller all compete for memory access.
+When concurrent video decoding demands continuous memory transactions,
+arbitration latency rises on narrow buses. If the VPU must wait for
+access to reference frames because the display engine is reading frame
+buffers, internal decode buffers can underrun, leading to stuttering,
+visual artifacts, and dropped frames.</p>
+<h4 id="3-power-and-thermal-throttling">3. Power and Thermal
+Throttling</h4>
+<p>Narrower buses forced to run at maximum memory frequencies to keep up
+with multi-stream bandwidth generate localized heat. Under sustained
+loads, this triggers thermal throttling, which reduces clock speeds
+across the SoC and degrades decoding performance. Wider buses transfer
+the same volume of data at lower clock frequencies, maintaining lower
+operating temperatures and consistent performance.</p>
+<h3 id="practical-bus-width-profiles">Practical Bus Width Profiles</h3>
+<ul>
+<li><strong>64-bit:</strong> Typically supports one or two 4K WebM
+streams at standard frame rates. Concurrent playback of three or more
+streams often causes dropped frames due to memory starvation and bus
+saturation.</li>
+<li><strong>128-bit:</strong> The standard for mid-to-high-end client
+processors. Capably handles multiple concurrent 4K WebM streams
+alongside everyday system tasks, provided memory frequency is
+sufficiently high.</li>
+<li><strong>256-bit and wider:</strong> Found in high-performance
+workstations, gaming consoles, and premium SoCs. Provides ample
+bandwidth to handle dense video walls, multi-camera feeds, or
+multi-track 4K video editing timelines without frame loss.</li>
+</ul>
+<p>Memory bus width establishes the physical limit of data movement
+within an SoC. While dedicated hardware decoders offload computational
+work from the CPU, their efficiency relies entirely on the memory
+subsystem. For concurrent 4K WebM playback, a wider memory bus ensures
+adequate throughput, minimal latency, and sustained frame delivery.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

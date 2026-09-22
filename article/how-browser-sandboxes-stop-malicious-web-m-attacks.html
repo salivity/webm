@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Browser Sandboxes Stop Malicious WebM Attacks - webm</title>
+    <meta name="description" content="Modern web browsers isolate complex media processing within multi-layered sandboxes to ensure that vulnerabilities in multimedia parsers cannot compromise the underlying operating system. Because WebM bitstreams rely on complex container parsing (Matrosk">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-browser-sandboxes-stop-malicious-web-m-attacks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Browser Sandboxes Stop Malicious WebM Attacks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-browser-sandboxes-stop-malicious-web-m-attacks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern web browsers isolate complex media processing within multi-layered sandboxes to ensure that vulnerabilities in multimedia parsers cannot compromise the underlying operating system. Because WebM bitstreams rely on complex container parsing (Matrosk" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-browser-sandboxes-stop-malicious-webm-attacks">How Browser
+Sandboxes Stop Malicious WebM Attacks</h1>
+<p>Modern web browsers isolate complex media processing within
+multi-layered sandboxes to ensure that vulnerabilities in multimedia
+parsers cannot compromise the underlying operating system. Because WebM
+bitstreams rely on complex container parsing (Matroska) and intensive
+video codecs (such as VP8, VP9, or AV1), they represent a frequent
+target for memory corruption exploits. To prevent an attacker from
+escalating privileges from an initial memory corruption bug to full
+system control, browsers employ a defense-in-depth architecture
+consisting of process separation, operating system-level restrictions,
+strict system call filtering, and hardened inter-process
+communication.</p>
+<h3 id="dedicated-low-privilege-media-processes">Dedicated Low-Privilege
+Media Processes</h3>
+<p>Browsers separate core browsing functions into isolated processes.
+Media decoding does not occur within the high-privilege browser process
+(the "broker"); instead, WebM parsing is confined to an unprivileged
+process, typically a dedicated Utility or GPU/Media process, or directly
+within the Renderer process. If a malformed WebM payload triggers an
+out-of-bounds write or integer overflow during decoding, arbitrary code
+execution is trapped within that single, unprivileged address space,
+containing no access to user files, credentials, or administrative
+interfaces.</p>
+<h3 id="os-level-tokens-and-integrity-levels">OS-Level Tokens and
+Integrity Levels</h3>
+<p>To enforce process boundaries, browsers leverage kernel-level
+security primitives:</p>
+<ul>
+<li><strong>Windows:</strong> The decoding process runs under a
+Restricted Token at an Untrusted or Low Integrity Level. It uses Windows
+Job Objects to restrict memory usage, prevent child process spawning,
+and prohibit desktop window hooks. Additionally, Less Privileged
+AppContainer (LPAC) configurations strip access to all system
+capabilities except explicitly granted resources.</li>
+<li><strong>Linux and Android:</strong> Browsers utilize User Namespaces
+and Network Namespaces to strip root capabilities, preventing access to
+the network, devices, and other user directories.</li>
+<li><strong>macOS:</strong> Media parsing is constrained using the
+Seatbelt framework (<code>sandbox_init</code>), which restricts the
+process to an explicit access profile that denies general file system
+and device access.</li>
+</ul>
+<h3 id="system-call-filtering">System Call Filtering</h3>
+<p>Even if an exploit gains execution within the media process,
+operating system kernel interfaces are strictly limited to prevent
+kernel-level privilege escalation:</p>
+<ul>
+<li><strong>Linux/ChromeOS (seccomp-BPF):</strong> Secure Computing Mode
+filters system calls through Berkeley Packet Filters. The sandbox blocks
+critical system calls like <code>execve</code>, <code>open</code>,
+<code>socket</code>, and <code>ptrace</code>. Decoders only retain calls
+strictly required for memory management and thread synchronization (such
+as <code>futex</code> or <code>mmap</code> with restricted flags).</li>
+<li><strong>Windows (Process Mitigation Policies):</strong> Browsers
+disable Win32k system calls for decoding processes via
+<code>SetProcessMitigationPolicy</code>. By severing the process from
+the <code>win32k.sys</code> kernel attack surface—a historically common
+vector for local privilege escalation—a compromised WebM parser cannot
+easily exploit graphics kernel vulnerabilities.</li>
+</ul>
+<h3 id="inter-process-communication-ipc-validation">Inter-Process
+Communication (IPC) Validation</h3>
+<p>A sandboxed decoding process cannot directly communicate with the
+hardware or file system. Instead, it must request resources via strongly
+typed IPC frameworks (such as Chromium’s Mojo or Firefox’s IPDL). The
+privileged browser broker acts as an uncompromised gatekeeper. The
+broker validates all parameters received from the sandbox, rejects
+malformed requests, and applies strict access control policies before
+handling data. Because the parsing process cannot initiate raw system
+transactions, an attacker must discover and chain a secondary, distinct
+vulnerability in the IPC interface to escape the sandbox.</p>
+<h3 id="memory-safety-and-exploit-mitigations">Memory Safety and Exploit
+Mitigations</h3>
+<p>Sandboxes are reinforced with binary-level mitigations to prevent the
+initial shellcode execution within the WebM decoder. These include:</p>
+<ul>
+<li><strong>Control Flow Integrity (CFI):</strong> Ensures that
+execution paths cannot be redirected to unauthorized function
+pointers.</li>
+<li><strong>Address Space Layout Randomization (ASLR) and Data Execution
+Prevention (DEP/NX):</strong> Make predictable memory targeting and
+stack execution unviable.</li>
+<li><strong>Arbitrary Code Guard (ACG):</strong> Prevents the media
+process from allocating new executable memory or modifying existing
+executable pages, shutting down runtime shellcode injection.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Entropy Coding Probability Update Models - webm</title>
+    <meta name="description" content="WebM VP9 achieves high-efficiency compression using an 8-bit binary arithmetic coder driven by context-adaptive probability distributions. Unlike codecs that dynamically update entropy probabilities after every parsed symbol, VP9 relies on a hybrid frame">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-9-entropy-coding-probability-update-models">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Entropy Coding Probability Update Models - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-9-entropy-coding-probability-update-models" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM VP9 achieves high-efficiency compression using an 8-bit binary arithmetic coder driven by context-adaptive probability distributions. Unlike codecs that dynamically update entropy probabilities after every parsed symbol, VP9 relies on a hybrid frame" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp9-entropy-coding-probability-update-models">VP9 Entropy Coding
+Probability Update Models</h1>
+<p>WebM VP9 achieves high-efficiency compression using an 8-bit binary
+arithmetic coder driven by context-adaptive probability distributions.
+Unlike codecs that dynamically update entropy probabilities after every
+parsed symbol, VP9 relies on a hybrid framework combining static
+probabilities within individual frames, backward adaptation via
+cumulative symbol counters across frame boundaries, and explicit forward
+signaling in frame headers. This approach allows VP9 to maintain dynamic
+entropy adaptation while eliminating symbol-level feedback loops that
+hinder parallel hardware decoding.</p>
+<h3 id="the-8-bit-arithmetic-coding-engine">The 8-Bit Arithmetic Coding
+Engine</h3>
+<p>VP9 represents symbol probabilities using 8-bit unsigned integers,
+where a value <span class="math inline">\(P\)</span> between 1 and 255
+represents the probability <span class="math inline">\(P / 256\)</span>
+of a binary decision being zero. Syntax elements with more than two
+potential values are decomposed into binary decision trees, where each
+internal node is assigned a specific probability context.</p>
+<p>To maximize decoding throughput and allow multi-threaded parsing,
+these probabilities remain static across the entire frame during
+execution. The dynamic adaptation mechanisms operate across frame
+boundaries rather than on a per-symbol basis.</p>
+<h3 id="backward-adaptation-via-symbol-accumulation">Backward Adaptation
+via Symbol Accumulation</h3>
+<p>The primary dynamic updating mechanism in VP9 is backward context
+adaptation. When backward updating is active, the decoder dynamically
+recalculates probabilities at the end of a frame without requiring
+explicit update data from the bitstream.</p>
+<ol type="1">
+<li><p><strong>Count Accumulation</strong>: Throughout the decoding of a
+frame, both the encoder and decoder accumulate counts of how frequently
+each branch of every syntax tree is taken. Separate frequency counters
+are maintained for transform coefficients, intra-prediction modes,
+inter-prediction vectors, reference frame selections, and block
+partitioning flags.</p></li>
+<li><p><strong>Weighted Interpolation</strong>: At the conclusion of the
+frame, the accumulated counts are combined with the pre-existing
+probabilities using a weighted moving average. The update formula
+balances historical probabilities against the empirical frequencies
+observed in the current frame:</p>
+<p><span class="math display">\[\text{New\_P} = \frac{\text{Count}_0
+\cdot 256}{\text{Count}_0 + \text{Count}_1} \cdot \alpha + \text{Old\_P}
+\cdot (1 - \alpha)\]</span></p>
+<p>The weighting factor (<span class="math inline">\(\alpha\)</span>) is
+derived from the total count of observations (<span
+class="math inline">\(\text{Count}_0 + \text{Count}_1\)</span>)
+alongside predefined lookup tables. If a context is visited rarely
+within a frame, the historical probability dominates; if a context is
+visited frequently, the newly observed frequency takes
+precedence.</p></li>
+</ol>
+<h3 id="multiple-frame-context-buffers">Multiple Frame Context
+Buffers</h3>
+<p>To handle varying statistical characteristics across different scene
+types (such as intra-coded frames versus high-motion inter frames), VP9
+maintains four separate context probability models, indexed 0 through
+3:</p>
+<ul>
+<li><strong>Context Selection</strong>: The uncompressed frame header
+specifies which of the four contexts the current frame must use to
+decode its syntax elements.</li>
+<li><strong>Selective Updating</strong>: A frame header flag
+(<code>refresh_frame_context</code>) determines whether the selected
+context buffer is overwritten by the newly adapted probabilities
+computed at the end of the frame.</li>
+</ul>
+<p>This model allows VP9 to switch between different statistical states
+(such as alternating between complex background motion and static
+foregrounds) without retraining the entropy engine from scratch on every
+frame.</p>
+<h3 id="forward-adaptation-and-header-deltas">Forward Adaptation and
+Header Deltas</h3>
+<p>When rapid scene transitions occur or when backward adaptation would
+adapt too slowly, VP9 employs forward adaptation. The encoder explicitly
+transmits updated probability values within the uncompressed frame
+header:</p>
+<ul>
+<li><strong>Update Flags</strong>: Binary flags in the header indicate
+whether a specific context probability is being updated.</li>
+<li><strong>Delta Encoding</strong>: Instead of transmitting absolute
+8-bit values, updates are often transmitted as differential values
+relative to the prior probability, saving bitstream overhead.</li>
+<li><strong>Keyframe Resets</strong>: Keyframes reset all frame context
+models to predefined default distributions, ensuring random access
+points remain independently decodable without reference to historical
+symbol counts.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

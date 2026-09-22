@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Default Audio Track Selection in WebM Files - webm</title>
+    <meta name="description" content="This article provides a direct breakdown of the container attributes within multi-language WebM files that govern automated audio stream selection. WebM is a restricted subset of the Matroska (MKV) format, utilizing Extensible Binary Meta Language (EBML)">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/default-audio-track-selection-in-web-m-files">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Default Audio Track Selection in WebM Files - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/default-audio-track-selection-in-web-m-files" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a direct breakdown of the container attributes within multi-language WebM files that govern automated audio stream selection. WebM is a restricted subset of the Matroska (MKV) format, utilizing Extensible Binary Meta Language (EBML)" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="default-audio-track-selection-in-webm-files">Default Audio Track
+Selection in WebM Files</h1>
+<p>This article provides a direct breakdown of the container attributes
+within multi-language WebM files that govern automated audio stream
+selection. WebM is a restricted subset of the Matroska (MKV) format,
+utilizing Extensible Binary Meta Language (EBML). To manage
+multi-language playback, media players evaluate metadata defined within
+each audio stream's <code>TrackEntry</code> element to determine which
+audio track should be activated by default.</p>
+<h3 id="key-ebml-attributes-in-trackentry">Key EBML Attributes in
+<code>TrackEntry</code></h3>
+<p>The default audio selection is dictated by four primary track-level
+elements located inside the WebM <code>Tracks</code> master element:</p>
+<h4 id="1-flagdefault-ebml-id-0x88">1. <code>FlagDefault</code> (EBML
+ID: <code>0x88</code>)</h4>
+<p>The <code>FlagDefault</code> element is a single-bit boolean
+indicator (1 or 0) that marks a track as the author’s intended
+default.</p>
+<ul>
+<li>A value of <code>1</code> indicates that the media player should
+automatically select this track if no user preferences override it.</li>
+<li>A value of <code>0</code> indicates the track should not be
+activated automatically.</li>
+<li>Under WebM and Matroska specifications, only one audio track should
+ideally have <code>FlagDefault</code> set to <code>1</code>. If multiple
+tracks have <code>FlagDefault</code> set to <code>1</code>, the behavior
+depends on the player, which typically falls back to the track
+order.</li>
+</ul>
+<h4
+id="2-language-ebml-id-0x22b59c-and-languageietf-ebml-id-0x22b59d">2.
+<code>Language</code> (EBML ID: <code>0x22B59C</code>) and
+<code>LanguageIETF</code> (EBML ID: <code>0x22B59D</code>)</h4>
+<p>These elements declare the spoken language of the audio stream.</p>
+<ul>
+<li><code>Language</code> uses a legacy 3-letter ISO 639-2 code (e.g.,
+<code>eng</code>, <code>spa</code>, <code>jpn</code>).</li>
+<li><code>LanguageIETF</code> uses the modern BCP 47 language tag syntax
+(e.g., <code>en-US</code>, <code>es-ES</code>). While not a direct
+"default" flag, these attributes dictate track selection because most
+media playback engines prioritize matching the user’s system or
+application language preferences before evaluating
+<code>FlagDefault</code>.</li>
+</ul>
+<h4 id="3-flagforced-ebml-id-0x55aa">3. <code>FlagForced</code> (EBML
+ID: <code>0x55AA</code>)</h4>
+<p>While primarily used for forced narrative subtitles,
+<code>FlagForced</code> is also a valid boolean flag for audio tracks in
+modern Matroska/WebM parsing. If a track is marked as forced
+(<code>1</code>), it indicates content that must be played if no other
+primary track matches the configuration, such as a director's commentary
+track or visual description track linked to specific accessibility
+profiles.</p>
+<h4 id="4-tracknumber-ebml-id-0xd7-and-container-order">4.
+<code>TrackNumber</code> (EBML ID: <code>0xD7</code>) and Container
+Order</h4>
+<p>When no track is explicitly tagged with <code>FlagDefault = 1</code>,
+or when no tracks match the player's preferred language, players fall
+back to structural sequence. The playback engine will select the first
+audio track encountered in the container, generally identified by the
+lowest <code>TrackNumber</code> or earliest byte position in the
+<code>Tracks</code> header.</p>
+<h3 id="player-track-resolution-priority">Player Track Resolution
+Priority</h3>
+<p>Most compliant players (such as browser engines using FFmpeg,
+Chromium, or GStreamer) evaluate these attributes in the following
+order:</p>
+<ol type="1">
+<li><strong>User Preference + Language Match:</strong> The player checks
+for audio tracks where <code>Language</code> or
+<code>LanguageIETF</code> matches the user's preferred playback
+language.</li>
+<li><strong>Language Match + Default Flag:</strong> If multiple tracks
+match the user's language, the player chooses the track with
+<code>FlagDefault</code> set to <code>1</code>.</li>
+<li><strong>Global Default Flag:</strong> If no language match occurs,
+the player selects the audio track with <code>FlagDefault = 1</code>,
+regardless of language.</li>
+<li><strong>Fallback (First Track):</strong> If no audio tracks have
+<code>FlagDefault = 1</code> and no language matches exist, the player
+selects the first audio track declared in the file.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

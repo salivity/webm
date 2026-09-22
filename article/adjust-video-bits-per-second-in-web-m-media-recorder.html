@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjust videoBitsPerSecond in WebM MediaRecorder - webm</title>
+    <meta name="description" content="Adjusting the videoBitsPerSecond constraint in a WebM MediaRecorder instance allows developers to control video quality and output file size during media capture in JavaScript. This guide covers how to properly define the bitrate within the constructor's">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/adjust-video-bits-per-second-in-web-m-media-recorder">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Adjust videoBitsPerSecond in WebM MediaRecorder - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/adjust-video-bits-per-second-in-web-m-media-recorder" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Adjusting the videoBitsPerSecond constraint in a WebM MediaRecorder instance allows developers to control video quality and output file size during media capture in JavaScript. This guide covers how to properly define the bitrate within the constructor's" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="adjust-videobitspersecond-in-webm-mediarecorder">Adjust
+videoBitsPerSecond in WebM MediaRecorder</h1>
+<p>Adjusting the <code>videoBitsPerSecond</code> constraint in a WebM
+<code>MediaRecorder</code> instance allows developers to control video
+quality and output file size during media capture in JavaScript. This
+guide covers how to properly define the bitrate within the constructor's
+options object, the hierarchy between general and specific bitrate
+settings, and best practices for browser compatibility.</p>
+<h3 id="setting-videobitspersecond-in-the-constructor">Setting
+<code>videoBitsPerSecond</code> in the Constructor</h3>
+<p>The <code>MediaRecorder</code> interface accepts an optional
+configuration object as its second argument. To set the video bitrate
+specifically for WebM video, define both the <code>mimeType</code> and
+the <code>videoBitsPerSecond</code> properties within this object.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Obtain the media stream (e.g., from camera or screen capture)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> stream <span class="op">=</span> <span class="cf">await</span> <span class="bu">navigator</span><span class="op">.</span><span class="at">mediaDevices</span><span class="op">.</span><span class="fu">getUserMedia</span>({ <span class="dt">video</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">audio</span><span class="op">:</span> <span class="kw">true</span> })<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Define the recording options</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> options <span class="op">=</span> {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">mimeType</span><span class="op">:</span> <span class="st">&#39;video/webm;codecs=vp9&#39;</span><span class="op">,</span> <span class="co">// or &#39;video/webm;codecs=vp8&#39;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">videoBitsPerSecond</span><span class="op">:</span> <span class="dv">2500000</span> <span class="co">// 2.5 Mbps</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Initialize MediaRecorder with the specified bitrate</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> options)<span class="op">;</span></span></code></pre></div>
+<h3 id="bitrate-settings-hierarchy">Bitrate Settings Hierarchy</h3>
+<p>The <code>MediaRecorder</code> API provides three properties to
+manage bitrates:</p>
+<ul>
+<li><code>videoBitsPerSecond</code>: Controls only the video track
+bitrate.</li>
+<li><code>audioBitsPerSecond</code>: Controls only the audio track
+bitrate.</li>
+<li><code>bitsPerSecond</code>: Sets an overall target bitrate shared
+between audio and video.</li>
+</ul>
+<p>If you specify <code>videoBitsPerSecond</code>, it overrides any
+value set in <code>bitsPerSecond</code> for the video track. For
+example:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> options <span class="op">=</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">mimeType</span><span class="op">:</span> <span class="st">&#39;video/webm&#39;</span><span class="op">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">bitsPerSecond</span><span class="op">:</span> <span class="dv">1000000</span><span class="op">,</span>        <span class="co">// Fallback overall bitrate (1 Mbps)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">videoBitsPerSecond</span><span class="op">:</span> <span class="dv">3000000</span><span class="op">,</span>   <span class="co">// Explicitly allocates 3 Mbps to video</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">audioBitsPerSecond</span><span class="op">:</span> <span class="dv">128000</span>     <span class="co">// Explicitly allocates 128 kbps to audio</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> options)<span class="op">;</span></span></code></pre></div>
+<h3 id="checking-support-and-inspecting-runtime-values">Checking Support
+and Inspecting Runtime Values</h3>
+<p>Bitrates are treated as targets rather than strict limits. The
+browser's underlying encoder adapts the actual bitrate depending on
+hardware capabilities, network conditions, and the complexity of the
+video stream.</p>
+<p>Before initializing, ensure the requested MIME type is supported:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> mimeType <span class="op">=</span> <span class="st">&#39;video/webm;codecs=vp8&#39;</span><span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="bu">MediaRecorder</span><span class="op">.</span><span class="fu">isTypeSupported</span>(mimeType)) {</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> mediaRecorder <span class="op">=</span> <span class="kw">new</span> <span class="bu">MediaRecorder</span>(stream<span class="op">,</span> {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">mimeType</span><span class="op">:</span> mimeType<span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">videoBitsPerSecond</span><span class="op">:</span> <span class="dv">1500000</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Verify the assigned bitrate</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&#39;Target Video Bitrate:&#39;</span><span class="op">,</span> mediaRecorder<span class="op">.</span><span class="at">videoBitsPerSecond</span>)<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;The specified WebM MIME type is not supported.&#39;</span>)<span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Once initialized, the <code>mediaRecorder.videoBitsPerSecond</code>
+read-only property reflects the configured target rate used by the
+encoder.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

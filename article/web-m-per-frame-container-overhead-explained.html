@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Per-Frame Container Overhead Explained - webm</title>
+    <meta name="description" content="In a typical WebM file, the exact container-level overhead per frame ranges between 6 and 8 bytes when using standard SimpleBlock structures. WebM is a restricted subset of the Matroska (MKV) format based on Extensible Binary Meta Language (EBML). Becaus">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-per-frame-container-overhead-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Per-Frame Container Overhead Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-per-frame-container-overhead-explained" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In a typical WebM file, the exact container-level overhead per frame ranges between 6 and 8 bytes when using standard SimpleBlock structures. WebM is a restricted subset of the Matroska (MKV) format based on Extensible Binary Meta Language (EBML). Becaus" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-per-frame-container-overhead-explained">WebM Per-Frame
+Container Overhead Explained</h1>
+<p>In a typical WebM file, the exact container-level overhead per frame
+ranges between <strong>6 and 8 bytes</strong> when using standard
+<code>SimpleBlock</code> structures. WebM is a restricted subset of the
+Matroska (MKV) format based on Extensible Binary Meta Language (EBML).
+Because WebM eliminates unnecessary metadata layers and streamlines
+packet encapsulation, nearly all per-frame overhead is restricted to a
+compact binary header preceding the raw media payload.</p>
+<hr />
+<h3 id="the-anatomy-of-a-webm-frame-simpleblock">The Anatomy of a WebM
+Frame (<code>SimpleBlock</code>)</h3>
+<p>In modern WebM streams (containing VP8, VP9, AV1, Opus, or Vorbis),
+individual media frames are packaged within a <code>SimpleBlock</code>
+EBML element. A <code>SimpleBlock</code> combines packet identification,
+timing, and frame flags into a single continuous header.</p>
+<p>Here is the exact byte-by-byte breakdown of the overhead before the
+raw compressed frame data:</p>
+<ol type="1">
+<li><p><strong>Element ID (1 byte):</strong></p>
+<ul>
+<li>The EBML ID for <code>SimpleBlock</code> is <code>0xA3</code>. This
+consumes exactly <strong>1 byte</strong>.</li>
+</ul></li>
+<li><p><strong>Data Size / Length Descriptor (1 to 3
+bytes):</strong></p>
+<ul>
+<li>The size of the payload is encoded as a variable-length integer
+(EBML VINT).</li>
+<li><strong>1 byte:</strong> Frame size <span
+class="math inline">\(\le\)</span> 126 bytes (rare, occasional small
+audio frames).</li>
+<li><strong>2 bytes:</strong> Frame size between 127 bytes and 16,382
+bytes (common for audio and small 1080p/720p delta video frames).</li>
+<li><strong>3 bytes:</strong> Frame size between 16,383 bytes and
+2,097,150 bytes (typical for most high-bitrate video frames and 4K
+I-frames).</li>
+</ul></li>
+<li><p><strong>Track Number (1 byte):</strong></p>
+<ul>
+<li>Stored as an EBML VINT. WebM files typically contain only two tracks
+(Track 1 for Video, Track 2 for Audio), meaning this value fits into
+<strong>1 byte</strong> (e.g., <code>0x81</code> or
+<code>0x82</code>).</li>
+</ul></li>
+<li><p><strong>Relative Timecode (2 bytes):</strong></p>
+<ul>
+<li>A signed 16-bit integer representing the frame's presentation
+timestamp relative to the parent <code>Cluster</code> timecode. This
+field is fixed at <strong>2 bytes</strong>.</li>
+</ul></li>
+<li><p><strong>Flags (1 byte):</strong></p>
+<ul>
+<li>An 8-bit field containing frame-level metadata (Keyframe status,
+Invisible/Alt-ref flag, Discardable flag, and EBML Lacing mode). This
+field is fixed at <strong>1 byte</strong>.</li>
+</ul></li>
+</ol>
+<hr />
+<h3 id="exact-per-frame-overhead-calculation">Exact Per-Frame Overhead
+Calculation</h3>
+<p>Summing these individual components yields the total byte overhead
+for an isolated frame:</p>
+<p><span class="math display">\[\text{Overhead} = \text{Element ID (1B)}
++ \text{Size VINT (1–3B)} + \text{Track Number (1B)} + \text{Timecode
+(2B)} + \text{Flags (1B)}\]</span></p>
+<ul>
+<li><strong>Small Video Frames (&lt; 16 KB) &amp; Typical Audio
+Frames:</strong> <span class="math display">\[1 + 2 + 1 + 2 + 1 =
+\mathbf{7\text{ bytes}}\]</span></li>
+<li><strong>Large Video Frames (16 KB to 2 MB):</strong> <span
+class="math display">\[1 + 3 + 1 + 2 + 1 = \mathbf{8\text{
+bytes}}\]</span></li>
+<li><strong>Very Small Audio Frames (&lt; 127 bytes):</strong> <span
+class="math display">\[1 + 1 + 1 + 2 + 1 = \mathbf{6\text{
+bytes}}\]</span></li>
+</ul>
+<hr />
+<h3 id="amortized-overhead-clusters-and-blockgroups">Amortized Overhead:
+Clusters and BlockGroups</h3>
+<p>While <code>SimpleBlock</code> represents the direct per-frame
+encapsulation cost, two other structural elements can slightly alter the
+effective average overhead:</p>
+<h4 id="1-cluster-overhead-amortized-02-to-05-bytesframe">1. Cluster
+Overhead (Amortized: ~0.2 to 0.5 bytes/frame)</h4>
+<p>WebM frames are grouped inside <code>Cluster</code> elements, usually
+generated at every keyframe interval (1 to 5 seconds). A cluster header
+contains:</p>
+<ul>
+<li>Cluster ID (<code>0x1F43B675</code>): 4 bytes</li>
+<li>Cluster Size VINT: 2 to 8 bytes</li>
+<li>Cluster Timestamp Element: 4 to 10 bytes</li>
+</ul>
+<p>A standard Cluster header totals <strong>10 to 22 bytes</strong>.
+When distributed across 30 to 150 frames within that cluster, it adds
+less than <strong>0.5 bytes</strong> of amortized overhead per
+frame.</p>
+<h4 id="2-blockgroup-structure-infrequent-11-to-14-bytesframe">2.
+<code>BlockGroup</code> Structure (Infrequent: 11 to 14
+bytes/frame)</h4>
+<p>If a frame requires explicit duration signaling or precise reference
+block tracking (common in older encoders, but discouraged in optimized
+WebM), a <code>BlockGroup</code> container is used instead of a
+<code>SimpleBlock</code>. This wraps a <code>Block</code> element inside
+a parent EBML structure, adding roughly <strong>4 to 6 additional
+bytes</strong>, raising per-frame overhead to <strong>11–14
+bytes</strong>.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Bit WebM Banding in Dark and Gradient Scenes - webm</title>
+    <meta name="description" content="Color banding in 8-bit WebM video files occurs when smooth color transitions are displayed as distinct, stair-stepped stripes rather than continuous gradations. This article explains the technical mechanics behind banding artifacts, why 8-bit color depth">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/8-bit-web-m-banding-in-dark-and-gradient-scenes">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="8-Bit WebM Banding in Dark and Gradient Scenes - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/8-bit-web-m-banding-in-dark-and-gradient-scenes" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Color banding in 8-bit WebM video files occurs when smooth color transitions are displayed as distinct, stair-stepped stripes rather than continuous gradations. This article explains the technical mechanics behind banding artifacts, why 8-bit color depth" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="8-bit-webm-banding-in-dark-and-gradient-scenes">8-Bit WebM
+Banding in Dark and Gradient Scenes</h1>
+<p>Color banding in 8-bit WebM video files occurs when smooth color
+transitions are displayed as distinct, stair-stepped stripes rather than
+continuous gradations. This article explains the technical mechanics
+behind banding artifacts, why 8-bit color depth struggles specifically
+with low-light scenes and gradients, how WebM compression algorithms
+exacerbate the problem, and the practical methods used to prevent or
+reduce these visual flaws.</p>
+<h2 id="what-causes-color-banding-in-8-bit-media">What Causes Color
+Banding in 8-Bit Media</h2>
+<p>Color banding—also known as false contouring—is primarily an issue of
+quantization. In standard 8-bit video, each color channel (Red, Green,
+and Blue, or Y, U, and V in YUV color space) has 8 bits of data,
+providing <span class="math inline">\(2^8 = 256\)</span> discrete values
+per channel (0–255).</p>
+<p>When rendering a full spectrum of colors across an entire image, 256
+levels per channel allow for roughly 16.7 million potential color
+combinations. However, when a scene features a narrow color range—such
+as a smooth sky gradient at sunset or shadows in a dimly lit room—only a
+tiny fraction of those 256 values are used. When the transition spans
+across hundreds of pixels but only has 5 to 10 digital values available
+to represent that range, the video cannot represent the subtle
+intermediary shades. The encoder is forced to round pixel values to the
+nearest available integer, creating sharp boundaries between adjacent
+shade blocks.</p>
+<h2 id="why-dark-and-gradient-scenes-are-most-vulnerable">Why Dark and
+Gradient Scenes Are Most Vulnerable</h2>
+<p>Dark areas and subtle gradients are uniquely prone to banding due to
+a combination of digital encoding limits and human visual
+perception:</p>
+<ul>
+<li><strong>Non-Linear Human Vision:</strong> The human eye is
+significantly more sensitive to minor changes in luminance at low light
+levels than in bright highlights (a principle described by the
+Weber-Fechner law). When a dark room shifts from an RGB value of (5, 5,
+5) to (6, 6, 6), the relative change in perceived brightness is vast
+compared to a shift from (245, 245, 245) to (246, 246, 246).</li>
+<li><strong>Color Starvation in Shadows:</strong> In dark scenes,
+luminance (Y) values are clustered near the bottom of the 0–255 scale.
+Because there are very few integer steps between absolute black and dark
+gray, smooth shadow falloff collapses into harsh, visible bands.</li>
+<li><strong>Continuous Gradients:</strong> Broad, smooth gradients (such
+as fog, mist, spotlights, or clear skies) lack high-frequency spatial
+detail or texture. Without texture to mask the transitions, the human
+eye easily detects the linear borders where one numeric value shifts to
+the next.</li>
+</ul>
+<h2 id="the-role-of-webm-compression-vp8-and-vp9">The Role of WebM
+Compression (VP8 and VP9)</h2>
+<p>The WebM container typically holds video encoded with VP8, VP9, or
+AV1 codecs. The lossy compression mechanisms inside these codecs can
+severely amplify 8-bit banding artifacts:</p>
+<ul>
+<li><strong>Chroma Subsampling (4:2:0):</strong> Most 8-bit WebM files
+use 4:2:0 chroma subsampling, which reduces color resolution by half
+both horizontally and vertically to save bandwidth. While the human eye
+is less sensitive to color resolution than brightness, this reduction
+strips out half of the color data, accelerating gradient
+degradation.</li>
+<li><strong>Macroblock Quantization:</strong> Video encoders divide
+frames into blocks (macroblocks in VP8 or superblocks in VP9). To save
+bitrate, the encoder rounds high-frequency spatial information via
+quantization matrices. In flat gradients, the encoder often treats
+subtle variations as redundant noise and flattens entire 8x8 or 16x16
+blocks to a single uniform color value, turning soft gradients into
+rigid checkerboard-like strips.</li>
+<li><strong>Temporal Prediction and Keyframe Pumping:</strong> In scenes
+with low movement (like a slowly fading dark scene), temporal
+compression attempts to reuse block data from previous frames. If the
+quantization varies slightly between frames, banding rings can pulse,
+crawl, or flicker, making the artifact far more noticeable in motion
+than in a static image.</li>
+</ul>
+<h2 id="identifying-banding-manifestations">Identifying Banding
+Manifestations</h2>
+<p>In 8-bit WebM files, banding typically appears in three distinct
+forms:</p>
+<ol type="1">
+<li><strong>Concentric Rings:</strong> In scenes with a localized light
+source (such as a lamp in a dark room or the sun behind clouds), banding
+forms visible rings radiating outward from the light source.</li>
+<li><strong>Horizontal/Vertical Striations:</strong> In linear
+gradients, such as an open sky or wall shadow, banding manifests as
+vertical or horizontal parallel stripes.</li>
+<li><strong>Blocky Boundary Artifacts:</strong> When combined with
+aggressive macroblock compression, the edges of the bands do not form
+smooth lines; instead, they appear jagged, pixelated, or stepped.</li>
+</ol>
+<h2 id="mitigation-techniques">Mitigation Techniques</h2>
+<p>Banding can be resolved or reduced using several encoding and
+post-production techniques:</p>
+<ul>
+<li><strong>Dithering and Grain Addition:</strong> Adding a minute
+amount of spatial noise or film grain to gradients before encoding
+breaks up the continuous mathematical steps. Dithering scatters pixels
+along the borders of color shifts, tricking the human eye into
+perceiving a smooth transition.</li>
+<li><strong>10-Bit Encoding:</strong> Encoding in 10-bit depth
+(supported by VP9 and AV1 within the WebM container) provides 1024
+levels per channel instead of 256. This offers four times the precision
+per channel and 64 times the total color combinations, virtually
+eliminating banding even when downscaled on 8-bit displays.</li>
+<li><strong>Adjusting Encoder Settings:</strong> Lowering the Constant
+Rate Factor (CRF) / quantization parameter (<span
+class="math inline">\(QP\)</span>), disabling aggressive deblocking
+filters, or enabling tuning modes optimized for grain retention (such as
+<code>-tune-content grain</code> in VP9) ensures the encoder preserves
+subtle variations rather than flattening them.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

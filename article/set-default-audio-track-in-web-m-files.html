@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Default Audio Track in WebM Files - webm</title>
+    <meta name="description" content="Modifying the default audio track flag in a WebM container allows media players to automatically select your preferred audio stream during playback. Because WebM is based on the Matroska (MKV) format, you can easily change these track flags without re-en">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/set-default-audio-track-in-web-m-files">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Set Default Audio Track in WebM Files - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/set-default-audio-track-in-web-m-files" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modifying the default audio track flag in a WebM container allows media players to automatically select your preferred audio stream during playback. Because WebM is based on the Matroska (MKV) format, you can easily change these track flags without re-en" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="set-default-audio-track-in-webm-files">Set Default Audio Track
+in WebM Files</h1>
+<p>Modifying the default audio track flag in a WebM container allows
+media players to automatically select your preferred audio stream during
+playback. Because WebM is based on the Matroska (MKV) format, you can
+easily change these track flags without re-encoding the video or audio
+streams. This guide covers how to set the default audio track using
+command-line tools like <code>mkvpropedit</code> and
+<code>FFmpeg</code>, as well as a graphical interface.</p>
+<h2 id="method-1-using-mkvpropedit-fastest-in-place-edit">Method 1:
+Using mkvpropedit (Fastest, In-Place Edit)</h2>
+<p><code>mkvpropedit</code> is part of the MKVToolNix suite. It modifies
+the container metadata directly without remuxing the entire file,
+completing the operation in seconds.</p>
+<h3 id="step-1-identify-track-ids">Step 1: Identify Track IDs</h3>
+<p>Check the track numbers and current flags using
+<code>mkvmerge</code>:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-i</span> input.webm</span></code></pre></div>
+<p>You will see output listing the tracks, such as:</p>
+<ul>
+<li>Track ID 0: video (VP9)</li>
+<li>Track ID 1: audio (Opus)</li>
+<li>Track ID 2: audio (Opus)</li>
+</ul>
+<h3 id="step-2-update-the-default-track-flag">Step 2: Update the Default
+Track Flag</h3>
+<p>To set the second audio track as the default and remove the default
+flag from the first audio track, run:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvpropedit</span> input.webm <span class="at">--edit</span> track:a1 <span class="at">--set</span> flag-default=0 <span class="at">--edit</span> track:a2 <span class="at">--set</span> flag-default=1</span></code></pre></div>
+<ul>
+<li><code>track:a1</code> refers to the first audio track.</li>
+<li><code>track:a2</code> refers to the second audio track.</li>
+<li><code>flag-default=1</code> marks the track as default;
+<code>flag-default=0</code> removes the default status.</li>
+</ul>
+<hr />
+<h2 id="method-2-using-ffmpeg-remuxing">Method 2: Using FFmpeg
+(Remuxing)</h2>
+<p>If you have FFmpeg installed, you can use the
+<code>-disposition</code> parameter to set the default track. This
+method remuxes the file into a new container while copying all streams
+without re-encoding.</p>
+<p>Run the following command:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map</span> 0 <span class="at">-c</span> copy <span class="at">-disposition:a:0</span> 0 <span class="at">-disposition:a:1</span> default output.webm</span></code></pre></div>
+<ul>
+<li><code>-map 0</code> includes all streams from the input file.</li>
+<li><code>-c copy</code> copies the streams without re-encoding.</li>
+<li><code>-disposition:a:0 0</code> removes the default flag from the
+first audio stream (index 0).</li>
+<li><code>-disposition:a:1 default</code> sets the default flag on the
+second audio stream (index 1).</li>
+</ul>
+<hr />
+<h2 id="method-3-using-mkvtoolnix-gui-visual-editor">Method 3: Using
+MKVToolNix GUI (Visual Editor)</h2>
+<p>If you prefer a graphical interface:</p>
+<ol type="1">
+<li>Open <strong>MKVToolNix GUI</strong>.</li>
+<li>Go to the <strong>Header editor</strong> tab from the left
+sidebar.</li>
+<li>Click <strong>Open Matroska or WebM file</strong> and select your
+<code>.webm</code> file.</li>
+<li>Expand the audio track you want to disable by default, select
+<strong>"Default track" flag</strong>, change its value to
+<strong>No</strong>, and check the enable box.</li>
+<li>Expand the audio track you want to make the default, select
+<strong>"Default track" flag</strong>, change its value to
+<strong>Yes</strong>, and check the enable box.</li>
+<li>Click <strong>Header editor</strong> in the top menu and select
+<strong>Save</strong>.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demuxing WebM on Microcontrollers with EBML - webm</title>
+    <meta name="description" content="This article explores how resource-constrained microcontrollers can demux WebM media streams by implementing lightweight Extensible Binary Meta Language (EBML) parsing techniques. Because typical microcontrollers feature limited RAM—often ranging from">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/demuxing-web-m-on-microcontrollers-with-ebml">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Demuxing WebM on Microcontrollers with EBML - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/demuxing-web-m-on-microcontrollers-with-ebml" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores how resource-constrained microcontrollers can demux WebM media streams by implementing lightweight Extensible Binary Meta Language (EBML) parsing techniques. Because typical microcontrollers feature limited RAM—often ranging from" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="demuxing-webm-on-microcontrollers-with-ebml">Demuxing WebM on
+Microcontrollers with EBML</h1>
+<p>This article explores how resource-constrained microcontrollers can
+demux WebM media streams by implementing lightweight Extensible Binary
+Meta Language (EBML) parsing techniques. Because typical
+microcontrollers feature limited RAM—often ranging from a few kilobytes
+to a couple of megabytes—standard tree-based EBML decoders are
+unfeasible. By relying on stream-oriented finite state machines,
+selective element skipping, optimized Variable-Length Integer (VINT)
+decoding, and ring-buffered I/O, developers can extract audio and video
+payloads from WebM files on low-power embedded hardware in real
+time.</p>
+<h3 id="stream-oriented-finite-state-machines">Stream-Oriented Finite
+State Machines</h3>
+<p>Standard desktop EBML parsers build an Abstract Syntax Tree (AST) of
+the container hierarchy in memory. On a microcontroller, allocating
+dynamic trees quickly exhausts the heap.</p>
+<p>A stream-oriented parser uses a Finite State Machine (FSM) that
+processes bytes sequentially from a network socket, SD card, or flash
+storage. The parser tracks only the current depth and parent element
+boundaries through an internal stack of offsets. Instead of buffering an
+entire container, the parser evaluates element headers byte by byte,
+changes states (such as <code>READ_ID</code>, <code>READ_SIZE</code>,
+<code>PROCESS_PAYLOAD</code>, or <code>SKIP_PAYLOAD</code>), and pushes
+payload data directly to downstream hardware decoders or buffers.</p>
+<h3 id="in-place-vint-decoding">In-Place VINT Decoding</h3>
+<p>EBML elements use Variable-Length Integers (VINTs) for both Element
+IDs and Data Sizes. A VINT encodes its length using leading zeros
+followed by a marker bit:</p>
+<ul>
+<li><code>1xxxxxxx</code> indicates a 1-byte length.</li>
+<li><code>01xxxxxx</code> indicates a 2-byte length.</li>
+<li><code>001xxxxxx</code> indicates a 3-byte length, continuing up to 8
+bytes.</li>
+</ul>
+<p>To minimize memory overhead, parsing should decode these values
+iteratively using simple bitwise shifts instead of caching byte
+sequences into intermediary memory structures. A lightweight decoder
+only requires an accumulator variable and a byte counter. Once the
+initial byte reveals the length via the <code>__builtin_clz</code>
+(count leading zeros) instruction, remaining bytes are shifted into a
+64-bit integer on the fly.</p>
+<h3
+id="selective-whitelisting-and-non-seeking-payload-skipping">Selective
+Whitelisting and Non-Seeking Payload Skipping</h3>
+<p>WebM files contain various auxiliary elements that microcontrollers
+do not need for continuous playback, such as <code>SeekHead</code>,
+<code>Cues</code>, <code>Tags</code>, and metadata strings.</p>
+<p>A low-memory parser utilizes an element whitelist containing only
+fundamental tokens:</p>
+<ul>
+<li><code>EBML</code> header and <code>Segment</code> (for container
+validation)</li>
+<li><code>Tracks</code> and <code>TrackEntry</code> (to identify codec
+types, timecode scales, and stream indexes)</li>
+<li><code>Cluster</code>, <code>Timecode</code>, and
+<code>SimpleBlock</code> / <code>BlockGroup</code> (for media
+payloads)</li>
+</ul>
+<p>When an Element ID is encountered that is not in the whitelist, the
+parser reads the declared data size and increments a skip-counter. The
+microcontroller bypasses this data without allocating buffer space by
+advancing the hardware SPI/SD bus clock or reading directly into a
+small, reusable scratchpad.</p>
+<h3 id="zero-copy-frame-extraction-from-simpleblocks">Zero-Copy Frame
+Extraction from SimpleBlocks</h3>
+<p>The <code>SimpleBlock</code> contains the raw video frame or audio
+packet. The header of a <code>SimpleBlock</code> contains:</p>
+<ol type="1">
+<li>Track Number (VINT)</li>
+<li>Relative Timecode (signed 16-bit integer)</li>
+<li>Flags (lacing, keyframe, discardable)</li>
+</ol>
+<p>Rather than copying the entire frame into an intermediate RAM buffer,
+the parser strips the small header (typically 4 to 12 bytes) and passes
+the memory pointer or direct DMA transfer channel of the remaining
+payload directly to the peripheral responsible for decoding (e.g., an
+external audio DAC or hardware codec).</p>
+<h3 id="handling-unknownindefinite-element-lengths">Handling
+Unknown/Indefinite Element Lengths</h3>
+<p>Live WebM streams or memory-efficient encoders often write
+<code>Cluster</code> elements with unknown data lengths (a VINT filled
+with <code>1</code> bits). An embedded parser cannot rely on a
+pre-calculated byte offset to know when an unknown-length container
+ends.</p>
+<p>To handle this efficiently without back-buffering:</p>
+<ul>
+<li>Maintain a parser state that treats unknown-length containers as
+infinite streams.</li>
+<li>Detect the termination of the current container by continuously
+evaluating incoming Element IDs at the expected boundary.</li>
+<li>When the parser encounters a top-level ID (such as a new
+<code>Cluster</code> ID <code>0x1F43B675</code>), it automatically
+resolves and terminates the context of the previous cluster, resetting
+local timecodes without retaining prior stream history.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

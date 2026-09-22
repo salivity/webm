@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Context Selection by Neighbor Transform Size - webm</title>
+    <meta name="description" content="In the VP9 video coding standard, context modeling improves entropy coding efficiency by exploiting spatial correlation between adjacent blocks. Specifically, VP9 determines the probability contexts for critical syntax elements—most notably the transfo">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-9-context-selection-by-neighbor-transform-size">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Context Selection by Neighbor Transform Size - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-9-context-selection-by-neighbor-transform-size" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In the VP9 video coding standard, context modeling improves entropy coding efficiency by exploiting spatial correlation between adjacent blocks. Specifically, VP9 determines the probability contexts for critical syntax elements—most notably the transfo" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp9-context-selection-by-neighbor-transform-size">VP9 Context
+Selection by Neighbor Transform Size</h1>
+<p>In the VP9 video coding standard, context modeling improves entropy
+coding efficiency by exploiting spatial correlation between adjacent
+blocks. Specifically, VP9 determines the probability contexts for
+critical syntax elements—most notably the transform block size
+(<code>tx_size</code>) and transform skip flags—by evaluating the
+transform dimensions of the directly adjacent above and left neighboring
+blocks. This article breaks down how VP9 queries neighboring transform
+boundaries, computes context indices, and manages spatial alignment
+across variable-sized coding blocks.</p>
+<h3 id="the-purpose-of-transform-size-context-modeling">The Purpose of
+Transform Size Context Modeling</h3>
+<p>VP9 supports four discrete transform sizes: 4x4, 8x8, 16x16, and
+32x32. Larger transforms are typically chosen in smooth, uniform areas,
+while smaller transforms are reserved for edges, fine textures, and
+complex motion. Because neighboring regions in natural video usually
+share structural characteristics, the transform size chosen for a
+current block is highly correlated with the transform sizes used in
+adjacent blocks.</p>
+<p>Rather than encoding transform selections with static probability
+distributions, VP9 employs context-adaptive binary arithmetic coding. By
+dynamically conditioning probability models on neighbor states, the
+encoder reduces the bit cost required to signal transform sizes and
+related residual flags.</p>
+<h3 id="determining-the-context-index-for-transform-size">Determining
+the Context Index for Transform Size</h3>
+<p>When coding the transform size for a given block, the VP9 entropy
+coder derives a specific context index. The primary neighbors considered
+are:</p>
+<ul>
+<li><strong>Above Neighbor (<span
+class="math inline">\(A\)</span>):</strong> The transform block
+immediately adjacent to the top edge of the current block.</li>
+<li><strong>Left Neighbor (<span
+class="math inline">\(L\)</span>):</strong> The transform block
+immediately adjacent to the left edge of the current block.</li>
+</ul>
+<p>The context index is computed based on whether each neighbor’s
+transform size meets or exceeds the maximum allowable transform size of
+the current coding unit.</p>
+<p>The standard context derivation logic functions as follows:</p>
+<ol type="1">
+<li><strong>Check Neighbor Availability:</strong> The decoder checks
+whether the above and left neighbors exist within the current frame or
+tile boundary. If a neighbor is unavailable (such as at frame edges or
+tile borders), its transform size defaults to zero or is treated as not
+meeting the threshold.</li>
+<li><strong>Threshold Evaluation:</strong> For an available neighbor,
+its selected transform size is compared against the maximum transform
+size supported by the current block’s partition size (<span
+class="math inline">\(tx\_max\)</span>):
+<ul>
+<li><span class="math inline">\(\text{above\_condition} =
+(\text{above\_tx\_size} \ge \text{tx\_max})\)</span></li>
+<li><span class="math inline">\(\text{left\_condition} =
+(\text{left\_tx\_size} \ge \text{tx\_max})\)</span></li>
+</ul></li>
+<li><strong>Context Selection:</strong> The active context index is
+computed as the sum of these conditions: <span
+class="math display">\[\text{Context Index} = \text{above\_condition} +
+\text{left\_condition}\]</span></li>
+</ol>
+<p>This calculation yields three potential context states (0, 1, or
+2):</p>
+<ul>
+<li><strong>Context 0:</strong> Neither neighbor used a transform size
+greater than or equal to the current block's target size. This indicates
+a high likelihood of localized detail, skewing probabilities toward
+smaller transform splits.</li>
+<li><strong>Context 1:</strong> Exactly one neighbor met or exceeded the
+threshold.</li>
+<li><strong>Context 2:</strong> Both neighbors used transform sizes at
+or above the threshold, signaling a broad, flat region where a large
+transform size is statistically preferred.</li>
+</ul>
+<h3 id="spatial-tracking-via-the-4x4-processing-grid">Spatial Tracking
+via the 4x4 Processing Grid</h3>
+<p>Because VP9 allows flexible recursive partitioning (from 64x64 down
+to 4x4 units), neighboring blocks rarely share a 1:1 size correspondence
+with the current block.</p>
+<p>To maintain consistency, VP9 tracks transform parameters at a
+standardized sub-block granularity (typically 4x4 or 8x8 units). The
+engine stores the transform size selected across every internal grid
+unit within a partitioned block. When a subsequent block queries its
+left or above boundary:</p>
+<ul>
+<li>It references the specific 4x4 grid cell directly adjacent to the
+top-left corner of the current transform unit.</li>
+<li>If a neighboring block was partitioned into smaller sub-transforms,
+the query reads the sub-transform directly touching the boundary,
+preserving local spatial accuracy.</li>
+</ul>
+<h3 id="impact-on-residual-skip-flags">Impact on Residual Skip
+Flags</h3>
+<p>Transform size decisions also influence surrounding syntax elements,
+such as the <code>skip</code> flag (which signals whether a block
+contains any non-zero transform coefficients). The context for
+predicting whether a block can be skipped relies on whether neighboring
+blocks contain transform residuals. The transform size of neighbors
+dictates the boundary mapping used to fetch these non-zero coefficient
+flags, ensuring that probabilities match the geometric scale of adjacent
+residual activity.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

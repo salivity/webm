@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EBML Master Elements in a WebM Segment - webm</title>
+    <meta name="description" content="This article provides a technical breakdown of the Extensible Binary Meta Language (EBML) Master elements that can be nested within the Segment element of a WebM file. In the WebM container format—a constrained subset of Matroska—the Segment element">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/ebml-master-elements-in-a-web-m-segment">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="EBML Master Elements in a WebM Segment - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/ebml-master-elements-in-a-web-m-segment" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides a technical breakdown of the Extensible Binary Meta Language (EBML) Master elements that can be nested within the Segment element of a WebM file. In the WebM container format—a constrained subset of Matroska—the Segment element" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="ebml-master-elements-in-a-webm-segment">EBML Master Elements in
+a WebM Segment</h1>
+<p>This article provides a technical breakdown of the Extensible Binary
+Meta Language (EBML) Master elements that can be nested within the
+<code>Segment</code> element of a WebM file. In the WebM container
+format—a constrained subset of Matroska—the <code>Segment</code> element
+functions as the primary container for all playback data and metadata.
+Below is a direct, detailed reference to the specific Master elements
+permitted inside this top-level structure.</p>
+<hr />
+<p>In EBML, a <strong>Master element</strong> is an element that
+contains other EBML sub-elements (acting similarly to an XML parent tag
+or directory). The <code>Segment</code> element (Element ID:
+<code>0x18538067</code>) wraps the entire multimedia stream.</p>
+<p>According to the WebM container specification, the following specific
+EBML Master elements can be nested directly beneath the
+<code>Segment</code> element:</p>
+<h3 id="1-seekhead-0x114d9b74">1. SeekHead
+(<code>0x114D9B74</code>)</h3>
+<p>The <code>SeekHead</code> element contains index pointers to other
+top-level elements within the <code>Segment</code>. It enables players
+to seek directly to specific structures without parsing the entire file
+sequentially.</p>
+<ul>
+<li><strong>Key nested children:</strong> One or more <code>Seek</code>
+master elements (each containing <code>SeekID</code> and
+<code>SeekPosition</code>).</li>
+</ul>
+<h3 id="2-info-0x1549a966">2. Info (<code>0x1549A966</code>)</h3>
+<p>The <code>Info</code> element houses fundamental metadata regarding
+the entire segment and playback synchronization. A WebM file must
+contain an <code>Info</code> element.</p>
+<ul>
+<li><strong>Key nested children:</strong> <code>TimestampScale</code>
+(formerly <code>TimecodeScale</code>), <code>Duration</code>,
+<code>MuxingApp</code>, and <code>WritingApp</code>.</li>
+</ul>
+<h3 id="3-tracks-0x1654ae6b">3. Tracks (<code>0x1654AE6B</code>)</h3>
+<p>The <code>Tracks</code> element declares the technical parameters of
+the elementary media streams (video and audio). It is mandatory for file
+playback.</p>
+<ul>
+<li><strong>Key nested children:</strong> One or more
+<code>TrackEntry</code> master elements, which define parameters such as
+<code>TrackNumber</code>, <code>TrackUID</code>, <code>TrackType</code>,
+<code>CodecID</code>, <code>Video</code>, and <code>Audio</code>.</li>
+</ul>
+<h3 id="4-cluster-0x1f43b675">4. Cluster (<code>0x1F43B675</code>)</h3>
+<p>The <code>Cluster</code> element contains the actual media data
+packets. A WebM file typically contains multiple sequential
+<code>Cluster</code> elements, designed to facilitate network streaming
+and dynamic buffering.</p>
+<ul>
+<li><strong>Key nested children:</strong> <code>Timestamp</code> (the
+cluster baseline timestamp), <code>SimpleBlock</code> (standard
+compressed media frames), and <code>BlockGroup</code> (for complex media
+frames requiring additional metadata).</li>
+</ul>
+<h3 id="5-cues-0x1c53bb6b">5. Cues (<code>0x1C53BB6B</code>)</h3>
+<p>The <code>Cues</code> element serves as the primary seek index for
+player navigation. It maps presentation timestamps to precise byte
+offsets of keyframe clusters.</p>
+<ul>
+<li><strong>Key nested children:</strong> Multiple <code>CuePoint</code>
+master elements, which further contain <code>CueTime</code> and
+<code>CueTrackPositions</code>.</li>
+</ul>
+<h3 id="6-tags-0x1254c367">6. Tags (<code>0x1254C367</code>)</h3>
+<p>The <code>Tags</code> element stores general descriptive metadata
+regarding the file, tracks, or individual segments (such as titles,
+artists, or copyright information).</p>
+<ul>
+<li><strong>Key nested children:</strong> One or more <code>Tag</code>
+master elements, each nesting <code>Targets</code> and
+<code>SimpleTag</code> structures.</li>
+</ul>
+<h3 id="7-chapters-0x1043a770">7. Chapters
+(<code>0x1043A770</code>)</h3>
+<p>The <code>Chapters</code> element provides basic navigational markers
+throughout the timeline, allowing players to jump between predefined
+scene points.</p>
+<ul>
+<li><strong>Key nested children:</strong> <code>EditionEntry</code> and
+<code>ChapterAtom</code> master elements detailing chapter display names
+and start/stop timestamps.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Track Audio and Subtitle Sync in Dynamic WebM - webm</title>
+    <meta name="description" content="Media servers achieve precise synchronization of multi-track audio and subtitles inside dynamically packaged WebM by normalizing disparate presentation timestamps into a unified timebase, structuring tracks within Extensible Binary Meta Language (EBML) h">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/multi-track-audio-and-subtitle-sync-in-dynamic-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Multi-Track Audio and Subtitle Sync in Dynamic WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/multi-track-audio-and-subtitle-sync-in-dynamic-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Media servers achieve precise synchronization of multi-track audio and subtitles inside dynamically packaged WebM by normalizing disparate presentation timestamps into a unified timebase, structuring tracks within Extensible Binary Meta Language (EBML) h" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="multi-track-audio-and-subtitle-sync-in-dynamic-webm">Multi-Track
+Audio and Subtitle Sync in Dynamic WebM</h1>
+<p>Media servers achieve precise synchronization of multi-track audio
+and subtitles inside dynamically packaged WebM by normalizing disparate
+presentation timestamps into a unified timebase, structuring tracks
+within Extensible Binary Meta Language (EBML) headers, and interleaving
+packets chronologically across dynamic WebM clusters. Dynamic packaging
+transforms incoming source streams—such as live RTMP, SRT, or
+pre-recorded MP4 assets—into WebM containers on the fly, ensuring that
+alternating audio languages and timed text align perfectly with video
+playback without requiring full re-encoding.</p>
+<h3 id="unified-timebase-and-ebml-timestamp-normalization">Unified
+Timebase and EBML Timestamp Normalization</h3>
+<p>The WebM container, based on the Matroska specification, relies on an
+EBML structure where timing depends on a global header parameter called
+<code>TimestampScale</code> (historically <code>TimecodeScale</code>).
+By default, this is set to 1,000,000 nanoseconds, providing a
+1-millisecond resolution.</p>
+<p>When a media server receives distinct source tracks, each input
+stream often operates on a different internal clock or timescale (for
+example, 90 kHz for MPEG-TS video, 48 kHz for Opus audio, or
+millisecond-based WebVTT text). The server's dynamic packager strips
+incoming container-specific timestamps and normalizes every track's
+Presentation Timestamp (PTS) to the common WebM reference clock. This
+mathematical mapping prevents clock drift between high-frequency audio
+frames and lower-frequency video or subtitle frames.</p>
+<h3 id="track-identification-in-ebml-headers">Track Identification in
+EBML Headers</h3>
+<p>Before streaming media samples, the server generates an EBML
+<code>Tracks</code> master element. Each audio stream (such as stereo
+English or 5.1 Spanish) and subtitle stream is assigned a unique,
+sequential <code>TrackNumber</code> and <code>TrackUID</code>.</p>
+<p>The header explicitly defines the track types:</p>
+<ul>
+<li>Audio tracks are marked as <code>TrackType</code> 2, paired with
+codec identifiers like <code>A_OPUS</code> or <code>A_VORBIS</code>,
+along with sampling rates and channel counts.</li>
+<li>Subtitles are marked as <code>TrackType</code> 17, typically
+utilizing <code>D_WEBVTT/SUBTITLES</code>.</li>
+<li>Track metadata tags like <code>Language</code> (ISO 639-2 or BCP 47)
+and <code>Name</code> are set to allow players to present track
+selection menus correctly.</li>
+</ul>
+<p>Declaring these tracks globally at the start of the stream
+establishes the playback context so the client engine can initialize the
+appropriate decoders to run against the single master clock.</p>
+<h3 id="cluster-generation-and-timestamp-offsets">Cluster Generation and
+Timestamp Offsets</h3>
+<p>WebM media data is encapsulated in sequential <code>Cluster</code>
+elements, which typically start with a video keyframe. Each cluster
+contains an absolute <code>Timestamp</code> element representing the
+base time of that chunk.</p>
+<p>Individual audio and subtitle frames are written inside these
+clusters as <code>SimpleBlock</code> or <code>BlockGroup</code>
+elements:</p>
+<ul>
+<li><strong>Audio Blocks:</strong> Audio frames are packaged into
+<code>SimpleBlock</code> elements referencing the respective audio
+<code>TrackNumber</code>. Each block contains a 16-bit signed integer
+defining its time offset relative to the cluster's base timestamp.
+Because audio packets arrive more frequently than video keyframes,
+servers slice audio into short durations to ensure steady playback
+buffers.</li>
+<li><strong>Subtitle Blocks:</strong> Timed text from formats like
+WebVTT is parsed into discreet subtitle cue payloads and placed inside
+<code>BlockGroup</code> elements. A <code>BlockGroup</code> contains
+both the subtitle <code>Block</code> (with its relative start timestamp)
+and a <code>BlockDuration</code> element, which specifies exactly how
+long the text remains visible on screen.</li>
+</ul>
+<h3 id="chronological-interleaving-and-buffer-management">Chronological
+Interleaving and Buffer Management</h3>
+<p>Dynamic packagers utilize an internal jitter buffer to multiplex
+incoming frames from all tracks into a single chronological byte stream.
+If a server outputted video, audio, and subtitle streams sequentially in
+isolated chunks, the client player would experience buffer starvation
+across unserved tracks, resulting in desynchronization or stalls.</p>
+<p>To maintain real-time sync:</p>
+<ol type="1">
+<li>The server buffers incoming packets across all active tracks over a
+short window (typically 1 to 2 seconds).</li>
+<li>The packager sorts these packets based on their calculated relative
+timestamps.</li>
+<li>The server flushes the sorted packets into the current
+<code>Cluster</code>, interleaving audio frames and subtitle cues
+directly alongside the video frames occurring at that exact moment in
+timeline playback.</li>
+</ol>
+<h3 id="managing-sparse-subtitle-data">Managing Sparse Subtitle
+Data</h3>
+<p>Subtitles present a unique synchronization challenge because timed
+text is sparse; unlike continuous audio and video, long periods of
+silence occur without subtitle cues.</p>
+<p>If a dynamic packager waited for a subtitle cue before closing a WebM
+cluster, the entire stream would stall. Media servers resolve this by
+decoupling cluster duration decisions from the subtitle timeline.
+Clusters are bounded strictly by video GOP (Group of Pictures) lengths
+or target segment durations. If a cluster contains no subtitle activity,
+the server simply omits that subtitle <code>TrackNumber</code> from that
+specific cluster. When a subtitle cue overlaps a cluster boundary, the
+server splits or appropriately bounds the cue to guarantee uninterrupted
+rendering across player buffer updates.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

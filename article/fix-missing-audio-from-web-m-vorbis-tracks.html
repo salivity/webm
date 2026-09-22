@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Missing Audio from WebM Vorbis Tracks - webm</title>
+    <meta name="description" content="WebM video containers typically pair VP8 or VP9 video streams with either Opus or Vorbis audio tracks. While Opus is the modern default, older or non-standard WebM files utilizing the Vorbis audio codec frequently encounter playback issues, resulting in">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/fix-missing-audio-from-web-m-vorbis-tracks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Fix Missing Audio from WebM Vorbis Tracks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/fix-missing-audio-from-web-m-vorbis-tracks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM video containers typically pair VP8 or VP9 video streams with either Opus or Vorbis audio tracks. While Opus is the modern default, older or non-standard WebM files utilizing the Vorbis audio codec frequently encounter playback issues, resulting in" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="fix-missing-audio-from-webm-vorbis-tracks">Fix Missing Audio
+from WebM Vorbis Tracks</h1>
+<p>WebM video containers typically pair VP8 or VP9 video streams with
+either Opus or Vorbis audio tracks. While Opus is the modern default,
+older or non-standard WebM files utilizing the Vorbis audio codec
+frequently encounter playback issues, resulting in video playing without
+sound. This guide provides actionable methods to identify Vorbis audio
+tracks, convert them into widely supported formats, and configure media
+players or web environments to restore missing audio.</p>
+<h2 id="1-verify-the-audio-codec">1. Verify the Audio Codec</h2>
+<p>Before attempting a fix, confirm that the missing audio is indeed
+caused by an unsupported Vorbis stream rather than file corruption or
+muting.</p>
+<ul>
+<li><strong>Using MediaInfo:</strong> Open the WebM file in MediaInfo.
+Navigate to the <strong>Audio</strong> section and check the
+<strong>Format</strong> field. If it reads <code>Vorbis</code>, the
+audio stream is using the legacy WebM audio codec.</li>
+<li><strong>Using FFmpeg:</strong> Run the command
+<code>ffmpeg -i input.webm</code>. Look at the stream mapping output; a
+line reading <code>Stream #0:1: Audio: vorbis</code> confirms the
+presence of a Vorbis track.</li>
+</ul>
+<h2 id="2-transcode-vorbis-to-opus-or-aac">2. Transcode Vorbis to Opus
+or AAC</h2>
+<p>The most reliable solution for long-term compatibility is transcoding
+the audio stream to a widely supported codec while copying the video
+stream to avoid quality loss.</p>
+<h3 id="option-a-convert-audio-to-opus-maintains-webm-container">Option
+A: Convert Audio to Opus (Maintains WebM Container)</h3>
+<p>Opus is the standard audio codec for WebM and is supported across all
+modern browsers and players. Run this command in FFmpeg:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-c:v</span> copy <span class="at">-c:a</span> libopus <span class="at">-b:a</span> 128k output.webm</span></code></pre></div>
+<ul>
+<li><code>-c:v copy</code>: Copies the existing video stream without
+re-encoding, preserving video quality and saving processing time.</li>
+<li><code>-c:a libopus</code>: Encodes the Vorbis audio track into Opus
+at a 128 kbps bitrate.</li>
+</ul>
+<h3
+id="option-b-convert-to-mp4-with-aac-audio-universal-compatibility">Option
+B: Convert to MP4 with AAC Audio (Universal Compatibility)</h3>
+<p>If target platforms do not support WebM containers natively (such as
+older Apple devices or standard video editors), convert the file to
+MP4:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-c:v</span> libx264 <span class="at">-c:a</span> aac <span class="at">-b:a</span> 192k output.mp4</span></code></pre></div>
+<h2 id="3-update-or-configure-local-media-players">3. Update or
+Configure Local Media Players</h2>
+<p>If you cannot transcode the file and need immediate local playback,
+configure your software environment to handle Vorbis audio decoding.</p>
+<ul>
+<li><strong>Use VLC Media Player:</strong> VLC includes native built-in
+decoders for Vorbis inside WebM containers. Ensure VLC is updated to the
+latest version.</li>
+<li><strong>Install DirectShow Filters (Windows):</strong> Legacy
+Windows media players require DirectShow filters to split WebM
+containers and decode Vorbis. Install the open-source <strong>LAV
+Filters</strong> package or the <strong>K-Lite Codec Pack</strong> to
+enable system-wide Vorbis playback.</li>
+<li><strong>Update Web Browsers:</strong> Ensure Chrome, Firefox, or
+Edge is updated to the latest stable release. While support for Vorbis
+in WebM is legacy, modern browser rendering engines can decode it if
+proper hardware or software fallbacks are active.</li>
+</ul>
+<h2 id="4-fix-vorbis-issues-for-web-developers">4. Fix Vorbis Issues for
+Web Developers</h2>
+<p>If you are serving WebM files on a website and users report silent
+playback:</p>
+<ul>
+<li><strong>Serve Dual Formats:</strong> Use the HTML5
+<code>&lt;video&gt;</code> element with fallback sources. Provide an MP4
+(H.264/AAC) source alongside the WebM file:</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">video</span><span class="ot"> controls</span><span class="dt">&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">source</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;video.webm&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&quot;video/webm; codecs=vp9,opus&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">source</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;video.mp4&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&quot;video/mp4; codecs=avc1,mp4a&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  Your browser does not support the video tag.</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">video</span><span class="dt">&gt;</span></span></code></pre></div>
+<ul>
+<li><strong>Verify Server MIME Types:</strong> Ensure your web server
+delivers WebM files with the correct header
+<code>Content-Type: video/webm</code>. Incorrect MIME types can cause
+browsers to disable native audio decoders.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

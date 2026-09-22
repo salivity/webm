@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Timestamp Rollover in Long Live Streams - webm</title>
+    <meta name="description" content="This article explains how the WebM container format manages timestamps during continuous, multi-day live streams. It details the structural design of Extensible Binary Meta Language (EBML), the interplay between Cluster-level and Block-level timestamps,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-timestamp-rollover-in-long-live-streams">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Timestamp Rollover in Long Live Streams - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-timestamp-rollover-in-long-live-streams" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how the WebM container format manages timestamps during continuous, multi-day live streams. It details the structural design of Extensible Binary Meta Language (EBML), the interplay between Cluster-level and Block-level timestamps," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-timestamp-rollover-in-long-live-streams">WebM Timestamp
+Rollover in Long Live Streams</h1>
+<p>This article explains how the WebM container format manages
+timestamps during continuous, multi-day live streams. It details the
+structural design of Extensible Binary Meta Language (EBML), the
+interplay between Cluster-level and Block-level timestamps, why WebM
+avoids the frequent rollover issues common to other container formats
+like MPEG-TS, and how client-side playback pipelines handle long-running
+streams.</p>
+<h3 id="ebml-and-64-bit-timestamp-architecture">EBML and 64-Bit
+Timestamp Architecture</h3>
+<p>WebM is a subset of the Matroska (MKV) multimedia container format,
+which is built on EBML (Extensible Binary Meta Language). At the
+container level, WebM handles presentation timing using a global
+timebase defined in the Segment Info element called
+<code>TimestampScale</code> (historically <code>TimecodeScale</code>).
+By default, this value is set to 1,000,000 nanoseconds, providing a
+1-millisecond resolution.</p>
+<p>The primary mechanism that prevents rollover in multi-day streams is
+the variable-length unsigned integer format defined by EBML. Cluster
+timestamps in WebM can use up to 8 bytes (64 bits). Even at a
+millisecond resolution, a 64-bit unsigned integer takes approximately
+584 million years to overflow. Unlike MPEG-TS, which uses a 33-bit
+Program Clock Reference (PCR) running at 90 kHz that rolls over roughly
+every 26.5 hours, a properly configured WebM stream will not experience
+an integer overflow at the container level during any practical live
+stream duration.</p>
+<h3 id="cluster-generation-and-16-bit-block-offsets">Cluster Generation
+and 16-Bit Block Offsets</h3>
+<p>While the absolute timestamp of each Cluster uses a large integer,
+individual media frames inside each Cluster do not store absolute
+timestamps. Instead, <code>Block</code> or <code>SimpleBlock</code>
+elements contain relative timestamps stored as signed 16-bit
+integers.</p>
+<p>At the standard 1-millisecond scale, a signed 16-bit integer has a
+range of -32,768 to +32,767 milliseconds (approximately ±32.7 seconds).
+To prevent this smaller relative counter from overflowing:</p>
+<ol type="1">
+<li>The encoder or muxer must regularly close the active Cluster and
+open a new one.</li>
+<li>In typical live streaming configurations, a new Cluster is created
+at every keyframe (GOP boundary), typically every 1 to 4 seconds.</li>
+<li>Each new Cluster updates the absolute baseline timestamp, resetting
+the 16-bit relative counter for subsequent blocks back near zero.</li>
+</ol>
+<p>As long as the distance between Clusters does not exceed ~32 seconds,
+the 16-bit relative offset never encounters an overflow.</p>
+<h3 id="continuous-segments-with-unknown-duration">Continuous Segments
+with Unknown Duration</h3>
+<p>For non-stop live broadcasting, WebM handles continuity by emitting
+an "unknown" or indefinite length for the primary Segment element. When
+the Segment length is omitted or set to an unknown EBML value, the muxer
+continuously appends new Clusters sequentially without needing to
+rewrite header elements or define a fixed endpoint.</p>
+<p>Because timestamps inside successive Clusters advance monotonically,
+decoders interpret the incoming media stream as an uninterrupted
+timeline without triggering discontinuous presentation timestamps (PTS)
+jumps.</p>
+<h3
+id="client-side-playback-and-media-source-extensions-mse">Client-Side
+Playback and Media Source Extensions (MSE)</h3>
+<p>While the WebM container itself does not roll over, playback
+engines—especially web browsers utilizing Media Source Extensions
+(MSE)—can encounter issues with memory management and continuous
+timeline tracking over several days.</p>
+<p>In browser environments, continuous streams are typically delivered
+in segmented WebM chunks (e.g., via DASH or custom chunked HTTP
+pipelines). To prevent browser pipelines from running into
+floating-point precision limits or memory leaks during multi-day
+runs:</p>
+<ul>
+<li><strong>Buffer Eviction:</strong> Players configure the
+<code>SourceBuffer</code> to remove previously played segments from
+memory using removal algorithms
+(<code>SourceBuffer.remove()</code>).</li>
+<li><strong>Timestamp Offset Management:</strong> In segmented
+architectures, delivery pipelines can reset timestamps per segment or
+period using the MSE <code>timestampOffset</code> property, mapping
+container-level timestamps to an arbitrary player presentation
+timeline.</li>
+<li><strong>Period Boundaries:</strong> When using standards like
+MPEG-DASH with WebM segments, multi-day streams often divide broadcasts
+into distinct Periods, allowing timestamp baselines to reset cleanly
+without interrupting playback.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

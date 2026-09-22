@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxy Buffer Settings to Prevent WebM Stutter - webm</title>
+    <meta name="description" content="High-definition WebM video delivery relies on consistent throughput and low-latency packet delivery to avoid playback interruptions. When proxy servers sit between the origin and the client, suboptimal buffer configurations frequently cause pipeline stal">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/proxy-buffer-settings-to-prevent-web-m-stutter">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Proxy Buffer Settings to Prevent WebM Stutter - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/proxy-buffer-settings-to-prevent-web-m-stutter" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="High-definition WebM video delivery relies on consistent throughput and low-latency packet delivery to avoid playback interruptions. When proxy servers sit between the origin and the client, suboptimal buffer configurations frequently cause pipeline stal" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="proxy-buffer-settings-to-prevent-webm-stutter">Proxy Buffer
+Settings to Prevent WebM Stutter</h1>
+<p>High-definition WebM video delivery relies on consistent throughput
+and low-latency packet delivery to avoid playback interruptions. When
+proxy servers sit between the origin and the client, suboptimal buffer
+configurations frequently cause pipeline stalls, buffer bloat, or packet
+fragmentation, resulting in visible playback stutter. This article
+covers the essential network buffering and socket configurations
+required on reverse proxies to maintain smooth, high-bitrate WebM
+streaming.</p>
+<h3 id="1-optimize-proxy-buffer-allocation">1. Optimize Proxy Buffer
+Allocation</h3>
+<p>When serving video on demand (VoD), reverse proxies (such as Nginx or
+HAProxy) must balance memory usage with delivery speed. Setting proxy
+buffers too small causes constant I/O read blocking from the upstream
+server, while setting them too large can exhaust system RAM during
+traffic spikes.</p>
+<ul>
+<li><strong>Proxy Buffers (<code>proxy_buffers</code>):</strong> For HD
+WebM (encoded in VP9 or AV1), frame sizes can fluctuate widely. Allocate
+at least 8 to 16 buffers sized at <code>64k</code> or <code>128k</code>
+(e.g., <code>proxy_buffers 16 128k;</code> in Nginx). This holds enough
+pre-fetched video data to smooth out minor network jitters.</li>
+<li><strong>Busy Buffers Size
+(<code>proxy_busy_buffers_size</code>):</strong> Increase this parameter
+to twice the size of an individual buffer (e.g., <code>256k</code>).
+This ensures that the proxy can continuously transmit data to the
+downstream client while simultaneously reading the next segments from
+the upstream server.</li>
+</ul>
+<h3 id="2-disable-buffering-for-live-chunked-streams">2. Disable
+Buffering for Live Chunked Streams</h3>
+<p>If delivering live WebM streams over chunked HTTP transfer (or via
+WebSockets), standard proxy buffering should be disabled. Video players
+rely on immediate chunk delivery; accumulating chunks in a proxy buffer
+leads to severe latency and rapid catch-up stuttering.</p>
+<ul>
+<li>Set <code>proxy_buffering off;</code> for live endpoints.</li>
+<li>Ensure chunked transfer encoding is passed directly through to the
+client without aggregation.</li>
+</ul>
+<h3 id="3-tune-kernel-tcp-socket-buffers">3. Tune Kernel TCP Socket
+Buffers</h3>
+<p>Proxies handle two separate TCP connections for every request:
+client-to-proxy and proxy-to-origin. Both connections must have their
+TCP window sizes tuned according to the Bandwidth-Delay Product
+(BDP).</p>
+<ul>
+<li><strong><code>SO_RCVBUF</code> and <code>SO_SNDBUF</code>:</strong>
+Expand the maximum socket buffer sizes in the operating system kernel
+(<code>sysctl.conf</code>):
+<ul>
+<li><code>net.ipv4.tcp_rmem = 4096 87380 16777216</code></li>
+<li><code>net.ipv4.tcp_wmem = 4096 65536 16777216</code></li>
+</ul></li>
+<li><strong>Window Scaling:</strong> Ensure
+<code>net.ipv4.tcp_window_scaling = 1</code> is enabled. High-definition
+1080p and 4K WebM streams quickly exceed the default 64 KB TCP window
+limit on high-latency connections, causing throughput to collapse unless
+window scaling is active.</li>
+</ul>
+<h3 id="4-enable-tcp-fast-path-directives">4. Enable TCP Fast-Path
+Directives</h3>
+<p>Delays in packet transmission trigger player demuxer underruns.
+Configure the proxy to optimize how TCP packets are pushed out to the
+wire:</p>
+<ul>
+<li><strong><code>tcp_nodelay</code>:</strong> Enable this to disable
+Nagle’s algorithm. This prevents the proxy from waiting to fill an
+entire TCP packet before sending small audio or video frames,
+substantially reducing initial playback and seek latency.</li>
+<li><strong><code>tcp_nopush</code> (or <code>TCP_CORK</code>):</strong>
+When serving static WebM assets from cache, combine
+<code>tcp_nopush on;</code> with <code>sendfile on;</code>. This forces
+the operating system to send HTTP response headers and the beginning of
+the WebM file in a single full packet, avoiding initial header
+overhead.</li>
+</ul>
+<h3 id="5-enforce-proper-range-request-handling">5. Enforce Proper Range
+Request Handling</h3>
+<p>WebM media elements in web browsers depend heavily on HTTP
+<code>Range</code> requests for initial metadata parsing (the EBML
+header and Cluster indexes) and seeking.</p>
+<ul>
+<li>Verify the proxy preserves the <code>Accept-Ranges: bytes</code>
+header from the upstream server.</li>
+<li>Configure proxy slice modules (such as Nginx’s
+<code>ngx_http_slice_module</code>) with slice sizes matched to media
+chunks (typically <code>1m</code> to <code>2m</code>). This prevents the
+proxy from buffering an entire multi-gigabyte WebM file when the browser
+only requested the first few kilobytes to read container metadata.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How VP9 Calculates SSIM in WebM Optimization - webm</title>
+    <meta name="description" content="During multi-pass WebM encoding, the VP9 codec calculates the Structural Similarity Index (SSIM) to evaluate perceived video quality and guide rate-distortion optimization (RDO). Unlike traditional metrics like Mean Squared Error (MSE) or Peak Signal-to-">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-vp-9-calculates-ssim-in-web-m-optimization">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How VP9 Calculates SSIM in WebM Optimization - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-vp-9-calculates-ssim-in-web-m-optimization" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="During multi-pass WebM encoding, the VP9 codec calculates the Structural Similarity Index (SSIM) to evaluate perceived video quality and guide rate-distortion optimization (RDO). Unlike traditional metrics like Mean Squared Error (MSE) or Peak Signal-to-" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-vp9-calculates-ssim-in-webm-optimization">How VP9 Calculates
+SSIM in WebM Optimization</h1>
+<p>During multi-pass WebM encoding, the VP9 codec calculates the
+Structural Similarity Index (SSIM) to evaluate perceived video quality
+and guide rate-distortion optimization (RDO). Unlike traditional metrics
+like Mean Squared Error (MSE) or Peak Signal-to-Noise Ratio (PSNR),
+which only quantify absolute pixel differences, SSIM measures
+degradation in structural information, luminance, and contrast. By
+calculating local SSIM values across blocks and frames in analysis and
+encoding passes, VP9 dynamically allocates bitrate, adjusts quantization
+parameters (QP), and selects optimal prediction modes to maximize human
+visual perception.</p>
+<h2 id="the-mathematical-foundation-of-ssim-in-vp9">The Mathematical
+Foundation of SSIM in VP9</h2>
+<p>The standard SSIM metric evaluates two image windows—the original
+source frame block (<span class="math inline">\(x\)</span>) and the
+reconstructed/compressed block (<span
+class="math inline">\(y\)</span>)—across three core visual
+components:</p>
+<ol type="1">
+<li><p><strong>Luminance (<span
+class="math inline">\(l\)</span>):</strong> Measures the closeness of
+mean pixel intensities. <span class="math display">\[\mu_x =
+\frac{1}{N}\sum_{i=1}^N x_i, \quad \mu_y = \frac{1}{N}\sum_{i=1}^N
+y_i\]</span> <span class="math display">\[l(x, y) = \frac{2\mu_x\mu_y +
+C_1}{\mu_x^2 + \mu_y^2 + C_1}\]</span></p></li>
+<li><p><strong>Contrast (<span
+class="math inline">\(c\)</span>):</strong> Measures the standard
+deviations of pixel intensities. <span class="math display">\[\sigma_x^2
+= \frac{1}{N-1}\sum_{i=1}^N (x_i - \mu_x)^2, \quad \sigma_y^2 =
+\frac{1}{N-1}\sum_{i=1}^N (y_i - \mu_y)^2\]</span> <span
+class="math display">\[c(x, y) = \frac{2\sigma_x\sigma_y +
+C_2}{\sigma_x^2 + \sigma_y^2 + C_2}\]</span></p></li>
+<li><p><strong>Structure (<span
+class="math inline">\(s\)</span>):</strong> Measures the
+cross-correlation after luminance and contrast normalization. <span
+class="math display">\[\sigma_{xy} = \frac{1}{N-1}\sum_{i=1}^N (x_i -
+\mu_x)(y_i - \mu_y)\]</span> <span class="math display">\[s(x, y) =
+\frac{\sigma_{xy} + C_3}{\sigma_x\sigma_y + C_3}\]</span></p></li>
+</ol>
+<p>Setting <span class="math inline">\(C_3 = C_2 / 2\)</span> combines
+these terms into the standard equation: <span
+class="math display">\[\text{SSIM}(x, y) = \frac{(2\mu_x\mu_y +
+C_1)(2\sigma_{xy} + C_2)}{(\mu_x^2 + \mu_y^2 + C_1)(\sigma_x^2 +
+\sigma_y^2 + C_2)}\]</span></p>
+<p>The constants <span class="math inline">\(C_1 = (K_1 L)^2\)</span>
+and <span class="math inline">\(C_2 = (K_2 L)^2\)</span> prevent
+division by zero in near-flat regions, where <span
+class="math inline">\(L\)</span> is the dynamic range of pixel values
+(255 for 8-bit video) and default scaling factors are typically <span
+class="math inline">\(K_1 = 0.01\)</span> and <span
+class="math inline">\(K_2 = 0.03\)</span>.</p>
+<h2 id="block-level-and-windowed-execution-in-libvpx">Block-Level and
+Windowed Execution in <code>libvpx</code></h2>
+<p>In the reference VP9 implementation (<code>libvpx</code>), SSIM
+calculations operate primarily on the luma (Y) plane, though chroma
+(U/V) components can also be incorporated.</p>
+<ul>
+<li><strong>Local Window Sampling:</strong> The calculation applies an
+<span class="math inline">\(8 \times 8\)</span> or <span
+class="math inline">\(4 \times 4\)</span> sliding pixel window across
+macroblocks and superblocks (from <span class="math inline">\(8 \times
+8\)</span> up to <span class="math inline">\(64 \times 64\)</span>
+partitions).</li>
+<li><strong>Parallel Summation:</strong> The encoder computes
+intermediate sum values in parallel using SIMD instructions (AVX2,
+SSE4.1, ARM NEON). It tracks five localized sums for each window: <span
+class="math inline">\(\sum x\)</span>, <span class="math inline">\(\sum
+y\)</span>, <span class="math inline">\(\sum x^2\)</span>, <span
+class="math inline">\(\sum y^2\)</span>, and <span
+class="math inline">\(\sum xy\)</span>.</li>
+<li><strong>Mean SSIM (MSSIM):</strong> The global frame-level quality
+score is calculated by averaging local SSIM values across all sliding
+windows: <span class="math display">\[\text{MSSIM} =
+\frac{1}{M}\sum_{j=1}^M \text{SSIM}_j\]</span></li>
+</ul>
+<h2 id="integration-into-two-pass-optimization">Integration into
+Two-Pass Optimization</h2>
+<p>VP9 calculates SSIM differently across its multi-pass encoding
+pipeline to optimize bitrate and visual quality.</p>
+<h3 id="pass-1-structural-complexity-profiling">Pass 1: Structural
+Complexity Profiling</h3>
+<p>During the first pass, VP9 analyzes frame sequences with a
+low-complexity pass to compute variance, motion vectors, and frame-level
+structural entropy. This generates statistical logs
+(<code>stats.log</code>) containing spatial and temporal complexity
+metrics for every frame.</p>
+<h3 id="pass-2-rate-distortion-optimization-rdo-and-tuning">Pass 2:
+Rate-Distortion Optimization (RDO) and Tuning</h3>
+<p>When configured with <code>--tune=ssim</code>, VP9 replaces standard
+Mean Squared Error with an SSIM-derived distortion metric inside its
+rate-distortion decision loops:</p>
+<ul>
+<li><strong>Lagrangian Cost Function:</strong> Mode selection, block
+partitioning (<span class="math inline">\(64 \times 64\)</span> down to
+<span class="math inline">\(4 \times 4\)</span>), and transform sizes
+are determined by minimizing: <span class="math display">\[J =
+D_{\text{SSIM}} + \lambda R\]</span> where <span
+class="math inline">\(D_{\text{SSIM}} = 1 - \text{SSIM}\)</span>, <span
+class="math inline">\(R\)</span> is the estimated bit cost, and <span
+class="math inline">\(\lambda\)</span> is the Lagrange multiplier linked
+to the frame QP.</li>
+<li><strong>Adaptive Quantization (AQ-Mode):</strong> When SSIM-guided
+adaptive quantization is active, VP9 shifts the quantization index
+(<code>delta_q</code>) per superblock:
+<ul>
+<li><strong>Flat/Smooth Regions:</strong> Human vision easily detects
+compression artifacts in uniform areas. SSIM detects lower contrast
+variance (<span class="math inline">\(\sigma_x^2\)</span>), prompting
+the encoder to lower QP and preserve gradients.</li>
+<li><strong>Textured/Complex Regions:</strong> High-variance regions
+mask distortion visually. The encoder increases QP slightly, reclaiming
+bits without significantly reducing perceptual SSIM.</li>
+</ul></li>
+</ul>
+<h2 id="speed-and-computational-optimizations">Speed and Computational
+Optimizations</h2>
+<p>To reduce the computational overhead of computing full windowed SSIM
+during exhaustive mode evaluation, VP9 employs fast approximation
+paths:</p>
+<ul>
+<li><strong>Integer Arithmetic:</strong> Real-time and fast encoding
+presets use scaled integer representations to calculate variances and
+covariance without floating-point division.</li>
+<li><strong>Downsampled Evaluation:</strong> Fast modes may subsample
+pixels or evaluate SSIM only on representative sub-blocks instead of
+continuous overlapping windows.</li>
+<li><strong>Transform-Domain Distortion:</strong> For early skip
+decisions, the encoder compares discrete cosine transform (DCT) or
+asymmetric discrete sine transform (ADST) coefficients as proxies for
+structural preservation before committing to full pixel-domain SSIM
+reconstruction.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

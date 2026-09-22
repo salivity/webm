@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM to VP9: Key Technical Milestones - webm</title>
+    <meta name="description" content="This article explores the technical evolution of Google’s open-source WebM project, tracing its path from the initial release of the VP8 video codec in 2010 to the deployment of VP9 in 2013. Faced with rising internet video traffic and the advent of 4K">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-to-vp-9-key-technical-milestones">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM to VP9: Key Technical Milestones - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-to-vp-9-key-technical-milestones" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores the technical evolution of Google’s open-source WebM project, tracing its path from the initial release of the VP8 video codec in 2010 to the deployment of VP9 in 2013. Faced with rising internet video traffic and the advent of 4K" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-to-vp9-key-technical-milestones">WebM to VP9: Key Technical
+Milestones</h1>
+<p>This article explores the technical evolution of Google’s open-source
+WebM project, tracing its path from the initial release of the VP8 video
+codec in 2010 to the deployment of VP9 in 2013. Faced with rising
+internet video traffic and the advent of 4K resolutions, developers
+overhauled VP8's architecture to achieve a 50% bitrate reduction without
+sacrificing quality. The following sections break down the core
+architectural, algorithmic, and ecosystem milestones that enabled the
+transition to VP9.</p>
+<h3 id="the-launch-of-webm-and-vp8-2010">The Launch of WebM and VP8
+(2010)</h3>
+<p>Google launched the WebM project in May 2010 following its
+acquisition of On2 Technologies. The project packaged the VP8 video
+codec and Vorbis audio inside a container based on a restricted subset
+of the Matroska (MKV) format.</p>
+<p>VP8 was designed to compete directly with H.264/AVC Baseline and Main
+profiles. Technically, VP8 relied on:</p>
+<ul>
+<li>A fixed 16x16 pixel macroblock structure for motion
+compensation.</li>
+<li><span class="math inline">\(4\times4\)</span> Discrete Cosine
+Transform (DCT) and Walsh-Hadamard transforms.</li>
+<li>Four basic intra-prediction modes for luma blocks.</li>
+<li>Sub-pixel motion estimation limited to quarter-pixel precision.</li>
+<li>An arithmetic entropy coder known as the boolean entropy
+engine.</li>
+</ul>
+<p>While VP8 established a royalty-free alternative for HTML5 video, the
+rapid emergence of high-definition streaming exposed its limitations
+compared to newer compression targets.</p>
+<h3 id="the-inception-of-the-next-gen-project-2011">The Inception of the
+Next-Gen Project (2011)</h3>
+<p>In late 2011, the WebM engineering team initiated development on
+"VP-Next," which was later formally named VP9. The explicit design
+target was to cut bandwidth requirements in half compared to VP8 while
+maintaining equivalent visual fidelity. This made VP9 a direct
+royalty-free competitor to High Efficiency Video Coding
+(HEVC/H.265).</p>
+<p>Achieving this target required discarding VP8’s rigid processing
+structures in favor of dynamic partitioning, wider transforms, and
+advanced statistical modeling.</p>
+<h3 id="superblocks-and-recursive-partitioning">Superblocks and
+Recursive Partitioning</h3>
+<p>The most significant structural shift from VP8 to VP9 was the
+departure from static 16x16 macroblocks. High-resolution video (such as
+1080p and 4K) contains broad, uniform regions where small blocks
+introduce unnecessary metadata overhead.</p>
+<p>VP9 introduced "Superblocks" up to 64x64 pixels in size:</p>
+<ul>
+<li><strong>Quad-Tree Decomposition:</strong> Superblocks can be
+recursively subdivided using a tree structure into sizes of 64x32,
+32x64, 32x32, down to 4x4 pixels.</li>
+<li><strong>Content Adaptability:</strong> Flat backgrounds are encoded
+using larger partitions to maximize data efficiency, while detailed,
+complex edges use smaller sub-blocks to retain sharpness.</li>
+</ul>
+<h3 id="advanced-transform-and-prediction-tooling">Advanced Transform
+and Prediction Tooling</h3>
+<p>To complement the larger block sizes, VP9 integrated more flexible
+mathematical transform and prediction algorithms:</p>
+<ul>
+<li><strong>Larger and Hybrid Transforms:</strong> While VP8 was limited
+to 4x4 transforms, VP9 added 8x8, 16x16, and 32x32 DCT sizes.
+Furthermore, VP9 introduced the Asymmetric Discrete Sine Transform
+(ADST), which better models boundary conditions where pixel values
+typically increase away from block edges.</li>
+<li><strong>Expanded Intra-Prediction:</strong> VP9 increased the number
+of directional intra-prediction modes from four to ten, allowing the
+encoder to predict gradients and textures at finer geometric
+angles.</li>
+<li><strong>Enhanced Inter-Prediction:</strong> VP9 expanded reference
+frames to include compound predictions, allowing a block to be predicted
+from two distinct frames simultaneously (e.g., one past frame and one
+future frame) to handle lighting changes and occlusions. Motion vectors
+were also updated to support eighth-pixel precision.</li>
+</ul>
+<h3 id="loop-filtering-and-parallel-processing">Loop Filtering and
+Parallel Processing</h3>
+<p>Compressing video at lower bitrates frequently introduces blocking
+artifacts along partition boundaries. VP9 revised the loop filter into
+an adaptive, in-loop component that evaluates edge strength based on
+transform size, quantization parameters, and motion vector
+differences.</p>
+<p>To handle the heavy computational load of these new tools, VP9 added
+native multithreading support through <strong>Tile-Based
+Parallelism</strong>. Frames can be split into vertical columns (tiles)
+that are encoded and decoded independently, allowing decoders to fully
+utilize multi-core modern CPUs and GPUs.</p>
+<h3 id="finalization-chrome-integration-and-scale-2013">Finalization,
+Chrome Integration, and Scale (2013)</h3>
+<p>Google finalized the VP9 bitstream specification in June 2013. Key
+enablement milestones followed quickly:</p>
+<ul>
+<li><strong>Native Browser Support:</strong> VP9 was enabled by default
+in Chromium and Google Chrome version 29 later that year.</li>
+<li><strong>Streaming Deployment:</strong> YouTube initiated broad VP9
+encoding, significantly lowering buffering rates for users on
+constrained connections and enabling default 4K streaming at 60 frames
+per second.</li>
+<li><strong>VP9 Profiles:</strong> The bitstream was organized into
+Profiles: Profile 0 (standard 8-bit color, 4:2:0 sampling), Profile 1
+(8-bit with 4:2:2 and 4:4:4 chroma), Profile 2 (10-bit and 12-bit for
+High Dynamic Range / HDR support), and Profile 3 (10/12-bit with
+advanced chroma formats).</li>
+</ul>
+<p>By resolving the architectural constraints of VP8, the VP9 milestone
+cemented open-source video codecs as viable infrastructure for global,
+large-scale media delivery, ultimately laying the technical foundation
+for the AV1 codec.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

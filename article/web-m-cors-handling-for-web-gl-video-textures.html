@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM CORS Handling for WebGL Video Textures - webm</title>
+    <meta name="description" content="Loading WebM videos as textures in WebGL requires compliance with the browser's Cross-Origin Resource Sharing (CORS) security model. Because WebGL can extract raw pixel data from video frames, browsers enforce strict origin checks to prevent unauthorized">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-cors-handling-for-web-gl-video-textures">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM CORS Handling for WebGL Video Textures - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-cors-handling-for-web-gl-video-textures" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Loading WebM videos as textures in WebGL requires compliance with the browser's Cross-Origin Resource Sharing (CORS) security model. Because WebGL can extract raw pixel data from video frames, browsers enforce strict origin checks to prevent unauthorized" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-cors-handling-for-webgl-video-textures">WebM CORS Handling
+for WebGL Video Textures</h1>
+<p>Loading WebM videos as textures in WebGL requires compliance with the
+browser's Cross-Origin Resource Sharing (CORS) security model. Because
+WebGL can extract raw pixel data from video frames, browsers enforce
+strict origin checks to prevent unauthorized cross-domain data access.
+This article explains how WebM CORS policies operate in WebGL
+environments, the required client-side configurations, server-side
+headers, and the security errors that occur if these standards are not
+met.</p>
+<h2 id="the-cors-mechanism-for-video-elements">The CORS Mechanism for
+Video Elements</h2>
+<p>The WebM container format itself does not manage CORS logic. Instead,
+the browser's standard media pipeline controls CORS handling via the
+HTML5 <code>&lt;video&gt;</code> element. When a WebM video is rendered
+onto a WebGL texture using <code>gl.texImage2D()</code> or
+<code>gl.texSubImage2D()</code>, the WebGL context requires direct
+access to the decoded pixel buffer.</p>
+<p>If the WebM file is hosted on a different domain, protocol, or port
+than the web application, the browser treats it as a cross-origin
+resource. Without explicit CORS authorization, the browser will block
+WebGL from reading the pixel data, even if the video element can play
+normally in the DOM.</p>
+<h2 id="client-side-implementation">Client-Side Implementation</h2>
+<p>To request cross-origin permissions for a WebM video texture, you
+must set the <code>crossOrigin</code> attribute on the video element
+before defining its source.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> video <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">&#39;video&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="at">crossOrigin</span> <span class="op">=</span> <span class="st">&#39;anonymous&#39;</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="at">src</span> <span class="op">=</span> <span class="st">&#39;https://media.example.com/textures/animation.webm&#39;</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="at">loop</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="at">muted</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="fu">play</span>()<span class="op">;</span></span></code></pre></div>
+<ul>
+<li><strong><code>anonymous</code></strong>: Sends standard HTTP
+requests without user credentials (cookies or HTTP basic
+authentication). This is the standard setting for public assets.</li>
+<li><strong><code>use-credentials</code></strong>: Sends cookies and
+authentication headers alongside the request when loading protected WebM
+assets.</li>
+</ul>
+<p>The <code>crossOrigin</code> attribute must be set prior to setting
+the <code>src</code> attribute or calling <code>load()</code>.
+Otherwise, the browser initiates the fetch under standard media loading
+rules instead of CORS-enabled mode.</p>
+<h2 id="server-side-requirements">Server-Side Requirements</h2>
+<p>When the browser requests the WebM file with CORS enabled, the
+hosting server must respond with the appropriate HTTP access control
+headers:</p>
+<ul>
+<li><strong><code>Access-Control-Allow-Origin: *</code></strong> or
+<strong><code>Access-Control-Allow-Origin: https://yourdomain.com</code></strong>:
+Authorizes the requesting domain to read the content.</li>
+<li><strong><code>Access-Control-Allow-Credentials: true</code></strong>:
+Required only if the client sets
+<code>crossOrigin = "use-credentials"</code>.</li>
+</ul>
+<p>Additionally, the server must properly support HTTP Range requests
+(<code>Accept-Ranges: bytes</code>) and return
+<code>206 Partial Content</code> status codes to allow smooth video
+seeking and frame buffering during WebGL rendering loops.</p>
+<h2 id="consequences-of-cors-failure">Consequences of CORS Failure</h2>
+<p>If a cross-origin WebM asset lacks proper authorization headers or
+client-side attributes:</p>
+<ol type="1">
+<li><strong>Context Tainting:</strong> The canvas context becomes
+tainted by cross-origin data.</li>
+<li><strong>Security Exceptions:</strong> Calling
+<code>gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video)</code>
+throws a <code>SecurityError: The operation is insecure</code> or fails
+silently, rendering a black or transparent texture depending on the
+browser engine.</li>
+<li><strong>Data Lockout:</strong> Functions such as
+<code>gl.readPixels()</code> or <code>canvas.toDataURL()</code> are
+permanently disabled for that rendering context.</li>
+</ol>
+<p>Properly pairing the <code>crossOrigin</code> property with valid
+server-side <code>Access-Control-Allow-Origin</code> headers ensures
+reliable decoding and streaming of WebM frames directly into the WebGL
+texture pipeline.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

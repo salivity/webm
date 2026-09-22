@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSE Timestamp Sync Across Split WebM Tracks - webm</title>
+    <meta name="description" content="The Media Source Extensions (MSE) API manages timestamp synchronization across split WebM tracks by decoding embedded container timecodes and mapping them onto a unified presentation timeline. When audio and video are delivered in separate WebM streams,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/mse-timestamp-sync-across-split-web-m-tracks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MSE Timestamp Sync Across Split WebM Tracks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/mse-timestamp-sync-across-split-web-m-tracks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The Media Source Extensions (MSE) API manages timestamp synchronization across split WebM tracks by decoding embedded container timecodes and mapping them onto a unified presentation timeline. When audio and video are delivered in separate WebM streams," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="mse-timestamp-sync-across-split-webm-tracks">MSE Timestamp Sync
+Across Split WebM Tracks</h1>
+<p>The Media Source Extensions (MSE) API manages timestamp
+synchronization across split WebM tracks by decoding embedded container
+timecodes and mapping them onto a unified presentation timeline. When
+audio and video are delivered in separate WebM streams, the browser
+assigns each track to its own <code>SourceBuffer</code> instance under a
+parent <code>MediaSource</code> object. Synchronization relies on the
+WebM container’s internal timecode structure, the active
+<code>SourceBuffer</code> append mode, and explicit timestamp
+adjustments applied via the MSE execution pipeline.</p>
+<h3 id="webm-timecode-extraction-and-absolute-timestamps">WebM Timecode
+Extraction and Absolute Timestamps</h3>
+<p>In a split-track configuration, the audio and video streams reside in
+independent WebM containers (often using VP9/AV1 for video and Opus for
+audio). Each WebM file defines a <code>TimecodeScale</code> in its
+Segment Info element and <code>Timecode</code> headers within each
+Cluster element. Individual media frames (<code>SimpleBlock</code> or
+<code>BlockGroup</code>) define relative offsets from their Cluster
+timecode.</p>
+<p>When data is appended to a <code>SourceBuffer</code> via
+<code>appendBuffer()</code>, the browser’s demuxer calculates the
+absolute Presentation Timestamp (PTS) for each frame:</p>
+<p><span class="math display">\[\text{PTS} = (\text{Cluster Timecode} +
+\text{Block Timecode}) \times \text{TimecodeScale}\]</span></p>
+<p>Because both tracks are processed through separate demuxers, the
+integrity of these embedded timestamps serves as the primary baseline
+for track alignment.</p>
+<h3 id="unified-presentation-timeline-via-segments-mode">Unified
+Presentation Timeline via <code>segments</code> Mode</h3>
+<p>By default, a <code>SourceBuffer</code> operates in
+<code>segments</code> mode
+(<code>SourceBuffer.mode = 'segments'</code>). In this mode, MSE places
+decoded frames directly onto the presentation timeline at the position
+dictated by their extracted PTS.</p>
+<p>As long as the muxing process encoded both the audio and video tracks
+with synchronized timecode origins (where zero or a specific base time
+corresponds to the identical real-time event), MSE aligns the tracks
+naturally. The underlying media engine matches the audio and video
+presentation timestamps to the current playback time
+(<code>currentTime</code>) of the parent
+<code>HTMLMediaElement</code>.</p>
+<h3 id="manual-alignment-with-timestampoffset">Manual Alignment with
+<code>timestampOffset</code></h3>
+<p>If split WebM tracks have mismatched base timecodes, or if media
+segments arrive out of sequence (such as in live streaming), MSE relies
+on the <code>SourceBuffer.timestampOffset</code> attribute.</p>
+<p>Applying an offset shifts the presentation timeline for that specific
+buffer:</p>
+<p><span class="math display">\[\text{Effective PTS} = \text{PTS} +
+\text{timestampOffset}\]</span></p>
+<p>To synchronize mismatched streams:</p>
+<ol type="1">
+<li>The demuxer reads the initial timestamp of the audio track and video
+track.</li>
+<li>If the audio stream starts at <code>0.00s</code> but the video
+cluster starts at <code>0.08s</code>, the application can adjust
+<code>SourceBuffer.timestampOffset</code> on the lagging buffer to
+normalize them to an identical start time.</li>
+<li>Once set, all subsequent appended clusters in that buffer adopt the
+new offset, bringing both tracks into continuous synchronization.</li>
+</ol>
+<h3 id="audio-as-the-master-clock-and-drift-management">Audio as the
+Master Clock and Drift Management</h3>
+<p>During playback, the browser’s media rendering pipeline coordinates
+decoding and display across both <code>SourceBuffer</code> elements
+using the hardware audio clock as the master reference.</p>
+<p>Because audio playback is sensitive to buffer underruns, the browser
+adjusts the video frame rendering rate to match the audio clock. If
+network latency or decoding complexity causes video to lag behind audio,
+the MSE implementation will drop video frames to catch up to the
+corresponding audio timestamp. If an audio gap occurs, MSE holds the
+current video frame until the next synchronized audio/video pair becomes
+available.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

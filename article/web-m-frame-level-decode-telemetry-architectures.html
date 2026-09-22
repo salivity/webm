@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Frame-Level Decode Telemetry Architectures - webm</title>
+    <meta name="description" content="This article examines the telemetry architectures used to extract, process, and analyze frame-level decode performance data from WebM video players. Capturing granular metrics such as per-frame decode latency, dropped frames, and hardware acceleration st">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-frame-level-decode-telemetry-architectures">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Frame-Level Decode Telemetry Architectures - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-frame-level-decode-telemetry-architectures" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article examines the telemetry architectures used to extract, process, and analyze frame-level decode performance data from WebM video players. Capturing granular metrics such as per-frame decode latency, dropped frames, and hardware acceleration st" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-frame-level-decode-telemetry-architectures">WebM
+Frame-Level Decode Telemetry Architectures</h1>
+<p>This article examines the telemetry architectures used to extract,
+process, and analyze frame-level decode performance data from WebM video
+players. Capturing granular metrics such as per-frame decode latency,
+dropped frames, and hardware acceleration states is critical for
+optimizing VP8, VP9, and AV1 playback. Below is an architectural
+breakdown of how client-side instrumentation interfaces with real-time
+data pipelines to monitor playback quality at scale.</p>
+<h3 id="1-client-side-extraction-layer">1. Client-Side Extraction
+Layer</h3>
+<p>Capturing frame-level metrics requires direct observation of the
+rendering and decoding lifecycle within the client environment
+(browsers, embedded webviews, or native wrapper apps).</p>
+<ul>
+<li><strong>WebCodecs API:</strong> When players implement custom WebM
+demuxing (via WebAssembly) and decoding, the WebCodecs
+<code>VideoDecoder</code> interface provides direct timestamps for every
+output frame. Telemetry hooks measure the delta between when an encoded
+chunk (<code>EncodedVideoChunk</code>) is passed to
+<code>decode()</code> and when the resulting <code>VideoFrame</code> is
+emitted.</li>
+<li><strong>HTML5 Media Element APIs:</strong> Standard
+<code>&lt;video&gt;</code> implementations expose decoding statistics
+via <code>HTMLVideoElement.getVideoPlaybackQuality()</code>. This
+provides cumulative counters for <code>totalVideoFrames</code>,
+<code>droppedVideoFrames</code>, and
+<code>corruptedVideoFrames</code>.</li>
+<li><strong>Media Capabilities and Performance APIs:</strong> The
+<code>MediaCapabilities</code> API tracks decoding smoothness and power
+efficiency configurations, while <code>PerformanceObserver</code>
+captures long tasks on the main thread that correlate with frame drops
+caused by CPU starvation.</li>
+<li><strong>RequestVideoFrameCallback (<code>rVFC</code>):</strong> The
+<code>HTMLVideoElement.requestVideoFrameCallback()</code> method allows
+telemetry agents to execute logic precisely when a new frame is
+presented to the compositor. The callback exposes metadata including
+<code>presentationTime</code>, <code>expectedDisplayTime</code>,
+<code>presentedFrames</code>, and processing duration, enabling precise
+detection of frame drops and presentation jitter.</li>
+</ul>
+<h3 id="2-local-aggregation-and-pre-processing">2. Local Aggregation and
+Pre-Processing</h3>
+<p>Emitting an event for every frame at 30, 60, or 120 fps generates
+prohibitive bandwidth and processing overhead. Client-side architectures
+mitigate this using local aggregation:</p>
+<ul>
+<li><strong>Circular Ring Buffers:</strong> Frame intervals and decode
+durations are written to a fixed-size ring buffer off the main thread
+(typically in a Web Worker).</li>
+<li><strong>Statistical Bucketing:</strong> Rather than transmitting raw
+timestamps, the client aggregates performance into discrete intervals
+(e.g., 5-to-10-second windows). It calculates metrics such as P95/P99
+decode time, standard deviation of presentation intervals (jitter), and
+total dropped frame ratios.</li>
+<li><strong>Anomaly-Triggered Tracing:</strong> Full frame-by-frame
+diagnostic traces are captured continuously in memory but only bundled
+and transmitted if a severe anomaly occurs, such as consecutive dropped
+frames or a sudden switch from hardware to software decoding.</li>
+</ul>
+<h3 id="3-ingestion-and-transport-layer">3. Ingestion and Transport
+Layer</h3>
+<p>Telemetry data must be offloaded from the client without competing
+for network bandwidth required by media segment fetching.</p>
+<ul>
+<li><strong>Transport Protocols:</strong> Aggregated payloads are
+dispatched using <code>navigator.sendBeacon</code> to ensure delivery
+during page unload, or over persistent <code>WebTransport</code> or
+<code>WebSocket</code> connections when real-time adaptive bitrate (ABR)
+feedback is required.</li>
+<li><strong>Ingestion Gateways:</strong> Load-balanced reverse proxies
+(such as NGINX, Envoy, or cloud API gateways) terminate incoming
+telemetry streams and authenticate client sessions before passing
+records to message queues.</li>
+</ul>
+<h3 id="4-stream-processing-and-storage-architecture">4. Stream
+Processing and Storage Architecture</h3>
+<p>Once ingested, the high-throughput telemetry stream is routed to
+real-time processors and analytical storage engines.</p>
+<ul>
+<li><strong>Message Buffering:</strong> High-throughput distributed logs
+(such as Apache Kafka or AWS Kinesis) decouple the ingestion gateway
+from downstream analytics, buffering high volumes during traffic
+spikes.</li>
+<li><strong>Stream Processing:</strong> Engines like Apache Flink or
+Apache Spark Streaming consume the raw telemetry to compute fleet-wide
+health indicators. They identify systemic decoding regressions tied to
+specific browser versions, GPU chipsets, or WebM encoding parameters
+(e.g., complex VP9 profiles or high-bitrate AV1 streams).</li>
+<li><strong>Analytical Storage:</strong> Pre-processed metrics are
+stored in columnar, time-series-optimized databases such as ClickHouse,
+TimescaleDB, or Apache Pinot. These engines allow engineers to run
+low-latency queries across dimensions such as codec profile, resolution,
+operating system, and hardware acceleration status.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

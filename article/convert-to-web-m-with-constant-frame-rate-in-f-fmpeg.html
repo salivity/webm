@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert to WebM with Constant Frame Rate in FFmpeg - webm</title>
+    <meta name="description" content="Converting video to the WebM format often results in a variable frame rate (VFR) by default, which can introduce audio-video desynchronization and compatibility issues with video editors or streaming pipelines. Enforcing a strict constant frame rate (CFR">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/convert-to-web-m-with-constant-frame-rate-in-f-fmpeg">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Convert to WebM with Constant Frame Rate in FFmpeg - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/convert-to-web-m-with-constant-frame-rate-in-f-fmpeg" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Converting video to the WebM format often results in a variable frame rate (VFR) by default, which can introduce audio-video desynchronization and compatibility issues with video editors or streaming pipelines. Enforcing a strict constant frame rate (CFR" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="convert-to-webm-with-constant-frame-rate-in-ffmpeg">Convert to
+WebM with Constant Frame Rate in FFmpeg</h1>
+<p>Converting video to the WebM format often results in a variable frame
+rate (VFR) by default, which can introduce audio-video desynchronization
+and compatibility issues with video editors or streaming pipelines.
+Enforcing a strict constant frame rate (CFR) requires configuring FFmpeg
+to normalize input timestamps and fix output pacing. This guide details
+the essential FFmpeg flags and filter parameters needed to guarantee a
+reliable CFR output when encoding to WebM.</p>
+<h3 id="essential-ffmpeg-parameters-for-cfr">Essential FFmpeg Parameters
+for CFR</h3>
+<p>To force a constant frame rate in WebM (using VP8 or VP9 codecs),
+combine frame rate definition, video filtering, and synchronization
+flags.</p>
+<h4 id="1--fps_mode-cfr-or--vsync-cfr">1. <code>-fps_mode cfr</code> (or
+<code>-vsync cfr</code>)</h4>
+<p>This parameter controls how FFmpeg handles video synchronization.
+Setting it to <code>cfr</code> instructs the encoder to duplicate frames
+if the source drops below the target frame rate or drop frames if the
+source exceeds it.</p>
+<p><em>Note: In FFmpeg 5.1 and newer, <code>-fps_mode cfr</code>
+replaces the legacy <code>-vsync cfr</code> (or <code>-vsync 1</code>)
+syntax.</em></p>
+<h4 id="2--vf-fpsvalue">2. <code>-vf "fps=VALUE"</code></h4>
+<p>Applying the <code>fps</code> video filter is the most robust method
+for generating CFR content. Unlike simple container-level flags, this
+filter resamples timestamps at the decoding stage, ensuring frames
+arrive at precise, uniform intervals before reaching the encoder.</p>
+<h4 id="3--r-value">3. <code>-r VALUE</code></h4>
+<p>Setting <code>-r</code> defines the output container's nominal frame
+rate. When used alongside <code>-vf fps=VALUE</code>, it guarantees that
+both the stream timestamps and the container headers match the desired
+rate.</p>
+<hr />
+<h3 id="complete-command-examples">Complete Command Examples</h3>
+<h4 id="using-vp9-and-opus-recommended">Using VP9 and Opus
+(Recommended)</h4>
+<p>This command converts an input video to a CFR WebM file at 30 frames
+per second using the VP9 video codec and Opus audio codec:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 2M <span class="at">-vf</span> <span class="st">&quot;fps=30&quot;</span> <span class="at">-r</span> 30 <span class="at">-fps_mode</span> cfr <span class="at">-c:a</span> libopus output.webm</span></code></pre></div>
+<h4 id="legacy-ffmpeg-syntax-versions-prior-to-51">Legacy FFmpeg Syntax
+(Versions prior to 5.1)</h4>
+<p>If using an older version of FFmpeg, use <code>-vsync 1</code> or
+<code>-vsync cfr</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mp4 <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 2M <span class="at">-vf</span> <span class="st">&quot;fps=30&quot;</span> <span class="at">-r</span> 30 <span class="at">-vsync</span> cfr <span class="at">-c:a</span> libopus output.webm</span></code></pre></div>
+<hr />
+<h3 id="verification">Verification</h3>
+<p>To verify that the resulting WebM file has a constant frame rate,
+inspect the packet presentation timestamps (PTS) using
+<code>ffprobe</code>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> v:0 <span class="at">-show_entries</span> frame=pkt_pts_time,pkt_duration_time <span class="at">-of</span> csv=p=0 output.webm</span></code></pre></div>
+<p>A consistent duration value across all frames confirms that the
+output adheres strictly to CFR.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

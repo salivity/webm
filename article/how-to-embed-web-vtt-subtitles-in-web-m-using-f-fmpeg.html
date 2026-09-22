@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Embed WebVTT Subtitles in WebM Using FFmpeg - webm</title>
+    <meta name="description" content="This guide explains how to mux external WebVTT (.vtt) subtitle tracks directly into a WebM (.webm) container using FFmpeg. By following the instructions below, you will combine video, audio, and subtitle streams into a single, web-compatible file without">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-embed-web-vtt-subtitles-in-web-m-using-f-fmpeg">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Embed WebVTT Subtitles in WebM Using FFmpeg - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-embed-web-vtt-subtitles-in-web-m-using-f-fmpeg" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide explains how to mux external WebVTT (.vtt) subtitle tracks directly into a WebM (.webm) container using FFmpeg. By following the instructions below, you will combine video, audio, and subtitle streams into a single, web-compatible file without" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-to-embed-webvtt-subtitles-in-webm-using-ffmpeg">How to Embed
+WebVTT Subtitles in WebM Using FFmpeg</h1>
+<p>This guide explains how to mux external WebVTT (<code>.vtt</code>)
+subtitle tracks directly into a WebM (<code>.webm</code>) container
+using FFmpeg. By following the instructions below, you will combine
+video, audio, and subtitle streams into a single, web-compatible file
+without re-encoding the underlying video and audio, preserving the
+original quality and completing the process almost instantly.</p>
+<h2 id="the-basic-command">The Basic Command</h2>
+<p>To embed a WebVTT subtitle file into a WebM video, run the following
+command:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-i</span> subtitles.vtt <span class="at">-c:v</span> copy <span class="at">-c:a</span> copy <span class="at">-c:s</span> webvtt output.webm</span></code></pre></div>
+<h3 id="command-breakdown">Command Breakdown:</h3>
+<ul>
+<li><strong><code>-i input.webm</code></strong>: Specifies the primary
+input video file.</li>
+<li><strong><code>-i subtitles.vtt</code></strong>: Specifies the
+external WebVTT subtitle file.</li>
+<li><strong><code>-c:v copy</code></strong>: Stream-copies the video
+track to prevent re-encoding.</li>
+<li><strong><code>-c:a copy</code></strong>: Stream-copies the audio
+track to prevent re-encoding.</li>
+<li><strong><code>-c:s webvtt</code></strong>: Encodes the subtitle
+stream as WebVTT, which is the standard subtitle format supported by the
+WebM container.</li>
+<li><strong><code>output.webm</code></strong>: The output file
+containing the embedded subtitles.</li>
+</ul>
+<h2 id="adding-language-and-track-metadata">Adding Language and Track
+Metadata</h2>
+<p>HTML5 players and desktop media players use metadata tags to identify
+subtitle tracks. You can define the language code (ISO 639-2) and a
+descriptive title using metadata flags:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-i</span> subtitles.vtt <span class="at">-map</span> 0:v <span class="at">-map</span> 0:a <span class="at">-map</span> 1:s <span class="at">-c:v</span> copy <span class="at">-c:a</span> copy <span class="at">-c:s</span> webvtt <span class="at">-metadata:s:s:0</span> language=eng <span class="at">-metadata:s:s:0</span> title=<span class="st">&quot;English&quot;</span> output.webm</span></code></pre></div>
+<ul>
+<li><strong><code>-map 0:v</code> and <code>-map 0:a</code></strong>:
+Explicitly includes the video and audio streams from the first input
+file (<code>input.webm</code>).</li>
+<li><strong><code>-map 1:s</code></strong>: Selects the subtitle stream
+from the second input file (<code>subtitles.vtt</code>).</li>
+<li><strong><code>-metadata:s:s:0 language=eng</code></strong>: Sets the
+language code for the first subtitle stream (<code>s:s:0</code>) to
+English (<code>eng</code>).</li>
+<li><strong><code>-metadata:s:s:0 title="English"</code></strong>: Sets
+the human-readable display label for the subtitle track.</li>
+</ul>
+<h2 id="embedding-multiple-subtitle-tracks">Embedding Multiple Subtitle
+Tracks</h2>
+<p>To include multiple language tracks in a single WebM file, add each
+VTT file as a separate input and map them individually:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-i</span> english.vtt <span class="at">-i</span> spanish.vtt <span class="dt">\</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>-map 0:v <span class="at">-map</span> 0:a <span class="at">-map</span> 1:s <span class="at">-map</span> 2:s <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>-c:v copy <span class="at">-c:a</span> copy <span class="at">-c:s</span> webvtt <span class="dt">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>-metadata:s:s:0 language=eng <span class="at">-metadata:s:s:0</span> title=<span class="st">&quot;English&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>-metadata:s:s:1 language=spa <span class="at">-metadata:s:s:1</span> title=<span class="st">&quot;Spanish&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>output.webm</span></code></pre></div>
+<h2 id="verifying-the-output-file">Verifying the Output File</h2>
+<p>To verify that the subtitles are correctly integrated into the
+container, inspect the output file with FFmpeg:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> output.webm</span></code></pre></div>
+<p>Check the output stream list. You should see an entry similar to:</p>
+<pre class="text"><code>Stream #0:2(eng): Subtitle: webvtt (default)
+    Metadata:
+      title           : English
+      language        : eng</code></pre></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

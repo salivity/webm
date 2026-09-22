@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix WebM Playback Main-Thread Freezing in JavaScript - webm</title>
+    <meta name="description" content="High-bitrate WebM playback often overwhelms the browser's main execution thread due to the intensive CPU demands of demuxing, decoding, and rendering high-resolution frames alongside standard DOM updates. When these tasks compete with the browser's event">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/fix-web-m-playback-main-thread-freezing-in-java-script">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Fix WebM Playback Main-Thread Freezing in JavaScript - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/fix-web-m-playback-main-thread-freezing-in-java-script" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="High-bitrate WebM playback often overwhelms the browser's main execution thread due to the intensive CPU demands of demuxing, decoding, and rendering high-resolution frames alongside standard DOM updates. When these tasks compete with the browser's event" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="fix-webm-playback-main-thread-freezing-in-javascript">Fix WebM
+Playback Main-Thread Freezing in JavaScript</h1>
+<p>High-bitrate WebM playback often overwhelms the browser's main
+execution thread due to the intensive CPU demands of demuxing, decoding,
+and rendering high-resolution frames alongside standard DOM updates.
+When these tasks compete with the browser's event loop, the interface
+stutters, drops frames, and becomes unresponsive. This guide outlines
+the key architectural patterns—including WebCodecs in dedicated workers,
+hardware-accelerated OffscreenCanvas rendering, zero-copy buffer
+transfers, and stream-based backpressure—that offload video processing
+entirely to background threads to ensure seamless, stutter-free
+playback.</p>
+<h2 id="offload-demuxing-and-parsing-to-web-workers">Offload Demuxing
+and Parsing to Web Workers</h2>
+<p>Parsing the Extensible Binary Meta Language (EBML) structure of a
+high-bitrate WebM container requires sequential binary analysis that can
+block the main thread for tens of milliseconds per chunk.</p>
+<p>Move the demuxing engine (whether written in pure JavaScript or
+compiled to WebAssembly) entirely into a Dedicated Web Worker. The main
+thread should only initialize the worker and receive high-level state
+updates.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// main.js</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> demuxWorker <span class="op">=</span> <span class="kw">new</span> <span class="bu">Worker</span>(<span class="st">&#39;demuxer-worker.js&#39;</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>demuxWorker<span class="op">.</span><span class="fu">postMessage</span>({ <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;init&#39;</span><span class="op">,</span> <span class="dt">url</span><span class="op">:</span> <span class="st">&#39;video-high-bitrate.webm&#39;</span> })<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>demuxWorker<span class="op">.</span><span class="at">onmessage</span> <span class="op">=</span> (e) <span class="kw">=&gt;</span> {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (e<span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">type</span> <span class="op">===</span> <span class="st">&#39;error&#39;</span>) {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;Playback pipeline failed:&#39;</span><span class="op">,</span> e<span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">message</span>)<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<h2 id="utilize-the-webcodecs-api-in-dedicated-workers">Utilize the
+WebCodecs API in Dedicated Workers</h2>
+<p>Traditional <code>&lt;video&gt;</code> tags and Media Source
+Extensions (MSE) still execute significant synchronization and telemetry
+tasks on the main thread. The WebCodecs API solves this by exposing
+low-level primitives like <code>VideoDecoder</code> directly inside
+worker contexts.</p>
+<p>By instantiating <code>VideoDecoder</code> inside a Web Worker, VP8,
+VP9, or AV1 compressed chunks are handed directly to underlying hardware
+decoders without involving the browser UI thread.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// worker.js</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> decoder <span class="op">=</span> <span class="kw">new</span> <span class="fu">VideoDecoder</span>({</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">output</span><span class="op">:</span> (frame) <span class="kw">=&gt;</span> {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Process or render the decoded VideoFrame directly in the worker</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">renderFrame</span>(frame)<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  }<span class="op">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">error</span><span class="op">:</span> (err) <span class="kw">=&gt;</span> <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;Decoding error:&#39;</span><span class="op">,</span> err)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>decoder<span class="op">.</span><span class="fu">configure</span>({</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">codec</span><span class="op">:</span> <span class="st">&#39;vp09.00.10.08&#39;</span><span class="op">,</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">codedWidth</span><span class="op">:</span> <span class="dv">3840</span><span class="op">,</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">codedHeight</span><span class="op">:</span> <span class="dv">2160</span><span class="op">,</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">optimizeForLatency</span><span class="op">:</span> <span class="kw">true</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h2 id="render-frames-directly-with-offscreencanvas">Render Frames
+Directly with OffscreenCanvas</h2>
+<p>Transferring raw decoded image data from a worker back to the main
+thread for rendering over canvas elements reintroduces main-thread
+overhead. Instead, transfer canvas control to the worker using
+<code>transferControlToOffscreen</code>.</p>
+<ol type="1">
+<li>The main thread grabs a canvas handle and calls
+<code>canvas.transferControlToOffscreen()</code>.</li>
+<li>The resulting <code>OffscreenCanvas</code> is transferred to the
+worker via <code>postMessage</code>.</li>
+<li>The worker draws decoded <code>VideoFrame</code> instances directly
+to the <code>OffscreenCanvas</code> via a 2D or WebGL context.</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// main.js</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> canvas <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">getElementById</span>(<span class="st">&#39;player&#39;</span>)<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> offscreen <span class="op">=</span> canvas<span class="op">.</span><span class="fu">transferControlToOffscreen</span>()<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>worker<span class="op">.</span><span class="fu">postMessage</span>({ <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;initCanvas&#39;</span><span class="op">,</span> <span class="dt">canvas</span><span class="op">:</span> offscreen }<span class="op">,</span> [offscreen])<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">// worker.js</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> ctx<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>self<span class="op">.</span><span class="at">onmessage</span> <span class="op">=</span> (e) <span class="kw">=&gt;</span> {</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (e<span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">type</span> <span class="op">===</span> <span class="st">&#39;initCanvas&#39;</span>) {</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    ctx <span class="op">=</span> e<span class="op">.</span><span class="at">data</span><span class="op">.</span><span class="at">canvas</span><span class="op">.</span><span class="fu">getContext</span>(<span class="st">&#39;2d&#39;</span>)<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">renderFrame</span>(frame) {</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  ctx<span class="op">.</span><span class="fu">drawImage</span>(frame<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  frame<span class="op">.</span><span class="fu">close</span>()<span class="op">;</span> <span class="co">// Immediate resource cleanup prevents memory bloat</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h2 id="apply-zero-copy-transfers-via-transferable-objects">Apply
+Zero-Copy Transfers via Transferable Objects</h2>
+<p>Passing binary segments between the network fetch handler, worker
+threads, and parser stages using structured cloning triggers expensive
+memory copy operations and triggers garbage collection (GC) pauses.</p>
+<p>Always use transferable objects by specifying the underlying
+<code>ArrayBuffer</code> in the transfer list array of
+<code>postMessage</code>.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Transfer ownership of network chunk without copying memory</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> chunkBuffer <span class="op">=</span> <span class="cf">await</span> response<span class="op">.</span><span class="fu">arrayBuffer</span>()<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>worker<span class="op">.</span><span class="fu">postMessage</span>({ <span class="dt">type</span><span class="op">:</span> <span class="st">&#39;chunk&#39;</span><span class="op">,</span> <span class="dt">buffer</span><span class="op">:</span> chunkBuffer }<span class="op">,</span> [chunkBuffer])<span class="op">;</span></span></code></pre></div>
+<p>After transfer, the byte length of the buffer on the sending context
+becomes zero, eliminating memory duplication and GC overhead.</p>
+<h2 id="implement-streaming-backpressure">Implement Streaming
+Backpressure</h2>
+<p>High-bitrate video streams can deliver data faster than hardware
+decoders can consume it, leading to queue buildup, out-of-memory
+crashes, and thread starvation. Implement backpressure using the WHATWG
+Streams API combined with <code>VideoDecoder.decodeQueueSize</code>.</p>
+<p>Monitor <code>decoder.decodeQueueSize</code> before feeding
+subsequent chunks:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">feedDecoder</span>(streamReader<span class="op">,</span> decoder) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> (<span class="kw">true</span>) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> { done<span class="op">,</span> value } <span class="op">=</span> <span class="cf">await</span> streamReader<span class="op">.</span><span class="fu">read</span>()<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (done) <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Throttle decoding if the hardware queue has backed up</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> (decoder<span class="op">.</span><span class="at">decodeQueueSize</span> <span class="op">&gt;</span> <span class="dv">5</span>) {</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">await</span> <span class="kw">new</span> <span class="bu">Promise</span>((resolve) <span class="kw">=&gt;</span> <span class="pp">setTimeout</span>(resolve<span class="op">,</span> <span class="dv">4</span>))<span class="op">;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    decoder<span class="op">.</span><span class="fu">decode</span>(<span class="kw">new</span> <span class="fu">EncodedVideoChunk</span>({</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">type</span><span class="op">:</span> value<span class="op">.</span><span class="at">isKey</span> <span class="op">?</span> <span class="st">&#39;key&#39;</span> <span class="op">:</span> <span class="st">&#39;delta&#39;</span><span class="op">,</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">timestamp</span><span class="op">:</span> value<span class="op">.</span><span class="at">timestamp</span><span class="op">,</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">data</span><span class="op">:</span> value<span class="op">.</span><span class="at">data</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    }))<span class="op">;</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>This pattern ensures that the network ingestion, demuxing, and
+hardware decoding stages remain in equilibrium without requiring
+intervention from the main thread.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timestamp Monotonicity in WebM Video Clusters - webm</title>
+    <meta name="description" content="This article provides an overview of how the WebM container format guarantees timestamp monotonicity across sequential video clusters. WebM, derived from the Matroska (EBML) specification, relies on a two-tier timing architecture consisting of cluster-le">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/timestamp-monotonicity-in-web-m-video-clusters">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Timestamp Monotonicity in WebM Video Clusters - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/timestamp-monotonicity-in-web-m-video-clusters" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of how the WebM container format guarantees timestamp monotonicity across sequential video clusters. WebM, derived from the Matroska (EBML) specification, relies on a two-tier timing architecture consisting of cluster-le" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="timestamp-monotonicity-in-webm-video-clusters">Timestamp
+Monotonicity in WebM Video Clusters</h1>
+<p>This article provides an overview of how the WebM container format
+guarantees timestamp monotonicity across sequential video clusters.
+WebM, derived from the Matroska (EBML) specification, relies on a
+two-tier timing architecture consisting of cluster-level base timestamps
+and block-level relative offsets. By enforcing strict structural rules
+at both the muxer and demuxer stages, the container prevents timing
+drift, frame overlap, and decoder underflow during continuous playback
+and live streaming.</p>
+<h3 id="the-two-tier-timestamp-hierarchy">The Two-Tier Timestamp
+Hierarchy</h3>
+<p>WebM organizes elementary stream data into <code>Segment</code>
+elements, which are subdivided into sequential <code>Cluster</code>
+elements. Timestamps are not stored as standalone absolute values on
+individual video frames. Instead, they are calculated hierarchically
+using three core components:</p>
+<ol type="1">
+<li><strong><code>TimestampScale</code></strong>: Defined globally in
+the <code>Info</code> header, this value sets the base time unit in
+nanoseconds (defaulting to 1,000,000 ns, or 1 ms).</li>
+<li><strong>Cluster <code>Timestamp</code></strong>: Each
+<code>Cluster</code> element contains an absolute base timestamp
+representing the start time of the cluster, expressed in
+<code>TimestampScale</code> units.</li>
+<li><strong>Block Relative Timestamp</strong>: Individual frames inside
+a cluster are encapsulated in <code>SimpleBlock</code> or
+<code>BlockGroup</code> elements. Each block contains a signed 16-bit
+integer representing a relative offset from the parent cluster's base
+timestamp.</li>
+</ol>
+<p>The absolute presentation timestamp (PTS) of any given frame is
+calculated as:</p>
+<p><span class="math display">\[\text{PTS} = (\text{Cluster Timestamp} +
+\text{Block Timestamp}) \times \text{TimestampScale}\]</span></p>
+<h3 id="enforcing-monotonicity-at-the-cluster-boundary">Enforcing
+Monotonicity at the Cluster Boundary</h3>
+<p>To maintain linear timeline progression across cluster boundaries,
+the WebM specification defines explicit ordering and boundary
+conditions:</p>
+<ul>
+<li><strong>Monotonic Base Progression</strong>: Each sequential
+<code>Cluster</code> must have a base <code>Timestamp</code> equal to or
+greater than the preceding cluster's base <code>Timestamp</code>. A
+cluster cannot declare a base timestamp that retrogrades to an earlier
+point in the timeline.</li>
+<li><strong>16-Bit Offset Window Constraints</strong>: Because block
+timestamps are limited to signed 16-bit integers (ranging from -32,768
+to +32,767), a cluster cannot span an indefinite duration. A muxer is
+forced to finalize the current cluster and instantiate a new cluster
+before the relative offset overflows the 16-bit limit.</li>
+<li><strong>Keyframe Alignment</strong>: Clusters typically start with a
+keyframe (such as a VP8/VP9 intra-frame or AV1 keyframe) with a relative
+block timestamp of zero. This resets the local frame offset relative to
+the new cluster base, preventing negative offsets from referencing times
+prior to the previous cluster's boundary.</li>
+</ul>
+<h3 id="muxer-responsibilities-during-stream-generation">Muxer
+Responsibilities During Stream Generation</h3>
+<p>The primary responsibility for monotonic integrity falls on the
+multiplexer (muxer). When generating sequential clusters, the muxer
+must:</p>
+<ul>
+<li><strong>Sort Decode and Presentation Timestamps</strong>: Ensure
+that frame delivery adheres to non-decreasing Decode Timestamps (DTS).
+For codecs without out-of-order presentation (like VP8), PTS and DTS are
+identical. For codecs utilizing alternate reference frames (like VP9) or
+out-of-order coding (AV1), presentation offsets must still resolve to a
+valid timeline without violating the cluster baseline.</li>
+<li><strong>Eliminate Negative Drift</strong>: Ensure that the lowest
+block timestamp within Cluster <span class="math inline">\(N\)</span>
+does not resolve to an absolute PTS that is earlier than the highest
+resolved absolute PTS of Cluster <span
+class="math inline">\(N-1\)</span>, except in designated multi-layer
+temporal references where the container level presentation order is
+explicitly signaled.</li>
+</ul>
+<h3 id="demuxer-and-parser-validation">Demuxer and Parser
+Validation</h3>
+<p>Demuxers enforce monotonicity defensively during playback or
+streaming ingestion:</p>
+<ul>
+<li><strong>Timestamp Clamping and Normalization</strong>: If a
+malformed cluster introduces a timestamp backward step, compliant
+parsers clamp the invalid timestamp to the last known valid timestamp or
+drop the packet to protect downstream hardware decoders.</li>
+<li><strong>Discontinuity Detection</strong>: In live streams (e.g.,
+dynamic WebM over chunked HTTP/WebSockets), parsers monitor cluster base
+values. If a cluster arrives with an unexpected time reset, the demuxer
+either flags a timeline discontinuity to reinitialize the audio/video
+synchronization clock or halts pipeline execution until a new segment
+initialization is parsed.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

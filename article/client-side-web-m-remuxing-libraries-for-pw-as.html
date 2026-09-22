@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client-Side WebM Remuxing Libraries for PWAs - webm</title>
+    <meta name="description" content="Client-side WebM remuxing allows Progressive Web Applications (PWAs) to re-encapsulate audio and video streams into a WebM container directly within the browser, eliminating server-side processing costs and enabling offline multimedia workflows. This art">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/client-side-web-m-remuxing-libraries-for-pw-as">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Client-Side WebM Remuxing Libraries for PWAs - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/client-side-web-m-remuxing-libraries-for-pw-as" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Client-side WebM remuxing allows Progressive Web Applications (PWAs) to re-encapsulate audio and video streams into a WebM container directly within the browser, eliminating server-side processing costs and enabling offline multimedia workflows. This art" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="client-side-webm-remuxing-libraries-for-pwas">Client-Side WebM
+Remuxing Libraries for PWAs</h1>
+<p>Client-side WebM remuxing allows Progressive Web Applications (PWAs)
+to re-encapsulate audio and video streams into a WebM container directly
+within the browser, eliminating server-side processing costs and
+enabling offline multimedia workflows. This article explores the primary
+software libraries available for in-browser WebM remuxing, examining
+lightweight JavaScript multiplexers, WebAssembly ports of
+industry-standard multimedia frameworks, and specialized EBML
+manipulators.</p>
+<h3 id="webm-muxer">webm-muxer</h3>
+<p><code>webm-muxer</code> is a lightweight, dependency-free JavaScript
+library built specifically to work alongside the modern WebCodecs API.
+It takes raw encoded video and audio chunks (such as VP8, VP9, AV1, or
+Opus) and packages them into a valid Matroska/WebM container format.</p>
+<p>Because <code>webm-muxer</code> focuses exclusively on multiplexing
+without including heavy decoders or encoders, its bundle size is
+minimal—making it ideal for performance-sensitive PWAs. It supports
+streaming outputs via the <code>FileSystemWritableFileStream</code> or
+in-memory targets like <code>ArrayBufferTarget</code>, enabling
+real-time file writing with negligible memory overhead.</p>
+<h3 id="ffmpegwasm">FFmpeg.wasm</h3>
+<p><code>ffmpeg.wasm</code> is a pure WebAssembly port of the FFmpeg
+multimedia suite. It provides full remuxing capabilities directly inside
+the browser using standard FFmpeg commands (such as
+<code>-c copy</code>).</p>
+<p>For PWAs, <code>ffmpeg.wasm</code> can ingest virtually any container
+format (such as MP4, MKV, or AVI) and remux the elementary streams into
+a WebM container without re-encoding, preserving video quality and
+executing significantly faster than a full transcode. However, it
+carries a larger bundle size (often several megabytes) and typically
+requires <code>SharedArrayBuffer</code> support, which demands
+cross-origin isolation headers (<code>COOP</code> and <code>COEP</code>)
+enabled on the web server.</p>
+<h3 id="libavjs">Libav.js</h3>
+<p><code>libav.js</code> is an Emscripten port of Libav and FFmpeg
+tailored specifically for browser integration. Unlike monolithic builds,
+<code>libav.js</code> offers modular variants, allowing developers to
+import only the demuxers and muxers needed for WebM creation.</p>
+<p>This modularity makes <code>libav.js</code> an efficient middle
+ground between a massive full-featured FFmpeg build and a barebones
+multiplexer. It operates effectively inside Web Workers, preventing the
+browser's main UI thread from freezing during large file operations.</p>
+<h3 id="ts-ebml-and-ebmljs">ts-ebml and EBML.js</h3>
+<p>Because WebM is a subset of the Extensible Binary Meta Language
+(EBML), low-level libraries like <code>ts-ebml</code> and
+<code>EBML.js</code> are frequently used for structural remuxing and
+metadata patching.</p>
+<p>A common limitation of the native browser <code>MediaRecorder</code>
+API is that it outputs WebM files lacking duration metadata, causing
+playback scrubbing issues. Libraries like <code>ts-ebml</code> read the
+raw WebM <code>ArrayBuffer</code>, parse the EBML element tree, inject a
+accurate <code>Duration</code> tag and <code>SeekHead</code> index, and
+output a fully scrubbable, spec-compliant WebM file directly on the
+client.</p>
+<h3 id="architectural-considerations-for-pwas">Architectural
+Considerations for PWAs</h3>
+<p>When implementing these libraries inside a PWA, intensive file
+operations should always be delegated to a dedicated Web Worker. This
+preserves UI responsiveness and ensures that background tasks, like
+caching processed media to the Cache API or IndexedDB, do not disrupt
+the user experience.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

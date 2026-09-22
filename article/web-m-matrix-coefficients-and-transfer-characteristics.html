@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Matrix Coefficients and Transfer Characteristics - webm</title>
+    <meta name="description" content="The WebM container format uses color metadata definitions derived from the Matroska specification to describe how video pixel values map to standard color spaces. This article details the specific values and standards that can be signaled for Matrix Coef">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-matrix-coefficients-and-transfer-characteristics">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Matrix Coefficients and Transfer Characteristics - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-matrix-coefficients-and-transfer-characteristics" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format uses color metadata definitions derived from the Matroska specification to describe how video pixel values map to standard color spaces. This article details the specific values and standards that can be signaled for Matrix Coef" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-matrix-coefficients-and-transfer-characteristics">WebM
+Matrix Coefficients and Transfer Characteristics</h1>
+<p>The WebM container format uses color metadata definitions derived
+from the Matroska specification to describe how video pixel values map
+to standard color spaces. This article details the specific values and
+standards that can be signaled for Matrix Coefficients and Transfer
+Characteristics within a WebM video track, enabling accurate color and
+dynamic range reproduction for SDR and HDR content.</p>
+<h2 id="color-signaling-in-webm">Color Signaling in WebM</h2>
+<p>In a WebM container, color metadata is stored under the
+<code>Colour</code> element within a video track entry. These parameters
+follow the ITU-T H.273 / ISO/IEC 23001-8 (Coding-independent code
+points) standards, aligning container-level metadata with the bitstream
+color signaling used in modern codecs such as VP9 and AV1.</p>
+<hr />
+<h2 id="matrix-coefficients">Matrix Coefficients</h2>
+<p>The <code>MatrixCoefficients</code> element determines the
+mathematical transformation used to derive luma and chroma signals from
+the RGB color primaries.</p>
+<p>The signaled integer values map to the following standards:</p>
+<ul>
+<li><strong>0 – GBR / Identity:</strong> Identity matrix, typically used
+for full-range RGB or GBR color representations.</li>
+<li><strong>1 – BT.709:</strong> ITU-R BT.709-6, the standard matrix
+used for high-definition (HD) video.</li>
+<li><strong>2 – Unspecified:</strong> The matrix coefficients are not
+explicitly defined.</li>
+<li><strong>3 – Reserved / US FCC:</strong> FCC Title 47 Code of Federal
+Regulations.</li>
+<li><strong>4 – BT.470BG:</strong> ITU-R BT.470-6 System B, G (standard
+PAL).</li>
+<li><strong>5 – SMPTE 170M:</strong> SMPTE 170M (standard NTSC /
+BT.601).</li>
+<li><strong>6 – SMPTE 240M:</strong> SMPTE 240M, an early
+high-definition standard.</li>
+<li><strong>7 – YCoCg:</strong> Non-constant luminance YCoCg color
+space.</li>
+<li><strong>8 – BT.2020 NCL:</strong> ITU-R BT.2020 non-constant
+luminance system, widely used in Ultra HD (UHD) and HDR delivery.</li>
+<li><strong>9 – BT.2020 CL:</strong> ITU-R BT.2020 constant luminance
+system.</li>
+<li><strong>10 – SMPTE ST 2085:</strong> SMPTE ST 2085 (specifically
+designed for Y'D'zD'x color representation).</li>
+<li><strong>11 – Chroma-derived NCL:</strong> Chromaticity-derived
+non-constant luminance system.</li>
+<li><strong>12 – Chroma-derived CL:</strong> Chromaticity-derived
+constant luminance system.</li>
+<li><strong>13 – ICtCp:</strong> ITU-R BT.2100-0 ICtCp color space,
+designed for High Dynamic Range and Wide Color Gamut processing.</li>
+</ul>
+<hr />
+<h2 id="transfer-characteristics">Transfer Characteristics</h2>
+<p>The <code>TransferCharacteristics</code> element defines the
+Opto-Electronic Transfer Function (OETF) or Electro-Optical Transfer
+Function (EOTF), which describes how pixel values scale across luminance
+levels (gamma/dynamic range).</p>
+<p>The signaled integer values map to the following standards:</p>
+<ul>
+<li><strong>1 – BT.709:</strong> ITU-R BT.709-6 (standard gamma for SDR
+HD content).</li>
+<li><strong>2 – Unspecified:</strong> The transfer characteristics are
+not defined.</li>
+<li><strong>3 – Reserved:</strong> Historically ITU-R BT.470M / System M
+(Gamma ~2.2).</li>
+<li><strong>4 – BT.470BG:</strong> ITU-R BT.470-6 System B, G (Gamma
+2.8).</li>
+<li><strong>5 – SMPTE 170M:</strong> SMPTE 170M / ITU-R BT.601.</li>
+<li><strong>6 – SMPTE 240M:</strong> SMPTE 240M.</li>
+<li><strong>7 – Linear:</strong> Linear transfer characteristics (<span
+class="math inline">\(V = L_c\)</span>).</li>
+<li><strong>8 – Logarithmic (100:1):</strong> Logarithmic transfer
+characteristics with a 100:1 dynamic range.</li>
+<li><strong>9 – Logarithmic (316.2:1):</strong> Logarithmic transfer
+characteristics with a 100 * <span
+class="math inline">\(\sqrt{10}\)</span> : 1 dynamic range.</li>
+<li><strong>10 – IEC 61966-2-4:</strong> xvYCC extended-gamut
+standard.</li>
+<li><strong>11 – BT.1361:</strong> ITU-R BT.1361-0 extended color
+gamut.</li>
+<li><strong>12 – sRGB / IEC 61966-2-1:</strong> Standard sRGB and sYCC
+color space.</li>
+<li><strong>13 – BT.2020 (10-bit):</strong> ITU-R BT.2020 for 10-bit
+systems.</li>
+<li><strong>14 – BT.2020 (12-bit):</strong> ITU-R BT.2020 for 12-bit
+systems.</li>
+<li><strong>15 – SMPTE ST 2084 (PQ):</strong> Perceptual Quantizer, the
+EOTF standard used for HDR10 and Dolby Vision.</li>
+<li><strong>16 – SMPTE ST 428-1:</strong> D-Cinema distribution master
+transfer function.</li>
+<li><strong>17 – ARIB STD-B67 (HLG):</strong> Hybrid Log-Gamma, the HDR
+standard defined in ITU-R BT.2100 for broadcast applications.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

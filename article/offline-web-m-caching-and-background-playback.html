@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline WebM Caching and Background Playback - webm</title>
+    <meta name="description" content="Delivering reliable offline access and seamless background playback for WebM media requires a coordinated set of web technologies. By combining Service Workers and the Cache API for byte-range management with the Media Session API and the Background Fetc">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/offline-web-m-caching-and-background-playback">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Offline WebM Caching and Background Playback - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/offline-web-m-caching-and-background-playback" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Delivering reliable offline access and seamless background playback for WebM media requires a coordinated set of web technologies. By combining Service Workers and the Cache API for byte-range management with the Media Session API and the Background Fetc" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="offline-webm-caching-and-background-playback">Offline WebM
+Caching and Background Playback</h1>
+<p>Delivering reliable offline access and seamless background playback
+for WebM media requires a coordinated set of web technologies. By
+combining Service Workers and the Cache API for byte-range management
+with the Media Session API and the Background Fetch API, modern web
+applications can store WebM files locally, serve partial content
+offline, and maintain continuous media playback even when the screen is
+locked or the browser is minimized.</p>
+<h3 id="handling-byte-range-requests-in-service-workers">Handling
+Byte-Range Requests in Service Workers</h3>
+<p>Web browsers stream and seek WebM media files by issuing HTTP
+<code>Range</code> requests, which expect an HTTP
+<code>206 Partial Content</code> status in return. By default, the
+Service Worker <code>Cache.match()</code> method cannot automatically
+slice full cached files to satisfy byte-range headers.</p>
+<p>To enable offline seeking and sequential playback:</p>
+<ul>
+<li><strong>Intercept <code>fetch</code> events</strong>: Detect whether
+the request headers include a <code>Range</code> key for
+<code>.webm</code> resources.</li>
+<li><strong>Slice cached array buffers</strong>: Retrieve the complete
+WebM file from the Cache Storage API as an <code>ArrayBuffer</code> or
+<code>Blob</code>, compute the byte offsets requested (e.g.,
+<code>bytes=0-1048575</code>), and extract the specified slice.</li>
+<li><strong>Return custom 206 responses</strong>: Construct a new
+<code>Response</code> object with the sliced payload, setting the status
+to <code>206 Partial Content</code> along with appropriate
+<code>Content-Range</code>, <code>Content-Length</code>, and
+<code>Content-Type: video/webm</code> (or <code>audio/webm</code>)
+headers.</li>
+<li><strong>Workbox Range Requests</strong>: Alternatively, use
+libraries like the <code>workbox-range-requests</code> plugin to
+automate range-header parsing and sliced response generation.</li>
+</ul>
+<h3 id="background-fetch-api-for-large-media-files">Background Fetch API
+for Large Media Files</h3>
+<p>Standard <code>fetch</code> calls inside a service worker can be
+terminated if the browser closes or enters a power-saving state. For
+larger WebM files:</p>
+<ul>
+<li><strong>Background Fetch</strong>: Use
+<code>serviceWorkerRegistration.backgroundFetch.fetch()</code> to handle
+multi-megabyte media downloads reliably in the background.</li>
+<li><strong>Cache persistence</strong>: Once the background fetch
+completes, listen to the <code>backgroundfetchsuccess</code> event
+inside the service worker to grab the responses and put them directly
+into the Cache API for future offline access.</li>
+</ul>
+<h3 id="continuous-background-playback-via-media-session-api">Continuous
+Background Playback via Media Session API</h3>
+<p>Service Workers do not play audio or video directly; they supply the
+data. The actual playback happens in the DOM layer via an
+<code>&lt;audio&gt;</code> or <code>&lt;video&gt;</code> element. To
+ensure WebM audio continues playing when the user leaves the tab or
+locks their device:</p>
+<ul>
+<li><strong>Media Session API</strong>: Configure
+<code>navigator.mediaSession.metadata</code> with media details (title,
+artist, album, and artwork).</li>
+<li><strong>Action handlers</strong>: Implement handlers for actions
+such as <code>play</code>, <code>pause</code>,
+<code>seekbackward</code>, <code>seekforward</code>, and
+<code>seekto</code>. Setting these handlers signals to mobile and
+desktop operating systems that the media is user-controlled, preventing
+the browser from suspending the execution context.</li>
+<li><strong>Page Lifecycle management</strong>: Avoid pausing or
+resetting the media element on <code>visibilitychange</code> or
+<code>pagehide</code> events if continuous listening is desired.</li>
+</ul>
+<h3 id="media-source-extensions-mse-vs-direct-blob-caching">Media Source
+Extensions (MSE) vs. Direct Blob Caching</h3>
+<p>For advanced streaming setups (such as DASH-like delivery in WebM
+containers):</p>
+<ul>
+<li><strong>Segmented caching</strong>: Cache individual initialization
+and media segments (<code>.webm</code> or <code>.chk</code>) in the
+Service Worker and feed them into a <code>SourceBuffer</code> via Media
+Source Extensions (MSE).</li>
+<li><strong>Direct URI caching</strong>: For self-contained WebM files,
+direct URL interception using the Cache API with range request handling
+provides a simpler architecture that works seamlessly across standard
+HTML5 media elements.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

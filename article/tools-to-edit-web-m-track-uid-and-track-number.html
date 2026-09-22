@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools to Edit WebM TrackUID and TrackNumber - webm</title>
+    <meta name="description" content="Modifying the TrackUID and TrackNumber elements in a WebM file requires utilities capable of reading and manipulating the Extensible Binary Meta Language (EBML) structure underpinning the Matroska and WebM container formats. This article outlines the mos">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/tools-to-edit-web-m-track-uid-and-track-number">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Tools to Edit WebM TrackUID and TrackNumber - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/tools-to-edit-web-m-track-uid-and-track-number" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modifying the TrackUID and TrackNumber elements in a WebM file requires utilities capable of reading and manipulating the Extensible Binary Meta Language (EBML) structure underpinning the Matroska and WebM container formats. This article outlines the mos" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="tools-to-edit-webm-trackuid-and-tracknumber">Tools to Edit WebM
+TrackUID and TrackNumber</h1>
+<p>Modifying the <code>TrackUID</code> and <code>TrackNumber</code>
+elements in a WebM file requires utilities capable of reading and
+manipulating the Extensible Binary Meta Language (EBML) structure
+underpinning the Matroska and WebM container formats. This article
+outlines the most effective software tools available to edit these
+specific track identifiers, ranging from specialized command-line
+utilities to EBML tree editors and programming libraries.</p>
+<h3 id="1-mkvtoolnix-mkvpropedit">1. MKVToolNix (mkvpropedit)</h3>
+<p>Because WebM is a subset of the Matroska (MKV) specification, tools
+from the MKVToolNix suite are fully capable of processing WebM files.
+The command-line utility <code>mkvpropedit</code> is the standard tool
+for this task because it edits file headers in-place without requiring a
+complete file remux.</p>
+<ul>
+<li><strong>Targeting Elements:</strong> You can select a track by its
+position or type (e.g., <code>track:v1</code> for the first video track
+or <code>track:a1</code> for the first audio track).</li>
+<li><strong>Usage Example:</strong>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvpropedit</span> <span class="st">&quot;video.webm&quot;</span> <span class="at">--edit</span> track:1 <span class="at">--set</span> track-number=2 <span class="at">--set</span> track-uid=123456789</span></code></pre></div></li>
+<li><strong>Pros:</strong> Fast, preserves all media streams intact, and
+prevents accidental container corruption.</li>
+</ul>
+<h3 id="2-010-editor-with-the-ebml-template">2. 010 Editor with the EBML
+Template</h3>
+<p>For low-level inspection and editing, 010 Editor combined with its
+community EBML/Matroska template provides a graphical hex-level
+interface mapped to WebM syntax.</p>
+<ul>
+<li><strong>Targeting Elements:</strong> In the template results pane,
+navigate to the <code>Segment</code> -&gt; <code>Tracks</code> -&gt;
+<code>TrackEntry</code> section. Inside, locate the
+<code>TrackNumber</code> (EBML ID <code>0xD7</code>) and
+<code>TrackUID</code> (EBML ID <code>0x73C5</code>) tags.</li>
+<li><strong>Usage:</strong> Click directly on the values in the template
+variable tree to modify the integers, then save the file.</li>
+<li><strong>Pros:</strong> Offers exact byte-level control without
+automatic recalculation of non-targeted data.</li>
+</ul>
+<h3 id="3-ebmlite-python-library">3. ebmlite (Python Library)</h3>
+<p>If you require automated or programmatic manipulation,
+<code>ebmlite</code> is a lightweight Python package designed to parse
+and re-serialize EBML documents like MKV and WebM based on schema
+definitions.</p>
+<ul>
+<li><strong>Targeting Elements:</strong> Open the WebM file using the
+Matroska schema, iterate through <code>Segment.Tracks</code>, find the
+target <code>TrackEntry</code>, and update the value attributes for
+<code>TrackNumber</code> and <code>TrackUID</code>.</li>
+<li><strong>Pros:</strong> Ideal for batch processing workflows where
+manual CLI commands or GUI editors are impractical.</li>
+</ul>
+<h3 id="note-on-ffmpeg">Note on FFmpeg</h3>
+<p>While FFmpeg can manipulate track order, mapping, and stream metadata
+flags (such as disposition and metadata tags), it automatically
+generates its own internal <code>TrackUID</code> values upon muxing. As
+a result, FFmpeg cannot be used to force arbitrary, custom values into
+<code>TrackUID</code> or <code>TrackNumber</code> during standard
+transcoding or remuxing procedures. For precise element overrides,
+dedicated Matroska/EBML tools like <code>mkvpropedit</code> remain the
+appropriate choice.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

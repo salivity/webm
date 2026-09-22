@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opus CodecPrivate Binary Structure in WebM - webm</title>
+    <meta name="description" content="In WebM containers using the AOPUS Codec ID, the CodecPrivate element contains the standard Opus identification header, designated as OpusHead. This binary data provides decoders with essential initialization parameters—including the channel count, pre">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/opus-codec-private-binary-structure-in-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Opus CodecPrivate Binary Structure in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/opus-codec-private-binary-structure-in-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In WebM containers using the AOPUS Codec ID, the CodecPrivate element contains the standard Opus identification header, designated as OpusHead. This binary data provides decoders with essential initialization parameters—including the channel count, pre" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="opus-codecprivate-binary-structure-in-webm">Opus CodecPrivate
+Binary Structure in WebM</h1>
+<p>In WebM containers using the <code>A_OPUS</code> Codec ID, the
+<code>CodecPrivate</code> element contains the standard Opus
+identification header, designated as <code>OpusHead</code>. This binary
+data provides decoders with essential initialization
+parameters—including the channel count, pre-skip delay, original input
+sample rate, output gain, and channel mapping rules—before any audio
+frames are processed.</p>
+<h2 id="the-opushead-specification">The OpusHead Specification</h2>
+<p>The WebM specification mandates that the <code>CodecPrivate</code>
+element encapsulates the exact identification header format specified in
+Section 5.1 of RFC 7845 (Ogg Opus). All multi-byte numeric fields are
+stored in little-endian byte order.</p>
+<p>The header has a minimum length of 19 bytes for family 0 (mono or
+stereo) and expands if multi-channel surround mapping is used.</p>
+<h3 id="byte-layout-table">Byte Layout Table</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Byte Offset</th>
+<th style="text-align: left;">Size (Bytes)</th>
+<th style="text-align: left;">Field Name</th>
+<th style="text-align: left;">Data Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>0</code></td>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;">Magic Signature</td>
+<td style="text-align: left;">ASCII String</td>
+<td style="text-align: left;">Fixed string: <code>OpusHead</code>
+(<code>0x4F 0x70 0x75 0x73 0x48 0x65 0x61 0x64</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>8</code></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Version</td>
+<td style="text-align: left;">uint8</td>
+<td style="text-align: left;">Version number; must be
+<code>0x01</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>9</code></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Output Channel Count</td>
+<td style="text-align: left;">uint8</td>
+<td style="text-align: left;">Number of output channels (1 to 255)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>10</code></td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Pre-skip</td>
+<td style="text-align: left;">uint16 (LE)</td>
+<td style="text-align: left;">Number of samples at 48 kHz to discard
+from the beginning</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>12</code></td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Input Sample Rate</td>
+<td style="text-align: left;">uint32 (LE)</td>
+<td style="text-align: left;">Informational sampling rate of original
+input (e.g., 48000 Hz)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>14</code></td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Output Gain</td>
+<td style="text-align: left;">int16 (LE)</td>
+<td style="text-align: left;">Additional gain in <span
+class="math inline">\(dB\)</span> (<span
+class="math inline">\(Q7.8\)</span> fixed-point format).
+<code>0x0000</code> is 0 dB</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>16</code></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Channel Mapping Family</td>
+<td style="text-align: left;">uint8</td>
+<td style="text-align: left;"><code>0x00</code> (mono/stereo),
+<code>0x01</code> (Vorbis mapping), or
+<code>0xFE</code>/<code>0xFF</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="channel-mapping-extension-family--0">Channel Mapping Extension
+(Family &gt; 0)</h3>
+<p>When the Channel Mapping Family byte (offset 16) is set to any value
+greater than <code>0</code>, additional bytes immediately follow to
+define stream counts and surround speaker routing:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Offset</th>
+<th style="text-align: left;">Size (Bytes)</th>
+<th style="text-align: left;">Field Name</th>
+<th style="text-align: left;">Data Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>17</code></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Stream Count (<span
+class="math inline">\(N\)</span>)</td>
+<td style="text-align: left;">uint8</td>
+<td style="text-align: left;">Total number of Opus streams encoded in
+each packet</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>18</code></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Coupled Stream Count (<span
+class="math inline">\(M\)</span>)</td>
+<td style="text-align: left;">uint8</td>
+<td style="text-align: left;">Number of paired (stereo) streams (<span
+class="math inline">\(M \le N\)</span>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>19</code></td>
+<td style="text-align: left;"><span
+class="math inline">\(C\)</span></td>
+<td style="text-align: left;">Channel Mapping</td>
+<td style="text-align: left;">uint8 array</td>
+<td style="text-align: left;">Array of <span
+class="math inline">\(C\)</span> bytes (where <span
+class="math inline">\(C\)</span> is Channel Count), mapping output
+channels to stream streams</td>
+</tr>
+</tbody>
+</table>
+<p>If the mapping family is <code>0</code>, these extra bytes are
+omitted, and the total size remains exactly 19 bytes.</p>
+<hr />
+<h2 id="example-standard-stereo-configuration-family-0">Example:
+Standard Stereo Configuration (Family 0)</h2>
+<p>A common stereo configuration recorded at 48,000 Hz, with a typical
+312-sample pre-skip (6.5 ms) and 0 dB gain, yields a 19-byte hexadecimal
+sequence:</p>
+<ul>
+<li><strong>Magic Signature:</strong>
+<code>4F 70 75 73 48 65 61 64</code> ("OpusHead")</li>
+<li><strong>Version:</strong> <code>01</code> (Version 1)</li>
+<li><strong>Channels:</strong> <code>02</code> (2 channels)</li>
+<li><strong>Pre-skip:</strong> <code>38 01</code> (312 in
+little-endian)</li>
+<li><strong>Sample Rate:</strong> <code>80 BB 00 00</code> (48000 in
+little-endian)</li>
+<li><strong>Gain:</strong> <code>00 00</code> (0 dB)</li>
+<li><strong>Mapping Family:</strong> <code>00</code> (Direct mono/stereo
+mapping)</li>
+</ul>
+<p>Complete hex representation in <code>CodecPrivate</code>:</p>
+<pre class="hex"><code>4F 70 75 73 48 65 61 64 01 02 38 01 80 BB 00 00 00 00 00</code></pre></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

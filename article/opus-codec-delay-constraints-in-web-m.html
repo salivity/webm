@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opus CodecDelay Constraints in WebM - webm</title>
+    <meta name="description" content="This article outlines the technical and structural requirements governing the placement of the CodecDelay element for Opus audio streams in the WebM container. In WebM, proper positioning, cardinality, and data formatting of CodecDelay within the Matrosk">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/opus-codec-delay-constraints-in-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Opus CodecDelay Constraints in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/opus-codec-delay-constraints-in-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article outlines the technical and structural requirements governing the placement of the CodecDelay element for Opus audio streams in the WebM container. In WebM, proper positioning, cardinality, and data formatting of CodecDelay within the Matrosk" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="opus-codecdelay-constraints-in-webm">Opus CodecDelay Constraints
+in WebM</h1>
+<p>This article outlines the technical and structural requirements
+governing the placement of the <code>CodecDelay</code> element for Opus
+audio streams in the WebM container. In WebM, proper positioning,
+cardinality, and data formatting of <code>CodecDelay</code> within the
+Matroska/EBML hierarchy are critical for ensuring accurate audio
+decoding, correct priming sample discarding, and seamless audio-video
+synchronization.</p>
+<h3 id="ebml-hierarchy-and-placement">EBML Hierarchy and Placement</h3>
+<p>The <code>CodecDelay</code> element (EBML ID <code>0x56AA</code>) is
+strictly constrained to the track header definition within the WebM
+container schema. It must reside inside the <code>TrackEntry</code>
+master element (<code>0xAE</code>), which in turn is located within the
+top-level <code>Tracks</code> element (<code>0x1654AE6B</code>) under
+the root <code>Segment</code> (<code>0x18538067</code>).</p>
+<p>Placing <code>CodecDelay</code> anywhere outside of an individual
+<code>TrackEntry</code>—such as directly within <code>Cluster</code>,
+<code>Segment</code>, or <code>Audio</code> settings
+sub-elements—violates the WebM specification and causes parser
+failure.</p>
+<h3 id="track-and-codec-association">Track and Codec Association</h3>
+<p>The presence of <code>CodecDelay</code> is tied to specific track
+attributes:</p>
+<ul>
+<li><strong>TrackType Requirement:</strong> It must only be defined on
+tracks where <code>TrackType</code> (<code>0x83</code>) is set to
+<code>2</code> (Audio).</li>
+<li><strong>CodecID Requirement:</strong> In WebM implementations of
+Opus, the <code>CodecID</code> (<code>0x86</code>) must be set to
+<code>A_OPUS</code>. While <code>CodecDelay</code> is optional or unused
+for some other codecs in standard Matroska, the WebM Opus adoption
+specification makes <code>CodecDelay</code> mandatory for every Opus
+track.</li>
+</ul>
+<h3 id="cardinality-and-multiplicity">Cardinality and Multiplicity</h3>
+<ul>
+<li><strong>Occurrence:</strong> <code>CodecDelay</code> must occur
+exactly once per Opus <code>TrackEntry</code>.</li>
+<li><strong>Zero or Duplicate Instances:</strong> A missing
+<code>CodecDelay</code> in an Opus <code>TrackEntry</code> renders the
+track non-compliant, as players cannot determine the pre-skip duration.
+Conversely, duplicate <code>CodecDelay</code> elements within the same
+<code>TrackEntry</code> are invalid under EBML parsing rules.</li>
+</ul>
+<h3 id="data-type-and-formatting-rules">Data Type and Formatting
+Rules</h3>
+<ul>
+<li><strong>Element Type:</strong> <code>CodecDelay</code> is stored as
+an unsigned integer (EBML <code>uinteger</code>).</li>
+<li><strong>Units:</strong> The value must be expressed in absolute
+nanoseconds, regardless of the <code>TimestampScale</code> specified in
+the <code>SegmentInformation</code> or the audio sample rate.</li>
+<li><strong>Value Alignment:</strong> For Opus, this value corresponds
+directly to the encoder's pre-skip delay (typically 3,840 samples at 48
+kHz, translating to <code>80000000</code> nanoseconds, or 80
+milliseconds). It dictates how many nanoseconds of decoded audio the
+demuxer/decoder must discard from the start of the stream to eliminate
+encoder priming artifacts.</li>
+</ul>
+<h3 id="structural-interdependence-with-seekpreroll">Structural
+Interdependence with SeekPreRoll</h3>
+<p>When <code>CodecDelay</code> is present in an Opus
+<code>TrackEntry</code>, it is structurally paired with the
+<code>SeekPreRoll</code> element (<code>0x56BB</code>). While
+<code>CodecDelay</code> governs the container-level discard duration
+from the initial playback start, <code>SeekPreRoll</code> defines the
+sample preroll required when seeking to an arbitrary point in the
+stream. Both elements exist as direct siblings inside the
+<code>TrackEntry</code> and share the same nanosecond-based integer
+representation.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

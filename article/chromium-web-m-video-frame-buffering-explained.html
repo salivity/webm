@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chromium WebM Video Frame Buffering Explained - webm</title>
+    <meta name="description" content="This article provides an overview of how the Chromium media pipeline ingests, buffers, decodes, and schedules video frames during WebM playback. It examines the journey of a WebM byte stream through Chromium's demuxing layers, the queuing of encoded pack">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/chromium-web-m-video-frame-buffering-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Chromium WebM Video Frame Buffering Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/chromium-web-m-video-frame-buffering-explained" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of how the Chromium media pipeline ingests, buffers, decodes, and schedules video frames during WebM playback. It examines the journey of a WebM byte stream through Chromium's demuxing layers, the queuing of encoded pack" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="chromium-webm-video-frame-buffering-explained">Chromium WebM
+Video Frame Buffering Explained</h1>
+<p>This article provides an overview of how the Chromium media pipeline
+ingests, buffers, decodes, and schedules video frames during WebM
+playback. It examines the journey of a WebM byte stream through
+Chromium's demuxing layers, the queuing of encoded packets within buffer
+streams, the memory eviction strategies used to prevent overflow, and
+the handoff of decoded frames to the presentation engine.</p>
+<h3 id="demuxing-and-input-ingestion">Demuxing and Input Ingestion</h3>
+<p>WebM is a subset of the Matroska (MKV) container format, typically
+carrying VP8, VP9, or AV1 video alongside Vorbis or Opus audio. When
+Chromium encounters a WebM media source, playback initiates either
+through standard HTML5 progressive playback (<code>FFmpegDemuxer</code>)
+or via the Media Source Extensions (MSE) pipeline
+(<code>ChunkDemuxer</code>).</p>
+<p>For MSE-based playback, the browser parses the byte stream using an
+internal parser based on <code>libwebm</code>. The parser reads the
+Extensible Binary Meta Language (EBML) elements to identify track
+metadata, clusters, and block structures. As raw bytes enter the
+<code>SourceBuffer</code>, the parser extracts timestamped elementary
+stream packets, known as <code>DecoderBuffer</code> instances, and
+forwards them to a dedicated <code>SourceBufferStream</code>.</p>
+<h3 id="buffer-queuing-and-memory-management">Buffer Queuing and Memory
+Management</h3>
+<p>Inside the <code>SourceBufferStream</code>, incoming
+<code>DecoderBuffer</code> objects are grouped into ranges of continuous
+data based on their presentation timestamps (PTS) and decode timestamps
+(DTS).</p>
+<ul>
+<li><strong>GOP Tracking:</strong> Video frames cannot be decoded in
+isolation if they depend on temporal references. The buffer groups
+frames by their Group of Pictures (GOP), ensuring that every sequence
+begins with a keyframe (intra-frame).</li>
+<li><strong>Buffer Eviction:</strong> To keep memory usage within strict
+limits, Chromium implements an eviction algorithm. When buffer limits
+are reached, the pipeline discards data that is furthest from the
+current playback position. It strictly evicts entire GOPs to prevent
+leaving orphaned inter-frames (delta frames) that cannot be
+decoded.</li>
+<li><strong>Splice Handling and Overlaps:</strong> If new WebM chunks
+overlap with previously buffered ranges, Chromium reconciles timestamps,
+trimming or replacing partially buffered GOPs to prevent timeline
+corruption.</li>
+</ul>
+<h3 id="decoding-and-asynchronous-buffer-delivery">Decoding and
+Asynchronous Buffer Delivery</h3>
+<p>Buffered compressed data feeds into the
+<code>VideoFrameStream</code>, which manages the interface between the
+demuxer buffers and the video decoders.</p>
+<ol type="1">
+<li><strong>Decoder Selection:</strong> Depending on platform
+capabilities and codecs (e.g., VP9 Profile 0/2 or AV1), Chromium selects
+either a hardware-accelerated decoder via the GPU process (using
+platform APIs like VA-API, DXVA, or VideoToolbox via Mojo IPC) or a
+software fallback (such as <code>libvpx</code> or
+<code>dav1d</code>).</li>
+<li><strong>Read Requests:</strong> The decoder pipeline requests
+<code>DecoderBuffer</code> objects asynchronously. Decoders pull data
+only when they have capacity to accept new input, preventing unbounded
+internal decoder queuing.</li>
+<li><strong>Decoded Output:</strong> The decoder converts compressed
+packets into raw <code>VideoFrame</code> instances (typically in YUV420p
+or NV12 pixel formats). These uncompressed frames are wrapped in shared
+memory or GPU textures (such as <code>Mailbox</code> handles) to
+minimize copy overhead.</li>
+</ol>
+<h3
+id="presentation-buffering-and-compositor-synchronization">Presentation
+Buffering and Compositor Synchronization</h3>
+<p>Once frames are decoded, they enter the
+<code>VideoRendererImpl</code> buffer queue before display.</p>
+<ul>
+<li><strong>Lookahead Queuing:</strong> <code>VideoRendererImpl</code>
+maintains an internal pool of several decoded frames (typically 3 to 4
+frames ahead of the current time). This lookahead absorbs jitter from
+decode latencies or main-thread scheduling delays.</li>
+<li><strong>Clock Synchronization:</strong> Playback timing is driven by
+a master clock—usually the audio renderer's clock, or the system
+monotonic clock for muted video. <code>VideoRendererImpl</code> inspects
+the PTS of decoded frames against the master clock to decide when a
+frame is ready for rendering, whether it should be delayed, or if it
+must be dropped due to falling behind.</li>
+<li><strong>Compositing:</strong> Valid frames are handed to the
+Chromium compositor via <code>VideoFrameSubmitter</code>. The compositor
+coordinates with the system display refresh rate (VSync) to draw the
+frame surface onto the web page without tearing.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

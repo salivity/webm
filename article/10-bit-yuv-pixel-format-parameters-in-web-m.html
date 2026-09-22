@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10-Bit YUV Pixel Format Parameters in WebM - webm</title>
+    <meta name="description" content="This article provides an overview of the container-level parameters that define 10-bit YUV pixel formats within the WebM container. Because WebM is a subset of the Matroska (MKV) specification based on EBML (Extensible Binary Meta Language), video pixel">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/10-bit-yuv-pixel-format-parameters-in-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="10-Bit YUV Pixel Format Parameters in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/10-bit-yuv-pixel-format-parameters-in-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of the container-level parameters that define 10-bit YUV pixel formats within the WebM container. Because WebM is a subset of the Matroska (MKV) specification based on EBML (Extensible Binary Meta Language), video pixel" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="10-bit-yuv-pixel-format-parameters-in-webm">10-Bit YUV Pixel
+Format Parameters in WebM</h1>
+<p>This article provides an overview of the container-level parameters
+that define 10-bit YUV pixel formats within the WebM container. Because
+WebM is a subset of the Matroska (MKV) specification based on EBML
+(Extensible Binary Meta Language), video pixel format metadata is
+established inside the <code>Video</code> track settings using specific
+<code>Colour</code> sub-elements. Understanding these parameters is
+essential for accurately signaling bit depth, chroma subsampling, and
+colorimetry for codecs like VP9 and AV1.</p>
+<h3 id="the-colour-master-element">The <code>Colour</code> Master
+Element</h3>
+<p>In WebM, track-level video attributes reside inside the
+<code>TrackEntry</code> -&gt; <code>Video</code> element. Pixel format
+parameters—including bit depth, subsampling, and color space—are
+encapsulated within the optional <code>Colour</code> master element
+(EBML ID <code>0x55B0</code>). When demuxers read a 10-bit YUV stream,
+they inspect the child elements of <code>Colour</code> to configure the
+decoding and rendering pipeline before the codec bitstream is even
+processed.</p>
+<h3 id="key-container-elements-defining-10-bit-yuv">Key Container
+Elements Defining 10-Bit YUV</h3>
+<h4 id="1-bitsperchannel-0x55b2">1. BitsPerChannel
+(<code>0x55B2</code>)</h4>
+<p>This element explicitly sets the bit depth of the luma and chroma
+components. For a 10-bit YUV stream, <code>BitsPerChannel</code> is an
+unsigned integer set to <code>10</code>. If omitted, decoders typically
+default to 8 bits per channel unless signaled otherwise within the video
+bitstream.</p>
+<h4 id="2-chroma-subsampling-elements">2. Chroma Subsampling
+Elements</h4>
+<p>WebM specifies the layout of chroma channels (U and V) relative to
+luma (Y) using two separate horizontal and vertical subsampling
+parameters:</p>
+<ul>
+<li><strong>ChromaSubsamplingHorz (<code>0x55B3</code>):</strong> The
+number of pixels to remove horizontally. Set to <code>1</code> for 4:2:0
+and 4:2:2, or <code>0</code> for 4:4:4.</li>
+<li><strong>ChromaSubsamplingVert (<code>0x55B4</code>):</strong> The
+number of pixels to remove vertically. Set to <code>1</code> for 4:2:0,
+or <code>0</code> for 4:2:2 and 4:4:4.</li>
+</ul>
+<p>Together, these determine standard YUV formats:</p>
+<ul>
+<li><strong>YUV 4:2:0 (10-bit):</strong>
+<code>ChromaSubsamplingHorz = 1</code>,
+<code>ChromaSubsamplingVert = 1</code></li>
+<li><strong>YUV 4:2:2 (10-bit):</strong>
+<code>ChromaSubsamplingHorz = 1</code>,
+<code>ChromaSubsamplingVert = 0</code></li>
+<li><strong>YUV 4:4:4 (10-bit):</strong>
+<code>ChromaSubsamplingHorz = 0</code>,
+<code>ChromaSubsamplingVert = 0</code></li>
+</ul>
+<h4 id="3-chromasiting-elements">3. ChromaSiting Elements</h4>
+<p>Chroma sample locations relative to the luma sample grid are defined
+by:</p>
+<ul>
+<li><strong>ChromaSitingHorz (<code>0x55B7</code>):</strong> Defines
+horizontal position (<code>0</code> = Unspecified, <code>1</code> = Left
+collocated, <code>2</code> = Half).</li>
+<li><strong>ChromaSitingVert (<code>0x55B8</code>):</strong> Defines
+vertical position (<code>0</code> = Unspecified, <code>1</code> = Top
+collocated, <code>2</code> = Half).</li>
+</ul>
+<p>For standard progressive 10-bit content, <code>1</code> (collocated)
+or <code>2</code> (half-grid alignment) is typically used to prevent
+color fringing during YUV-to-RGB conversion.</p>
+<h4 id="4-range-0x55b9">4. Range (<code>0x55B9</code>)</h4>
+<p>The quantization range defines whether the 10-bit integer values span
+the standard broadcast limits or the full digital spectrum:</p>
+<ul>
+<li><code>0</code>: Unspecified</li>
+<li><code>1</code>: Studio/Limited range (Y typically maps to 64–940, UV
+to 64–960 in 10-bit)</li>
+<li><code>2</code>: Full range (values span 0–1023)</li>
+<li><code>3</code>: Defined by <code>MatrixCoefficients</code> /
+<code>TransferCharacteristics</code></li>
+</ul>
+<h4 id="5-matrixcoefficients-0x55b1">5. MatrixCoefficients
+(<code>0x55B1</code>)</h4>
+<p>This parameter defines how the Y, U, and V channels are derived from
+RGB components. For 10-bit SDR content, BT.709 (<code>1</code>) is
+common. For 10-bit HDR or Wide Color Gamut (WCG) streams, BT.2020
+Non-constant Luminance (<code>9</code>) is standard.</p>
+<h4 id="6-colourprimaries-0x55bb-and-transfercharacteristics-0x55ba">6.
+ColourPrimaries (<code>0x55BB</code>) and TransferCharacteristics
+(<code>0x55BA</code>)</h4>
+<p>While not strictly determining the layout of the YUV pixel array,
+these parameters complete the pixel format definition by establishing
+the color gamut and opto-electrical transfer function (EOTF):</p>
+<ul>
+<li><strong>Primaries:</strong> Typically set to <code>9</code> for
+ITU-R BT.2020 in 10-bit HDR/WCG pipelines.</li>
+<li><strong>Transfer:</strong> Set to <code>16</code> for SMPTE ST 2084
+(PQ) or <code>18</code> for ARIB STD-B67 (HLG).</li>
+</ul>
+<h3 id="interaction-with-codec-bitstreams">Interaction with Codec
+Bitstreams</h3>
+<p>WebM container-level pixel format values should mirror the internal
+bitstream configuration (such as VP9 Profile 2 or AV1 Main/High Profile
+sequence headers). If a discrepancy occurs, modern decoders typically
+prioritize the underlying bitstream parameters, but conforming container
+metadata ensures correct thumbnail generation, hardware pipeline
+allocation, and rapid playback initialization across media
+frameworks.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

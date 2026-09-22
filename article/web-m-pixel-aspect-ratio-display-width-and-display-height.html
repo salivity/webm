@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Pixel Aspect Ratio DisplayWidth and DisplayHeight - webm</title>
+    <meta name="description" content="The WebM container format does not feature a dedicated, standalone metadata tag to define Pixel Aspect Ratio (PAR). Instead, WebM derives PAR indirectly through the relationship between encoded storage dimensions (PixelWidth and PixelHeight) and renderin">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-pixel-aspect-ratio-display-width-and-display-height">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Pixel Aspect Ratio DisplayWidth and DisplayHeight - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-pixel-aspect-ratio-display-width-and-display-height" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format does not feature a dedicated, standalone metadata tag to define Pixel Aspect Ratio (PAR). Instead, WebM derives PAR indirectly through the relationship between encoded storage dimensions (PixelWidth and PixelHeight) and renderin" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-pixel-aspect-ratio-displaywidth-and-displayheight">WebM
+Pixel Aspect Ratio DisplayWidth and DisplayHeight</h1>
+<p>The WebM container format does not feature a dedicated, standalone
+metadata tag to define Pixel Aspect Ratio (PAR). Instead, WebM derives
+PAR indirectly through the relationship between encoded storage
+dimensions (<code>PixelWidth</code> and <code>PixelHeight</code>) and
+rendering target dimensions (<code>DisplayWidth</code> and
+<code>DisplayHeight</code>). By defining the final intended Display
+Aspect Ratio (DAR) via these display elements, media players can
+calculate the exact pixel stretching required to present non-square
+pixels correctly on a display device.</p>
+<h2 id="the-webm-video-track-dimensions">The WebM Video Track
+Dimensions</h2>
+<p>WebM inherits its video track specifications from the Matroska (EBML)
+specification. Within a video track header (<code>TrackEntry</code>
+-&gt; <code>Video</code>), two pairs of elements dictate how the frame
+is stored and how it must be rendered:</p>
+<ul>
+<li><strong><code>PixelWidth</code> and
+<code>PixelHeight</code>:</strong> These unsigned integer elements
+represent the raw, encoded resolution of the video stream in actual
+pixels (Storage Aspect Ratio, or SAR).</li>
+<li><strong><code>DisplayWidth</code> and
+<code>DisplayHeight</code>:</strong> These unsigned integer elements
+define the intended spatial dimensions of the video when scaled for
+playback.</li>
+</ul>
+<p>By default, if <code>DisplayWidth</code> or
+<code>DisplayHeight</code> are omitted from the WebM header, playback
+engines assume they are equal to <code>PixelWidth</code> and
+<code>PixelHeight</code>, which results in a 1:1 square pixel aspect
+ratio.</p>
+<h2 id="calculating-par-from-display-elements">Calculating PAR from
+Display Elements</h2>
+<p>The Pixel Aspect Ratio represents the width-to-height ratio of an
+individual pixel. When video is encoded with non-square pixels (such as
+anamorphic NTSC or PAL DVD transfers), the storage resolution does not
+match the viewing aspect ratio.</p>
+<p>The relationship between Display Aspect Ratio (<span
+class="math inline">\(DAR\)</span>), Storage Aspect Ratio (<span
+class="math inline">\(SAR\)</span>), and Pixel Aspect Ratio (<span
+class="math inline">\(PAR\)</span>) is defined mathematically as:</p>
+<p><span class="math display">\[\text{DAR} = \text{SAR} \times
+\text{PAR}\]</span></p>
+<p>Because WebM provides the display dimensions and pixel dimensions
+directly, media players calculate the PAR using the following
+formula:</p>
+<p><span class="math display">\[\text{PAR} = \frac{\text{DisplayWidth}
+\times \text{PixelHeight}}{\text{DisplayHeight} \times
+\text{PixelWidth}}\]</span></p>
+<h3 id="practical-calculation-example">Practical Calculation
+Example</h3>
+<p>Consider an anamorphic standard-definition video encoded for
+widescreen playback:</p>
+<ul>
+<li><code>PixelWidth</code>: 720</li>
+<li><code>PixelHeight</code>: 480</li>
+<li><code>DisplayWidth</code>: 854</li>
+<li><code>DisplayHeight</code>: 480</li>
+</ul>
+<p>Using the calculation:</p>
+<p><span class="math display">\[\text{PAR} = \frac{854 \times 480}{480
+\times 720} = \frac{854}{720} \approx 1.186\]</span></p>
+<p>The player reads this container metadata and horizontally scales each
+horizontal pixel by a factor of roughly 1.186 during playback to display
+the full 16:9 picture without vertical compression.</p>
+<h2 id="the-role-of-the-displayunit-element">The Role of the DisplayUnit
+Element</h2>
+<p>The interpretation of <code>DisplayWidth</code> and
+<code>DisplayHeight</code> is governed by another optional element:
+<code>DisplayUnit</code>.</p>
+<ul>
+<li><strong>Value 0 (Pixels):</strong> This is the default setting.
+<code>DisplayWidth</code> and <code>DisplayHeight</code> indicate the
+preferred target resolution in pixels.</li>
+<li><strong>Value 1 (Centimeters):</strong> Defines physical display
+size in centimeters.</li>
+<li><strong>Value 2 (Inches):</strong> Defines physical display size in
+inches.</li>
+<li><strong>Value 3 (Display Aspect Ratio):</strong> Directs the demuxer
+to interpret the numbers in <code>DisplayWidth</code> and
+<code>DisplayHeight</code> purely as an aspect ratio fraction (for
+instance, <code>16</code> and <code>9</code>) rather than specific
+target pixel bounds.</li>
+</ul>
+<p>Regardless of whether <code>DisplayUnit</code> is set to
+<code>0</code> or <code>3</code>, the ratio between
+<code>DisplayWidth</code> and <code>DisplayHeight</code> remains the
+reference for calculating the necessary non-square pixel scaling.</p>
+<h2 id="container-vs-codec-precedence">Container vs. Codec
+Precedence</h2>
+<p>Codecs commonly encapsulated within WebM—such as VP8, VP9, and
+AV1—can also signal aspect ratio information inside their sequence
+headers. However, the WebM container specification mandates that
+container-level track properties take precedence over elementary
+bitstream headers. Demuxers and playback renderers rely on
+<code>DisplayWidth</code> and <code>DisplayHeight</code> in the EBML
+structure to override internal codec geometry, ensuring that pixel
+aspect ratio adjustments remain consistent across varying decoder
+implementations.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

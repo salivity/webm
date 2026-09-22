@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smooth Audio Resumption in Looping WebM Videos - webm</title>
+    <meta name="description" content="Unmuting a looping WebM video in a modern web browser requires complex coordination across media demuxers, audio decoders, and output renderers. This article examines the core mechanisms that prevent clicks, pops, and desynchronization during playback, s">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/smooth-audio-resumption-in-looping-web-m-videos">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Smooth Audio Resumption in Looping WebM Videos - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/smooth-audio-resumption-in-looping-web-m-videos" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Unmuting a looping WebM video in a modern web browser requires complex coordination across media demuxers, audio decoders, and output renderers. This article examines the core mechanisms that prevent clicks, pops, and desynchronization during playback, s" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="smooth-audio-resumption-in-looping-webm-videos">Smooth Audio
+Resumption in Looping WebM Videos</h1>
+<p>Unmuting a looping WebM video in a modern web browser requires
+complex coordination across media demuxers, audio decoders, and output
+renderers. This article examines the core mechanisms that prevent
+clicks, pops, and desynchronization during playback, specifically
+focusing on Presentation Timestamp (PTS) alignment, audio gain ramping,
+background clock synchronization, and loop boundary buffer
+management.</p>
+<h3 id="continuous-timestamp-synchronization">Continuous Timestamp
+Synchronization</h3>
+<p>The foundation of smooth unmuting is Presentation Timestamp (PTS)
+synchronization. WebM containers—built on a subset of the Matroska
+format—store audio (typically Opus or Vorbis) and video (VP8, VP9, or
+AV1) in separate elementary streams with interleaved
+<code>SimpleBlock</code> or <code>BlockGroup</code> structures. Each
+block carries an explicit timestamp relative to its parent cluster.</p>
+<p>When a video element plays while muted, the media engine does not
+simply discard the audio track's timeline. Instead, it tracks the global
+media clock driven by the video frame timestamps. When the
+<code>muted</code> attribute changes from <code>true</code> to
+<code>false</code>, the media pipeline immediately maps the current
+video display time to the corresponding audio PTS, ensuring playback
+starts at the exact millisecond matching the visible frame.</p>
+<h3 id="audio-gain-ramping-de-clicking">Audio Gain Ramping
+(De-Clicking)</h3>
+<p>Instantly switching an audio output from complete silence to full
+amplitude causes an abrupt waveform discontinuity. This results in an
+audible transient spike, commonly heard as an unpleasant "pop" or
+"click."</p>
+<p>To prevent this, modern browser audio engines (such as Chromium’s
+<code>AudioRendererImpl</code> and WebKit’s audio sink) implement
+automated gain ramping:</p>
+<ul>
+<li><strong>Micro-Fades:</strong> When unmuting occurs, the audio mixer
+applies a rapid linear or S-curve gain ramp (typically between 5 and 20
+milliseconds) starting from zero amplitude to the target volume.</li>
+<li><strong>Zero-Crossing Detection:</strong> Where applicable, hardware
+and software buffers attempt to apply gain adjustments at or near
+zero-crossing points in the audio wave to minimize harmonic
+distortion.</li>
+</ul>
+<h3 id="preroll-and-background-buffer-management">Preroll and Background
+Buffer Management</h3>
+<p>Browsers handle muted media streams in one of two ways depending on
+resource constraints and power-saving profiles:</p>
+<ol type="1">
+<li><strong>Continuous Decoding:</strong> The browser demuxes and
+decodes the audio packets continuously, passing the PCM samples through
+the pipeline but applying a zero-gain multiplier at the final mixing
+stage. This provides zero-latency resumption because the audio buffer is
+already populated and aligned.</li>
+<li><strong>On-Demand Demuxing with Fast Preroll:</strong> If the
+browser suspended audio decoding to save CPU cycles while muted,
+unmuting triggers a rapid seek-and-decode operation. The demuxer reads
+backward to the nearest Opus audio packet boundary, rapidly decodes the
+preroll frames (discarding their output to prime the decoder's internal
+state), and fills the playback ring buffer before output begins.</li>
+</ol>
+<h3 id="seamless-loop-boundary-transitions">Seamless Loop Boundary
+Transitions</h3>
+<p>Looping media introduces the risk of buffer underrun when the video
+reaches its end and returns to timestamp <code>00:00:00.000</code>. WebM
+handles this using gapless metadata and container-level cue points:</p>
+<ul>
+<li><strong>Opus Codec Delay and Discard:</strong> The WebM container
+specifies <code>CodecDelay</code> and <code>SeekPreRoll</code>. When
+looping, the audio decoder discards the initial codec delay padding at
+the loop start to prevent introducing millisecond-level silences.</li>
+<li><strong>Dual-Buffer Swapping:</strong> The media engine loads the
+initial audio clusters of the WebM file into memory while the current
+loop iteration completes. As the playback clock crosses the file
+duration boundary, the audio sink crossfades or seamlessly stitches the
+start buffer to the end buffer, keeping the audio clock synchronized
+even if unmuted precisely at the loop inflection point.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

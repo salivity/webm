@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set WebM Audio Track Language with mkvmerge - webm</title>
+    <meta name="description" content="This guide explains how to specify and modify the audio track language when muxing or remuxing WebM files using mkvmerge. By utilizing the --language command-line option alongside track identifiers and standard language codes, you can ensure that media p">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/set-web-m-audio-track-language-with-mkvmerge">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Set WebM Audio Track Language with mkvmerge - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/set-web-m-audio-track-language-with-mkvmerge" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This guide explains how to specify and modify the audio track language when muxing or remuxing WebM files using mkvmerge. By utilizing the --language command-line option alongside track identifiers and standard language codes, you can ensure that media p" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="set-webm-audio-track-language-with-mkvmerge">Set WebM Audio
+Track Language with mkvmerge</h1>
+<p>This guide explains how to specify and modify the audio track
+language when muxing or remuxing WebM files using <code>mkvmerge</code>.
+By utilizing the <code>--language</code> command-line option alongside
+track identifiers and standard language codes, you can ensure that media
+players recognize and select the correct audio stream automatically.</p>
+<h2 id="the-primary-command-line-option">The Primary Command-Line
+Option</h2>
+<p>The primary option for defining a track's language in
+<code>mkvmerge</code> is:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">--language</span> <span class="op">&lt;</span>TID<span class="op">&gt;</span>:<span class="op">&lt;</span>language-code<span class="op">&gt;</span></span></code></pre></div>
+<ul>
+<li><strong><code>&lt;TID&gt;</code> (Track ID):</strong> The numerical
+identifier of the track you want to modify (e.g., <code>0</code>,
+<code>1</code>, <code>2</code>).</li>
+<li><strong><code>&lt;language-code&gt;</code>:</strong> An ISO 639-2
+three-letter code (e.g., <code>eng</code>, <code>fre</code>,
+<code>ger</code>, <code>jpn</code>) or a BCP 47 / RFC 5646 language tag
+(e.g., <code>en-US</code>, <code>es-ES</code>).</li>
+</ul>
+<hr />
+<h2 id="step-by-step-usage">Step-by-Step Usage</h2>
+<h3 id="1-identify-the-track-id">1. Identify the Track ID</h3>
+<p>Before setting the language, determine the ID of the audio track
+within your source file using the identification flag:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-i</span> input.webm</span></code></pre></div>
+<p><strong>Example Output:</strong></p>
+<pre class="text"><code>File &#39;input.webm&#39;: container: WebM
+Track ID 0: video (VP9)
+Track ID 1: audio (Opus)</code></pre>
+<p>In this example, the audio track ID is <code>1</code>.</p>
+<hr />
+<h3 id="2-set-the-language-flag">2. Set the Language Flag</h3>
+<p>Run <code>mkvmerge</code> with the <code>-o</code> (output) option
+and the <code>--language</code> flag targeting the audio track ID:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> output.webm <span class="at">--language</span> 1:eng input.webm</span></code></pre></div>
+<hr />
+<h2 id="common-use-cases">Common Use Cases</h2>
+<h3
+id="setting-language-when-merging-separate-video-and-audio-files">Setting
+Language When Merging Separate Video and Audio Files</h3>
+<p>When combining a standalone WebM video file and a separate audio file
+(e.g., Opus or Vorbis), the track ID references the position in the
+specific input file it follows.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> final.webm video.webm <span class="at">--language</span> 0:spa audio.opus</span></code></pre></div>
+<h3 id="setting-multiple-audio-track-languages">Setting Multiple Audio
+Track Languages</h3>
+<p>If you are packaging a WebM container with multiple audio streams,
+apply the <code>--language</code> flag for each track:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> multilingual.webm video.webm <span class="at">--language</span> 0:eng english.opus <span class="at">--language</span> 0:jpn japanese.opus</span></code></pre></div>
+<h3 id="setting-default-and-forced-flags">Setting Default and Forced
+Flags</h3>
+<p>To specify an audio track as the default or forced track alongside
+the language tag, combine <code>--language</code> with
+<code>--default-track-flag</code> or
+<code>--forced-display-flag</code>:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> output.webm <span class="at">--language</span> 1:eng <span class="at">--default-track-flag</span> 1:yes input.webm</span></code></pre></div>
+<hr />
+<h2 id="webm-requirements-and-considerations">WebM Requirements and
+Considerations</h2>
+<ul>
+<li><strong>Supported Audio Codecs:</strong> WebM only supports
+<strong>Opus</strong> and <strong>Vorbis</strong> audio.
+<code>mkvmerge</code> will automatically enforce WebM-compliant muxing
+when the output filename ends with <code>.webm</code>.</li>
+<li><strong>Language Standards:</strong> MKVToolNix version 40.0.0 and
+newer defaults to IETF BCP 47 language tags while maintaining backward
+compatibility with standard ISO 639-2 codes.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

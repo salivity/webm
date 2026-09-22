@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Video Errors for Corrupted WebM Clusters - webm</title>
+    <meta name="description" content="When an HTML5 <video> element encounters a corrupted WebM cluster during playback, it halts media processing and dispatches a standard DOM error event. Because a corrupted cluster represents an inability to parse or decode valid container structures (EBM">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/html-5-video-errors-for-corrupted-web-m-clusters">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="HTML5 Video Errors for Corrupted WebM Clusters - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/html-5-video-errors-for-corrupted-web-m-clusters" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When an HTML5 <video> element encounters a corrupted WebM cluster during playback, it halts media processing and dispatches a standard DOM error event. Because a corrupted cluster represents an inability to parse or decode valid container structures (EBM" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="html5-video-errors-for-corrupted-webm-clusters">HTML5 Video
+Errors for Corrupted WebM Clusters</h1>
+<p>When an HTML5 <code>&lt;video&gt;</code> element encounters a
+corrupted WebM cluster during playback, it halts media processing and
+dispatches a standard DOM <code>error</code> event. Because a corrupted
+cluster represents an inability to parse or decode valid container
+structures (EBML) or media frames, the media engine flags this state by
+setting the element's <code>video.error</code> attribute to a
+<code>MediaError</code> object with the code
+<code>MEDIA_ERR_DECODE</code> (numeric value <code>3</code>).
+Understanding how this error surfaces, along with browser-specific
+diagnostic messages, enables developers to detect playback failures and
+implement proper recovery mechanisms.</p>
+<h3 id="the-primary-error-type-media_err_decode">The Primary Error Type:
+<code>MEDIA_ERR_DECODE</code></h3>
+<p>The HTML5 media specification defines four standard error codes on
+the <code>MediaError</code> interface:</p>
+<ol type="1">
+<li><code>MEDIA_ERR_ABORTED</code> (Code 1): Playback was aborted by the
+user agent.</li>
+<li><code>MEDIA_ERR_NETWORK</code> (Code 2): A network error caused
+playback to fail.</li>
+<li><code>MEDIA_ERR_DECODE</code> (Code 3): An error occurred while
+decoding the media resource after it was determined to be usable.</li>
+<li><code>MEDIA_ERR_SRC_NOT_SUPPORTED</code> (Code 4): The media format
+or MIME type is not supported.</li>
+</ol>
+<p>A WebM cluster contains the actual timing and media blocks (such as
+<code>SimpleBlock</code> or <code>BlockGroup</code> elements). If the
+cluster header, size descriptors, or inner payloads contain corrupted
+bytes, the browser's demuxer can no longer parse the Matroska/WebM
+structure or feed valid packets to the audio/video decoder. This failure
+directly triggers:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="at">error</span><span class="op">.</span><span class="at">code</span> <span class="op">===</span> <span class="bu">MediaError</span><span class="op">.</span><span class="at">MEDIA_ERR_DECODE</span><span class="op">;</span> <span class="co">// Evaluates to true (numeric code 3)</span></span></code></pre></div>
+<h3 id="extended-error-details-mediaerrormessage">Extended Error Details
+(<code>MediaError.message</code>)</h3>
+<p>While the W3C specification strictly categorizes container and stream
+decode failures under <code>MEDIA_ERR_DECODE</code>, modern browsers
+provide detailed strings via <code>video.error.message</code> to specify
+the exact parsing breakdown:</p>
+<ul>
+<li><strong>Chromium-based Browsers (Chrome, Edge):</strong> The
+pipeline outputs demuxer-specific errors, often represented as
+<code>DEMUXER_ERROR_COULD_NOT_PARSE</code> or
+<code>CHUNK_DEMUXER_ERROR_APPEND_FAILED</code>. In the case of severe
+EBML header corruption inside a cluster, Chromium logs pipeline errors
+such as <code>PIPELINE_ERROR_DECODE</code> with a subtext pointing to
+invalid WebM/Matroska parsing.</li>
+<li><strong>Mozilla Firefox:</strong> Firefox surfaces internal decode
+diagnostics, often referencing
+<code>NS_ERROR_DOM_MEDIA_DECODE_ERR</code> or specific Gecko Media
+Plugin (GMP) decoding faults pointing to corrupted container
+frames.</li>
+<li><strong>Safari:</strong> Safari relies on underlying AVFoundation
+and CoreMedia frameworks (when WebM playback is supported), exposing
+decode failure descriptions within the console and setting the error
+code to <code>3</code>.</li>
+</ul>
+<h3 id="media-source-extensions-mse-behavior">Media Source Extensions
+(MSE) Behavior</h3>
+<p>If the corrupted WebM is being delivered via Media Source Extensions
+(MSE) rather than a direct <code>src</code> URL:</p>
+<ol type="1">
+<li>Appending the corrupted cluster to a <code>SourceBuffer</code>
+triggers an <code>error</code> event directly on the
+<code>SourceBuffer</code> object.</li>
+<li>The <code>sourceBuffer.appendBuffer()</code> operation fails,
+throwing a <code>DecodeError</code> DOMException.</li>
+<li>The parent <code>MediaSource.readyState</code> transitions to
+<code>ended</code>.</li>
+<li>The parent <code>&lt;video&gt;</code> element subsequently fires its
+own <code>error</code> event, once again exposing
+<code>MediaError.MEDIA_ERR_DECODE</code>.</li>
+</ol>
+<h3 id="detecting-the-error-in-javascript">Detecting the Error in
+JavaScript</h3>
+<p>To programmatically detect and inspect a corrupted WebM cluster
+failure, listen for the <code>error</code> event on the media
+element:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> video <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">querySelector</span>(<span class="st">&#39;video&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>video<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;error&#39;</span><span class="op">,</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> mediaError <span class="op">=</span> video<span class="op">.</span><span class="at">error</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (mediaError <span class="op">&amp;&amp;</span> mediaError<span class="op">.</span><span class="at">code</span> <span class="op">===</span> <span class="bu">MediaError</span><span class="op">.</span><span class="at">MEDIA_ERR_DECODE</span>) {</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">&#39;Decoding failed: Corrupted WebM cluster or bitstream.&#39;</span>)<span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="vs">`Diagnostic details: </span><span class="sc">${</span>mediaError<span class="op">.</span><span class="at">message</span><span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<p>When this error occurs, playback cannot resume automatically. The
+application must handle the failure by reloading the stream, requesting
+an alternative bitrate/source, or skipping past the corrupted cluster
+timestamp.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

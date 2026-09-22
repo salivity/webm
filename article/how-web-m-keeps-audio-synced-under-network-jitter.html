@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Keeps Audio Synced Under Network Jitter - webm</title>
+    <meta name="description" content="Maintaining continuous audio-video alignment over unpredictable network connections is critical for media playback. The WebM container format, derived from Matroska (MKV), handles network jitter by leveraging granular presentation timestamps, independent">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-keeps-audio-synced-under-network-jitter">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Keeps Audio Synced Under Network Jitter - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-keeps-audio-synced-under-network-jitter" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Maintaining continuous audio-video alignment over unpredictable network connections is critical for media playback. The WebM container format, derived from Matroska (MKV), handles network jitter by leveraging granular presentation timestamps, independent" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-keeps-audio-synced-under-network-jitter">How WebM Keeps
+Audio Synced Under Network Jitter</h1>
+<p>Maintaining continuous audio-video alignment over unpredictable
+network connections is critical for media playback. The WebM container
+format, derived from Matroska (MKV), handles network jitter by
+leveraging granular presentation timestamps, independent stream
+packetization, and player-side jitter buffers. By synchronizing
+independent audio and video streams against a master playback clock
+rather than packet arrival times, WebM ensures that audio remains
+seamless and synchronized even when packets arrive out of order or with
+variable delay.</p>
+<h3 id="independent-presentation-timestamps-pts">Independent
+Presentation Timestamps (PTS)</h3>
+<p>At the core of WebM's synchronization mechanism are Presentation
+Timestamps embedded directly within the container's
+<code>SimpleBlock</code> and <code>BlockGroup</code> elements.</p>
+<ul>
+<li><strong>Granular Timecodes:</strong> WebM assigns a precise,
+millisecond-level (or sub-millisecond) timestamp to every individual
+audio and video frame relative to the cluster's base timecode.</li>
+<li><strong>Decoupled Delivery:</strong> Because the playback time is
+permanently encoded into the metadata of each block, the client does not
+rely on real-time packet arrival to determine when a frame should be
+rendered.</li>
+</ul>
+<h3 id="jitter-buffering-and-reordering">Jitter Buffering and
+Reordering</h3>
+<p>When network jitter causes packets to arrive erratically, client
+media engines (such as Web browsers using the HTML5
+<code>&lt;video&gt;</code> element or Media Source Extensions) implement
+a jitter buffer to reconstruct the stream:</p>
+<ol type="1">
+<li><strong>Packet Ingestion:</strong> Incoming WebM clusters and frames
+are temporarily held in a memory buffer.</li>
+<li><strong>Reordering and Assembly:</strong> The parser reads the
+container's timecodes to reorder any packets that arrived out of
+sequence.</li>
+<li><strong>Queue Management:</strong> The playback pipeline delays
+rendering by a fraction of a second to build a sufficient queue,
+smoothing out intermittent arrival gaps before feeding decoded data to
+the output devices.</li>
+</ol>
+<h3 id="audio-clock-as-the-master-reference">Audio Clock as the Master
+Reference</h3>
+<p>In WebM playback architectures, the audio renderer typically serves
+as the master clock:</p>
+<ul>
+<li><strong>Hardware Timing:</strong> Audio hardware processes sound
+continuously at fixed sample rates (e.g., 44.1 kHz or 48 kHz).
+Disruptions in audio are far more noticeable to the human ear than
+dropped video frames.</li>
+<li><strong>Video Frame Dropping and Stretching:</strong> If network
+jitter causes severe delays that starve the video buffer, the player
+continues to decode and play audio without interruption. Once late video
+frames arrive, the player compares their timestamps against the audio
+clock, dropping non-reference video frames (such as certain B-frames or
+non-keyframe P-frames in VP8/VP9/AV1) to instantly catch video up to the
+current audio position.</li>
+</ul>
+<h3 id="resiliency-in-real-time-streaming">Resiliency in Real-Time
+Streaming</h3>
+<p>When WebM is used in real-time contexts, such as WebRTC, audio and
+video streams are transmitted via RTP using distinct payload formats
+(typically Opus for audio and VP8/VP9/AV1 for video).</p>
+<p>The receiving client maps the RTP timestamps and RTCP Sender Reports
+back to the container’s reference timeline. If severe jitter causes a
+temporary packet loss in the audio stream, codecs like Opus apply Packet
+Loss Concealment (PLC) to generate synthetic audio for the missing
+duration, preserving the continuous audio timeline so video frames stay
+aligned once network conditions stabilize.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

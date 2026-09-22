@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libvpx Constrained Quality WebM Encoding - webm</title>
+    <meta name="description" content="Constrained-Quality (CQ) mode in WebM (VP8 and VP9) allows an encoder to adaptively lower the bitrate for simple scenes while maintaining a maximum quality ceiling and an upper bitrate limit. This article outlines the specific configuration struct parame">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/libvpx-constrained-quality-web-m-encoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Libvpx Constrained Quality WebM Encoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/libvpx-constrained-quality-web-m-encoding" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Constrained-Quality (CQ) mode in WebM (VP8 and VP9) allows an encoder to adaptively lower the bitrate for simple scenes while maintaining a maximum quality ceiling and an upper bitrate limit. This article outlines the specific configuration struct parame" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="libvpx-constrained-quality-webm-encoding">Libvpx Constrained
+Quality WebM Encoding</h1>
+<p>Constrained-Quality (CQ) mode in WebM (VP8 and VP9) allows an encoder
+to adaptively lower the bitrate for simple scenes while maintaining a
+maximum quality ceiling and an upper bitrate limit. This article
+outlines the specific configuration struct parameters and control
+identifiers in the libvpx C API required to enable and tune
+constrained-quality encoding.</p>
+<h3 id="1-rate-control-mode-rc_end_usage">1. Rate Control Mode
+(<code>rc_end_usage</code>)</h3>
+<p>To activate Constrained-Quality mode, you must configure the
+<code>rc_end_usage</code> field within the
+<code>vpx_codec_enc_cfg_t</code> configuration structure. Set this value
+to <code>VPX_CQ</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>vpx_codec_enc_cfg_t cfg<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>vpx_codec_enc_config_default<span class="op">(</span>vpx_codec_vp9_cx<span class="op">(),</span> <span class="op">&amp;</span>cfg<span class="op">,</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>cfg<span class="op">.</span>rc_end_usage <span class="op">=</span> VPX_CQ<span class="op">;</span></span></code></pre></div>
+<p>When set to <code>VPX_CQ</code>, the encoder targets a specific
+visual quality level but restricts the stream so it does not exceed the
+designated target bitrate.</p>
+<h3 id="2-cq-target-level-vp8e_set_cq_level">2. CQ Target Level
+(<code>VP8E_SET_CQ_LEVEL</code>)</h3>
+<p>The actual quality target is set using the
+<code>vpx_codec_control()</code> function with the
+<code>VP8E_SET_CQ_LEVEL</code> control ID. This parameter accepts an
+integer corresponding to the quantizer scale (ranging from 0 to 63):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>vpx_codec_control<span class="op">(&amp;</span>codec_ctx<span class="op">,</span> VP8E_SET_CQ_LEVEL<span class="op">,</span> cq_level_value<span class="op">);</span></span></code></pre></div>
+<ul>
+<li>Lower values produce higher visual quality and larger file
+sizes.</li>
+<li>Higher values produce lower quality and smaller file sizes.</li>
+<li>Typical values range between 15 and 35, depending on the visual
+fidelity requirements.</li>
+</ul>
+<h3 id="3-bitrate-limit-rc_target_bitrate">3. Bitrate Limit
+(<code>rc_target_bitrate</code>)</h3>
+<p>In CQ mode, the <code>rc_target_bitrate</code> parameter in
+<code>vpx_codec_enc_cfg_t</code> acts as an upper boundary rather than
+an absolute target. The encoder will attempt to deliver the quality set
+by <code>VP8E_SET_CQ_LEVEL</code> unless doing so requires a bitrate
+exceeding this value:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>cfg<span class="op">.</span>rc_target_bitrate <span class="op">=</span> <span class="dv">2000</span><span class="op">;</span> <span class="co">// Value defined in kilobits per second (kbps)</span></span></code></pre></div>
+<p>If complex scene motion causes the stream to surpass this bandwidth
+threshold, the encoder temporarily increases quantization (lowering
+quality) to respect the bitrate constraint.</p>
+<h3 id="4-quantizer-boundaries-rc_min_quantizer-and-rc_max_quantizer">4.
+Quantizer Boundaries (<code>rc_min_quantizer</code> and
+<code>rc_max_quantizer</code>)</h3>
+<p>To guarantee the quantizer remains within an acceptable operational
+range, configure <code>rc_min_quantizer</code> and
+<code>rc_max_quantizer</code> in <code>vpx_codec_enc_cfg_t</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>cfg<span class="op">.</span>rc_min_quantizer <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>   <span class="co">// Lowest permissible quantizer (highest quality)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>cfg<span class="op">.</span>rc_max_quantizer <span class="op">=</span> <span class="dv">63</span><span class="op">;</span>  <span class="co">// Highest permissible quantizer (lowest quality)</span></span></code></pre></div>
+<p>Setting these limits prevents the encoder from dropping quality below
+acceptable visual tolerances during high-action sequences or wasting
+bits on static frames.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

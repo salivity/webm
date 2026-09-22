@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Keeps Text Sharp in Screen Captures - webm</title>
+    <meta name="description" content="WebM preserves sharp, readable text in software screen captures through advanced compression mechanisms within its core codecs, VP9 and AV1. This article explains the technical compression methods—including flexible block partitioning, transform skip m">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-keeps-text-sharp-in-screen-captures">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Keeps Text Sharp in Screen Captures - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-keeps-text-sharp-in-screen-captures" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM preserves sharp, readable text in software screen captures through advanced compression mechanisms within its core codecs, VP9 and AV1. This article explains the technical compression methods—including flexible block partitioning, transform skip m" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-keeps-text-sharp-in-screen-captures">How WebM Keeps
+Text Sharp in Screen Captures</h1>
+<p>WebM preserves sharp, readable text in software screen captures
+through advanced compression mechanisms within its core codecs, VP9 and
+AV1. This article explains the technical compression methods—including
+flexible block partitioning, transform skip modes, palette prediction,
+full chroma subsampling, and adaptive loop filtering—that prevent edge
+bleeding, ringing artifacts, and blurring across digital user
+interfaces.</p>
+<h3 id="flexible-block-partitioning">Flexible Block Partitioning</h3>
+<p>Software interfaces contain large areas of uniform color mixed with
+tiny, intricate text elements. WebM codecs use flexible block
+partitioning (superblocks up to 64x64 in VP9 and 128x128 in AV1) that
+split recursively down to 4x4 blocks. Flat interface backgrounds are
+encoded efficiently using massive blocks with minimal data, freeing up
+bandwidth to allocate fine 4x4 and 8x8 sub-blocks directly around text
+characters to preserve sharp edges.</p>
+<h3 id="transform-skip-and-identity-transforms">Transform Skip and
+Identity Transforms</h3>
+<p>Standard video compression uses Discrete Cosine Transforms (DCT) to
+convert pixel data into frequency components, discarding high-frequency
+detail. On high-contrast edges like black text on white backgrounds,
+standard transforms produce "ringing artifacts" (halos around letters).
+VP9 and AV1 feature transform skip modes and identity transforms,
+allowing the encoder to bypass the frequency transform completely in
+areas with sharp, high-contrast boundaries. This encodes pixel values
+directly without edge distortion.</p>
+<h3 id="screen-content-tools-and-palette-mode">Screen Content Tools and
+Palette Mode</h3>
+<p>AV1 includes dedicated screen content coding tools tailored for
+digital displays. A key mechanism is Palette Mode, which operates
+similarly to indexed color formats like PNG. Instead of predicting
+continuous gradient values, the encoder identifies a small set of
+dominant colors (such as font color and background color) and encodes
+the pixels using a color index map. This eliminates gradient
+approximations and renders text characters with pixel-perfect
+accuracy.</p>
+<h3 id="444-chroma-subsampling-support">4:4:4 Chroma Subsampling
+Support</h3>
+<p>Most web video uses 4:2:0 chroma subsampling, which reduces color
+resolution by 75% compared to brightness. While unnoticeable in natural
+video, 4:2:0 causes colored text (such as syntax-highlighted code or
+hyperlinks) to blur severely. WebM supports Profile 1 in VP9 and
+Professional profiles in AV1, enabling full 4:4:4 chroma sampling. This
+ensures that colored fonts retain the exact same sharpness and edge
+resolution as grayscale text.</p>
+<h3 id="selective-in-loop-deblocking">Selective In-Loop Deblocking</h3>
+<p>Video codecs use deblocking and deringing filters to smooth out the
+block boundaries in compressed video. In screen captures, these filters
+mistakenly treat crisp character strokes as compression errors and
+smooth them out, creating muddy text. WebM encoders can selectively
+disable or reduce the intensity of in-loop filtering on high-contrast,
+fine-detailed blocks, ensuring the straight lines and sharp corners of
+typography remain completely intact.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM EBML Element ID VINT Encoding Rules - webm</title>
+    <meta name="description" content="This article provides an overview of the variable-length integer (VINT) encoding rules that govern Element IDs within WebM. As a subset of the Extensible Binary Meta Language (EBML), WebM utilizes specialized VINT structures to identify container element">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-ebml-element-id-vint-encoding-rules">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM EBML Element ID VINT Encoding Rules - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-ebml-element-id-vint-encoding-rules" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of the variable-length integer (VINT) encoding rules that govern Element IDs within WebM. As a subset of the Extensible Binary Meta Language (EBML), WebM utilizes specialized VINT structures to identify container element" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-ebml-element-id-vint-encoding-rules">WebM EBML Element ID
+VINT Encoding Rules</h1>
+<p>This article provides an overview of the variable-length integer
+(VINT) encoding rules that govern Element IDs within WebM. As a subset
+of the Extensible Binary Meta Language (EBML), WebM utilizes specialized
+VINT structures to identify container elements, metadata headers, and
+media clusters. The following sections detail the exact bit-level
+constraints, length limits, and uniqueness requirements applied
+specifically to Element IDs in WebM implementations.</p>
+<h2 id="preservation-of-the-length-descriptor">Preservation of the
+Length Descriptor</h2>
+<p>In standard EBML VINT encoding (such as for element data sizes), the
+length descriptor—consisting of zero or more leading zero bits followed
+by a terminating <code>1</code> bit—is stripped out to read the integer
+value.</p>
+<p>For Element IDs, this rule does not apply. The length descriptor bit
+pattern is preserved as an integral part of the Element ID itself. When
+parsers identify an element, the leading <code>0</code> bits and the
+marker <code>1</code> bit are included in the hexadecimal or numerical
+representation of the ID (e.g., the EBML Header ID is represented as
+<code>0x1A45DFA3</code>, retaining the <code>0001</code> prefix).</p>
+<h2 id="octet-length-limits-1-to-4-octets">Octet Length Limits (1 to 4
+Octets)</h2>
+<p>While EBML allows variable-length integers up to 8 octets in length,
+WebM strictly limits Element IDs to a range of 1 to 4 octets:</p>
+<ul>
+<li><strong>Class A (1 Octet):</strong> Starts with bit pattern
+<code>1xxxxxxx</code></li>
+<li><strong>Class B (2 Octets):</strong> Starts with bit pattern
+<code>01xxxxxx</code></li>
+<li><strong>Class C (3 Octets):</strong> Starts with bit pattern
+<code>001xxxxx</code></li>
+<li><strong>Class D (4 Octets):</strong> Starts with bit pattern
+<code>0001xxxx</code></li>
+</ul>
+<p>Any Element ID encoded using 5 or more octets is invalid in WebM and
+must be rejected by compliant demuxers.</p>
+<h2 id="bit-patterns-and-usable-ranges">Bit Patterns and Usable
+Ranges</h2>
+<p>The position of the first set bit (<code>1</code>) dictates the total
+byte length of the ID. The remaining bits serve as the payload:</p>
+<ul>
+<li><strong>1-Byte IDs:</strong> Bitmask <code>0x80</code>, usable
+payload of 7 bits. Raw range: <code>0x81</code> to
+<code>0xFE</code>.</li>
+<li><strong>2-Byte IDs:</strong> Bitmask <code>0x4000</code>, usable
+payload of 14 bits. Raw range: <code>0x407F</code> to
+<code>0x7FFE</code>.</li>
+<li><strong>3-Byte IDs:</strong> Bitmask <code>0x200000</code>, usable
+payload of 21 bits. Raw range: <code>0x203FFF</code> to
+<code>0x3FFFFE</code>.</li>
+<li><strong>4-Byte IDs:</strong> Bitmask <code>0x10000000</code>, usable
+payload of 28 bits. Raw range: <code>0x101FFFFF</code> to
+<code>0x1FFFFFFE</code>.</li>
+</ul>
+<h2 id="forbidden-and-reserved-values">Forbidden and Reserved
+Values</h2>
+<p>EBML VINT encoding forbids specific values from serving as valid
+Element IDs:</p>
+<ol type="1">
+<li><strong>All Data Bits Set to One:</strong> An Element ID whose data
+bits (excluding the length descriptor) are all set to <code>1</code> is
+reserved. Consequently, <code>0xFF</code>, <code>0x7FFF</code>,
+<code>0x3FFFFF</code>, and <code>0x1FFFFFFF</code> are invalid Element
+IDs.</li>
+<li><strong>All Zero Marker:</strong> An octet sequence beginning with
+eight <code>0</code> bits (<code>0x00</code>) cannot define a valid
+length descriptor and is strictly prohibited.</li>
+<li><strong>Empty Data Payload:</strong> Values containing only the VINT
+marker bit with all trailing data bits set to zero are reserved in
+certain classes to prevent collisions with legacy systems or empty
+masks.</li>
+</ol>
+<h2 id="fixed-length-representation-no-redundant-encoding">Fixed-Length
+Representation (No Redundant Encoding)</h2>
+<p>Element IDs in WebM do not permit canonical normalization through
+zero-padding. An Element ID assigned a shorter length cannot be padded
+with leading zeros into a longer VINT format. For example, a 1-octet
+Element ID such as <code>0x81</code> cannot be encoded as a 2-octet
+sequence <code>0x4081</code>. Each defined WebM element has a fixed,
+immutable octet size defined directly by its specification.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

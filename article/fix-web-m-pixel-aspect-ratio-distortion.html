@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix WebM Pixel Aspect Ratio Distortion - webm</title>
+    <meta name="description" content="Non-standard Pixel Aspect Ratio (PAR) distortion occurs when a WebM video displays stretched or squished because the playback software assumes square pixels (1:1 PAR) instead of the intended non-square aspect ratio. This guide explains how to detect PAR">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/fix-web-m-pixel-aspect-ratio-distortion">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Fix WebM Pixel Aspect Ratio Distortion - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/fix-web-m-pixel-aspect-ratio-distortion" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Non-standard Pixel Aspect Ratio (PAR) distortion occurs when a WebM video displays stretched or squished because the playback software assumes square pixels (1:1 PAR) instead of the intended non-square aspect ratio. This guide explains how to detect PAR" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="fix-webm-pixel-aspect-ratio-distortion">Fix WebM Pixel Aspect
+Ratio Distortion</h1>
+<p>Non-standard Pixel Aspect Ratio (PAR) distortion occurs when a WebM
+video displays stretched or squished because the playback software
+assumes square pixels (1:1 PAR) instead of the intended non-square
+aspect ratio. This guide explains how to detect PAR discrepancies using
+tools like MediaInfo and FFmpeg, and provides step-by-step methods to
+fix the distortion by either altering metadata flags without quality
+loss or re-encoding the video to standard square pixels for universal
+web compatibility.</p>
+<h2 id="understanding-pixel-aspect-ratio-par-in-webm">Understanding
+Pixel Aspect Ratio (PAR) in WebM</h2>
+<p>Video geometry relies on three core values:</p>
+<ul>
+<li><strong>Storage Aspect Ratio (SAR):</strong> The raw pixel
+dimensions (width x height) stored in the file.</li>
+<li><strong>Pixel Aspect Ratio (PAR):</strong> The shape of an
+individual pixel (width:height ratio). Standard digital video uses
+square pixels (1:1), whereas legacy formats (like DVD or anamorphic
+captures) often use rectangular pixels.</li>
+<li><strong>Display Aspect Ratio (DAR):</strong> The final intended
+viewing dimension, calculated as <span class="math inline">\(\text{DAR}
+= \text{SAR} \times \text{PAR}\)</span>.</li>
+</ul>
+<p>Web browsers and HTML5 <code>&lt;video&gt;</code> players frequently
+ignore non-square PAR metadata inside WebM containers, forcing a 1:1
+pixel rendering. This results in noticeable horizontal or vertical
+distortion.</p>
+<h2 id="how-to-identify-non-standard-par">How to Identify Non-Standard
+PAR</h2>
+<h3 id="method-1-using-ffmpeg-ffprobe">Method 1: Using FFmpeg
+(ffprobe)</h3>
+<p>Run the following command in your terminal to inspect the video
+stream metadata:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> <span class="at">-v</span> error <span class="at">-select_streams</span> v:0 <span class="at">-show_entries</span> stream=width,height,sample_aspect_ratio,display_aspect_ratio input.webm</span></code></pre></div>
+<p><strong>Output Analysis:</strong></p>
+<ul>
+<li>If <code>sample_aspect_ratio=1:1</code> or <code>N/A</code>, the
+file uses standard square pixels.</li>
+<li>If <code>sample_aspect_ratio</code> is anything other than
+<code>1:1</code> (e.g., <code>40:33</code>, <code>32:27</code>, or
+<code>8:9</code>), the file contains non-standard PAR and will distort
+in players that do not support anamorphic playback.</li>
+</ul>
+<h3 id="method-2-using-mediainfo">Method 2: Using MediaInfo</h3>
+<p>Open the WebM file in MediaInfo and inspect the
+<strong>Video</strong> section:</p>
+<ul>
+<li>Look at <strong>Original display aspect ratio</strong> versus
+<strong>Display aspect ratio</strong>.</li>
+<li>Look at <strong>Pixel aspect ratio</strong>. A value other than
+<code>1.000</code> indicates non-square pixels.</li>
+</ul>
+<hr />
+<h2 id="how-to-fix-webm-par-distortion">How to Fix WebM PAR
+Distortion</h2>
+<h3
+id="method-1-re-encode-to-standard-square-pixels-universal-fix">Method
+1: Re-encode to Standard Square Pixels (Universal Fix)</h3>
+<p>The most reliable solution for the web is re-encoding the video so
+the pixel data itself matches the intended display dimensions with a 1:1
+PAR.</p>
+<p>Use FFmpeg with the <code>scale</code> and <code>setsar</code>
+filters:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-vf</span> <span class="st">&quot;scale=iw*sar:ih,setsar=1&quot;</span> <span class="at">-c:v</span> libvpx-vp9 <span class="at">-b:v</span> 0 <span class="at">-crf</span> 30 <span class="at">-c:a</span> copy output.webm</span></code></pre></div>
+<ul>
+<li><code>scale=iw*sar:ih</code> scales the image horizontally to match
+the display aspect ratio.</li>
+<li><code>setsar=1</code> sets the pixel aspect ratio explicitly to 1:1
+(square).</li>
+<li><code>-c:v libvpx-vp9 -crf 30 -b:v 0</code> re-encodes the stream
+using VP9 with standard quality-based variable bitrate.</li>
+<li><code>-c:a copy</code> copies the audio stream without
+re-encoding.</li>
+</ul>
+<p>If you need a specific target resolution (e.g., standard 1080p,
+16:9):</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-vf</span> <span class="st">&quot;scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1&quot;</span> <span class="at">-c:v</span> libvpx-vp9 <span class="at">-crf</span> 30 <span class="at">-b:v</span> 0 <span class="at">-c:a</span> copy output.webm</span></code></pre></div>
+<hr />
+<h3 id="method-2-lossless-display-flag-correction-remuxing">Method 2:
+Lossless Display Flag Correction (Remuxing)</h3>
+<p>If your target player respects Matroska/WebM container display
+dimension flags, you can modify the display width and height without
+re-encoding the video stream.</p>
+<h4 id="using-mkvmerge-from-mkvtoolnix">Using <code>mkvmerge</code>
+(from MKVToolNix):</h4>
+<ol type="1">
+<li>Determine the target display resolution (e.g., <span
+class="math inline">\(720 \times 480\)</span> with a 16:9 DAR should
+display at <span class="math inline">\(854 \times 480\)</span>).</li>
+<li>Run <code>mkvpropedit</code> or <code>mkvmerge</code> to set the
+display dimensions:</li>
+</ol>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> output.webm <span class="at">--display-dimensions</span> 0:854x480 input.webm</span></code></pre></div>
+<h4 id="using-ffmpeg-lossless-remux">Using FFmpeg (Lossless Remux):</h4>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-c</span> copy <span class="at">-aspect</span> 16:9 output.webm</span></code></pre></div>
+<p><em>Note: While remuxing is instantaneous and preserves 100% of
+original quality, some web browsers and mobile platforms may still
+ignore container-level aspect ratio flags. For guaranteed web
+compatibility, re-encoding to 1:1 PAR (Method 1) is
+recommended.</em></p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

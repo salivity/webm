@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Void Elements for Inplace Header Updating - webm</title>
+    <meta name="description" content="In WebM and its underlying Extensible Binary Meta Language (EBML) specification, Void elements (0xEC) serve as placeholders to reserve space for metadata that is only known after encoding completes, such as total segment duration, seek heads, or cue poin">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-void-elements-for-inplace-header-updating">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Void Elements for Inplace Header Updating - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-void-elements-for-inplace-header-updating" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In WebM and its underlying Extensible Binary Meta Language (EBML) specification, Void elements (0xEC) serve as placeholders to reserve space for metadata that is only known after encoding completes, such as total segment duration, seek heads, or cue poin" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-void-elements-for-inplace-header-updating">WebM Void
+Elements for Inplace Header Updating</h1>
+<p>In WebM and its underlying Extensible Binary Meta Language (EBML)
+specification, Void elements (<code>0xEC</code>) serve as placeholders
+to reserve space for metadata that is only known after encoding
+completes, such as total segment duration, seek heads, or cue points.
+This mechanism enables in-place updating of headers without requiring a
+complete rewrite of the media container, which is critical for
+single-pass encoders and live-to-file pipelines. Several structural,
+size, and encoding parameters dictate how these Void elements must be
+reserved, sized, and replaced.</p>
+<h3 id="minimum-element-footprint">Minimum Element Footprint</h3>
+<p>An EBML Void element consists of an Element ID, a variable-length
+data size descriptor (VINT), and the payload (padding bytes). The
+element ID for Void is <code>0xEC</code> (1 byte). The smallest valid
+VINT encoding requires 1 byte. Consequently, the minimum footprint of
+any Void element is 2 bytes (a 1-byte ID followed by a 1-byte size
+indicator with a value of <code>0x00</code>). When reserving space for
+header data, the reserved area must account for both the target
+metadata’s payload and its EBML header overhead.</p>
+<h3 id="residual-space-handling-and-the-1-byte-boundary">Residual Space
+Handling and the 1-Byte Boundary</h3>
+<p>When updating headers in place, the replacement data rarely matches
+the reserved Void space down to the exact byte. The remaining space must
+be handled according to strict EBML sizing constraints:</p>
+<ul>
+<li><strong>Residual Void Creation:</strong> If the unused space is 2
+bytes or greater, a new, smaller Void element must be constructed to
+occupy the leftover bytes.</li>
+<li><strong>The 1-Byte Remainder Issue:</strong> Because the minimum
+valid Void element requires 2 bytes, a leftover space of exactly 1 byte
+cannot be converted into an independent Void element.</li>
+</ul>
+<h3 id="vint-padding-and-octet-expansion">VINT Padding and Octet
+Expansion</h3>
+<p>To resolve potential 1-byte gaps or fine-tune alignments without
+leaving invalid dangling bytes, implementations must manipulate the VINT
+widths of the replacement elements:</p>
+<ul>
+<li>EBML permits data size descriptors to be encoded with arbitrary
+lengths (up to 8 bytes), even if the numerical value could fit within a
+smaller byte representation.</li>
+<li>An encoder can artificially widen the VINT of the replacement
+element or one of its child elements (e.g., expanding a 1-byte length
+descriptor to 2 or more bytes by prefixing zero bits) to absorb leftover
+single-byte discrepancies. This ensures the replacement element and any
+subsequent residual Void element cleanly cover the exact footprint of
+the original placeholder.</li>
+</ul>
+<h3 id="placement-and-structural-boundaries">Placement and Structural
+Boundaries</h3>
+<p>Void elements are valid inside any Master element where arbitrary
+EBML child elements are permitted. For in-place header updating,
+parameters governing placement include:</p>
+<ul>
+<li><strong>Container Scope:</strong> The placeholder Void must exist
+within the same parent Master element (typically the
+<code>Segment</code> element) as the header fields it will eventually
+contain. It cannot straddle the boundary of another element.</li>
+<li><strong>Ordering Requirements:</strong> While EBML permits Void
+elements almost anywhere, WebM guidelines recommend that critical
+informational elements—specifically the <code>Info</code> and
+<code>Tracks</code> elements—appear near the front of the file. The
+reserved Void must be positioned before the first <code>Cluster</code>
+to ensure streaming clients can parse seeking tables and track
+information immediately upon opening the file.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

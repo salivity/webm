@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embed Custom Metadata in WebM Files with MKVToolNix - webm</title>
+    <meta name="description" content="Embedding custom metadata tags into WebM files allows you to organize media libraries, add licensing information, and specify track details without altering the underlying video or audio streams. Because the WebM format is a specialized subset of the Mat">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/embed-custom-metadata-in-web-m-files-with-mkv-tool-nix">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Embed Custom Metadata in WebM Files with MKVToolNix - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/embed-custom-metadata-in-web-m-files-with-mkv-tool-nix" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Embedding custom metadata tags into WebM files allows you to organize media libraries, add licensing information, and specify track details without altering the underlying video or audio streams. Because the WebM format is a specialized subset of the Mat" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="embed-custom-metadata-in-webm-files-with-mkvtoolnix">Embed
+Custom Metadata in WebM Files with MKVToolNix</h1>
+<p>Embedding custom metadata tags into WebM files allows you to organize
+media libraries, add licensing information, and specify track details
+without altering the underlying video or audio streams. Because the WebM
+format is a specialized subset of the Matroska (MKV) container
+specification, the MKVToolNix suite can directly read and write metadata
+to WebM files. This guide demonstrates how to create a compliant XML tag
+file and write custom metadata tags directly into WebM containers using
+MKVToolNix command-line tools.</p>
+<h3 id="1-create-the-xml-metadata-file">1. Create the XML Metadata
+File</h3>
+<p>MKVToolNix uses a structured XML format to define custom and standard
+metadata tags. Create a new text file named <code>tags.xml</code> and
+define your custom tags using the Matroska XML tagging structure:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode xml"><code class="sourceCode xml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;?xml</span> <span class="ot">version=</span><span class="st">&quot;1.0&quot;</span> <span class="ot">encoding=</span><span class="st">&quot;UTF-8&quot;</span><span class="fu">?&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;!DOCTYPE</span> <span class="dt">Tags</span> SYSTEM &quot;matroskatags.dtd&quot;<span class="dt">&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">Tags</span>&gt;</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">Tag</span>&gt;</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">Targets</span>&gt;</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>      <span class="co">&lt;!-- TargetTypeValue 50 applies tags globally to the entire movie/file --&gt;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">TargetTypeValue</span>&gt;50&lt;/<span class="kw">TargetTypeValue</span>&gt;</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">Targets</span>&gt;</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">Name</span>&gt;TITLE&lt;/<span class="kw">Name</span>&gt;</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">String</span>&gt;Sample WebM Video&lt;/<span class="kw">String</span>&gt;</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">Name</span>&gt;ARTIST&lt;/<span class="kw">Name</span>&gt;</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">String</span>&gt;Jane Doe&lt;/<span class="kw">String</span>&gt;</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">Name</span>&gt;CUSTOM_TAG_NAME&lt;/<span class="kw">Name</span>&gt;</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">String</span>&gt;Custom Tag Value&lt;/<span class="kw">String</span>&gt;</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">Name</span>&gt;LICENSE&lt;/<span class="kw">Name</span>&gt;</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>      &lt;<span class="kw">String</span>&gt;Creative Commons Attribution 4.0&lt;/<span class="kw">String</span>&gt;</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">Simple</span>&gt;</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">Tag</span>&gt;</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">Tags</span>&gt;</span></code></pre></div>
+<h3 id="2-embed-metadata-in-place-using-mkvpropedit">2. Embed Metadata
+In-Place Using <code>mkvpropedit</code></h3>
+<p>The fastest way to embed metadata into an existing WebM file without
+re-muxing is using <code>mkvpropedit</code>. This tool modifies the WebM
+header directly.</p>
+<p>Run the following command in your terminal:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvpropedit</span> <span class="st">&quot;input.webm&quot;</span> <span class="at">--tags</span> global:<span class="st">&quot;tags.xml&quot;</span></span></code></pre></div>
+<p>To replace or set track-specific metadata (such as tagging an audio
+or video stream specifically), target the track number:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvpropedit</span> <span class="st">&quot;input.webm&quot;</span> <span class="at">--tags</span> track:v1:<span class="st">&quot;tags.xml&quot;</span></span></code></pre></div>
+<h3 id="3-embed-metadata-during-muxing-using-mkvmerge">3. Embed Metadata
+During Muxing Using <code>mkvmerge</code></h3>
+<p>If you are assembling a WebM file from separate streams or wish to
+output a new file rather than editing in-place, use
+<code>mkvmerge</code>:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvmerge</span> <span class="at">-o</span> <span class="st">&quot;output.webm&quot;</span> <span class="at">--global-tags</span> <span class="st">&quot;tags.xml&quot;</span> <span class="st">&quot;input.webm&quot;</span></span></code></pre></div>
+<h3 id="4-verify-the-embedded-tags">4. Verify the Embedded Tags</h3>
+<p>To verify that the custom tags have been successfully written to the
+WebM container, inspect the file using <code>mkvinfo</code> or the
+MKVToolNix GUI:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkvinfo</span> <span class="st">&quot;input.webm&quot;</span></span></code></pre></div>
+<p>The output will display the tag elements, their target levels, and
+the associated key-value pairs stored within the WebM container.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

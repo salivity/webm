@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate-Distortion Cost Math in WebM Motion Search - webm</title>
+    <meta name="description" content="During the motion search phase of WebM codecs (principally VP8 and VP9 via libvpx), the encoder decides the optimal motion vector by evaluating candidate displacement vectors against a Rate-Distortion (RD) cost function. This process uses Lagrangian opti">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/rate-distortion-cost-math-in-web-m-motion-search">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rate-Distortion Cost Math in WebM Motion Search - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/rate-distortion-cost-math-in-web-m-motion-search" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="During the motion search phase of WebM codecs (principally VP8 and VP9 via libvpx), the encoder decides the optimal motion vector by evaluating candidate displacement vectors against a Rate-Distortion (RD) cost function. This process uses Lagrangian opti" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="rate-distortion-cost-math-in-webm-motion-search">Rate-Distortion
+Cost Math in WebM Motion Search</h1>
+<p>During the motion search phase of WebM codecs (principally VP8 and
+VP9 via <code>libvpx</code>), the encoder decides the optimal motion
+vector by evaluating candidate displacement vectors against a
+Rate-Distortion (RD) cost function. This process uses Lagrangian
+optimization to balance prediction fidelity against the bit budget
+needed to transmit motion data. The encoder minimizes a cost function
+<span class="math inline">\(J\)</span> composed of an error metric
+(Distortion), an entropy estimate (Rate), and a Lagrange multiplier
+derived from the frame's quantization parameter.</p>
+<h3 id="the-lagrangian-cost-function">The Lagrangian Cost Function</h3>
+<p>The primary formula executed during motion estimation is:</p>
+<p><span class="math display">\[J(\mathbf{v}) = D(\mathbf{v}) +
+\lambda_{\text{motion}} \cdot R(\mathbf{v} -
+\mathbf{v}_{\text{pred}})\]</span></p>
+<ul>
+<li><span class="math inline">\(J(\mathbf{v})\)</span> represents the
+total motion-search RD cost for a candidate motion vector <span
+class="math inline">\(\mathbf{v} = (v_x, v_y)\)</span>.</li>
+<li><span class="math inline">\(D(\mathbf{v})\)</span> represents the
+distortion between the source block and the motion-compensated reference
+block.</li>
+<li><span class="math inline">\(R(\mathbf{v} -
+\mathbf{v}_{\text{pred}})\)</span> represents the estimated number of
+bits required to encode the motion vector difference (MVD).</li>
+<li><span class="math inline">\(\lambda_{\text{motion}}\)</span>
+represents the Lagrange multiplier that weights rate against
+distortion.</li>
+</ul>
+<h3 id="1-distortion-metrics-d">1. Distortion Metrics (<span
+class="math inline">\(D\)</span>)</h3>
+<p>Depending on the search stage—coarse integer-pixel search,
+fractional-pixel search, or final mode evaluation—WebM encoders use one
+of three primary distortion calculations.</p>
+<p><strong>Sum of Absolute Differences (SAD):</strong> Used in
+early-stage integer motion estimation for computational efficiency:</p>
+<p><span class="math display">\[\text{SAD}(\mathbf{v}) =
+\sum_{y=0}^{N-1} \sum_{x=0}^{M-1} |S(x, y) - R(x + v_x, y +
+v_y)|\]</span></p>
+<p>where <span class="math inline">\(S(x,y)\)</span> is the current
+block sample, <span class="math inline">\(R\)</span> is the reference
+frame buffer, and <span class="math inline">\(M \times N\)</span> is the
+block dimension (e.g., <span class="math inline">\(16 \times
+16\)</span>, <span class="math inline">\(8 \times 8\)</span>).</p>
+<p><strong>Sum of Absolute Transformed Differences (SATD):</strong> Used
+during sub-pel refinement to better correlate with frequency-domain
+residual coding without computing a full discrete cosine transform:</p>
+<p><span class="math display">\[\text{SATD}(\mathbf{v}) = \frac{1}{2}
+\sum_{u, v} |H \cdot (S - R_{\mathbf{v}}) \cdot H^T|\]</span></p>
+<p>where <span class="math inline">\(H\)</span> is a normalized
+Walsh-Hadamard transform matrix applied to residual differences.</p>
+<p><strong>Sum of Squared Errors (SSE):</strong> Used in full
+rate-distortion optimization (RDO) stages:</p>
+<p><span class="math display">\[\text{SSE}(\mathbf{v}) =
+\sum_{y=0}^{N-1} \sum_{x=0}^{M-1} (S(x, y) - R(x + v_x, y +
+v_y))^2\]</span></p>
+<h3 id="2-motion-vector-rate-calculation-r">2. Motion Vector Rate
+Calculation (<span class="math inline">\(R\)</span>)</h3>
+<p>WebM codecs transmit motion vectors differentially relative to a
+predicted motion vector (<span
+class="math inline">\(\mathbf{v}_{\text{pred}}\)</span>) generated from
+neighboring spatial or temporal blocks.</p>
+<p>The motion vector difference (MVD) is calculated component-wise:</p>
+<p><span class="math display">\[\Delta v_x = v_x - v_{\text{pred},
+x}\]</span> <span class="math display">\[\Delta v_y = v_y -
+v_{\text{pred}, y}\]</span></p>
+<p>The rate cost is the sum of bits required to encode both residual
+components through the codec's entropy engine (tree probabilities in
+VP8, or non-stationary context models in VP9):</p>
+<p><span class="math display">\[R(\mathbf{v} - \mathbf{v}_{\text{pred}})
+= \text{Cost}_{x}(\Delta v_x) + \text{Cost}_{y}(\Delta v_y)\]</span></p>
+<p>In <code>libvpx</code>, these bit counts are pre-calculated into
+lookup tables based on the Shannon entropy of the syntax trees:</p>
+<p><span class="math display">\[\text{Cost}(\Delta v) = -\sum_{i}
+\log_2(P(\text{bit}_i))\]</span></p>
+<p>where <span class="math inline">\(P(\text{bit}_i)\)</span> is the
+context-dependent probability of each decision bit traversing the tree
+to encode the sign, magnitude class, and fractional offsets of the
+vector delta.</p>
+<h3 id="3-the-lagrange-multiplier-lambda">3. The Lagrange Multiplier
+(<span class="math inline">\(\lambda\)</span>)</h3>
+<p>The trade-off factor <span
+class="math inline">\(\lambda_{\text{motion}}\)</span> controls the
+stringency of the rate penalty. It is directly tied to the frame-level
+Quantization Parameter (<span class="math inline">\(Q\)</span> or <span
+class="math inline">\(qindex \in [0, 255]\)</span>).</p>
+<p>For squared error distortion (SSE), the theoretical relationship
+between the mode-selection multiplier <span
+class="math inline">\(\lambda_{\text{mode}}\)</span> and the
+quantization step size <span class="math inline">\(\Delta_Q\)</span>
+is:</p>
+<p><span class="math display">\[\lambda_{\text{mode}} = c \cdot
+\Delta_Q^2\]</span></p>
+<p>Because fast motion estimation uses absolute difference metrics
+(SAD/SATD) rather than squared differences, the metric scale is linear
+rather than quadratic. Therefore, the motion search multiplier relates
+to <span class="math inline">\(\lambda_{\text{mode}}\)</span> by the
+square root:</p>
+<p><span class="math display">\[\lambda_{\text{motion}} \propto
+\sqrt{\lambda_{\text{mode}}} \propto \Delta_Q\]</span></p>
+<p>In implementation, <code>libvpx</code> maps the active <span
+class="math inline">\(qindex\)</span> to fixed-point integer lookup
+tables:</p>
+<p><span class="math display">\[\lambda_{\text{motion}} =
+\text{vp9\_sad\_per\_bit\_lut}[qindex]\]</span></p>
+<p>This ensures that at high quantization levels (low bitrates, large
+<span class="math inline">\(\Delta_Q\)</span>), <span
+class="math inline">\(\lambda_{\text{motion}}\)</span> heavily penalizes
+large motion vector deviations, favoring zero or near-predictor vectors.
+Conversely, at low quantization levels (high bitrates, small <span
+class="math inline">\(\Delta_Q\)</span>), <span
+class="math inline">\(\lambda_{\text{motion}}\)</span> decreases,
+allowing the search to select vectors that minimize residual distortion
+regardless of the bit overhead.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Bitstream Flags for Keyframe Detection - webm</title>
+    <meta name="description" content="Detecting keyframes versus inter-frames in real-time WebM streams requires inspecting specific header flags at either the container level (Matroska/WebM) or within the raw video bitstream (VP8, VP9, or AV1). Real-time parsers typically inspect the Simple">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-bitstream-flags-for-keyframe-detection">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Bitstream Flags for Keyframe Detection - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-bitstream-flags-for-keyframe-detection" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Detecting keyframes versus inter-frames in real-time WebM streams requires inspecting specific header flags at either the container level (Matroska/WebM) or within the raw video bitstream (VP8, VP9, or AV1). Real-time parsers typically inspect the Simple" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-bitstream-flags-for-keyframe-detection">WebM Bitstream
+Flags for Keyframe Detection</h1>
+<p>Detecting keyframes versus inter-frames in real-time WebM streams
+requires inspecting specific header flags at either the container level
+(Matroska/WebM) or within the raw video bitstream (VP8, VP9, or AV1).
+Real-time parsers typically inspect the <code>SimpleBlock</code> header
+flag for the fastest detection, but fallback bitstream parsing is
+necessary when dealing with raw codec payloads or unindexed streams.</p>
+<h3 id="container-level-detection-webm-simpleblock">Container-Level
+Detection (WebM SimpleBlock)</h3>
+<p>WebM is a subset of the Matroska (MKV) container format. In real-time
+streaming, video frames are packed into <code>SimpleBlock</code>
+elements.</p>
+<p>Within each <code>SimpleBlock</code>, the container includes a 4-byte
+minimum header:</p>
+<ul>
+<li><strong>Track Number:</strong> EBML-encoded integer.</li>
+<li><strong>Timecode:</strong> 2 bytes (relative signed integer).</li>
+<li><strong>Flags Byte:</strong> 1 byte located immediately after the
+timecode.</li>
+</ul>
+<p>To detect a keyframe at the container level:</p>
+<ul>
+<li>Inspect <strong>Bit 7 (0x80 / Most Significant Bit)</strong> of the
+<code>Flags</code> byte.</li>
+<li><code>1</code> indicates a <strong>Keyframe</strong> (intra-frame,
+independent frame).</li>
+<li><code>0</code> indicates an <strong>Inter-frame</strong> (predictive
+frame).</li>
+</ul>
+<h3 id="vp8-bitstream-keyframe-flag">VP8 Bitstream Keyframe Flag</h3>
+<p>If parsing raw VP8 payloads directly without container headers,
+inspect the 3-byte uncompressed frame header:</p>
+<ul>
+<li><strong>Byte 0, Bit 0 (Least Significant Bit):</strong> Represents
+the <code>frame_type</code>.
+<ul>
+<li><code>0</code>: <strong>Keyframe</strong></li>
+<li><code>1</code>: <strong>Inter-frame</strong></li>
+</ul></li>
+<li><strong>Bytes 0–2:</strong> For keyframes
+(<code>frame_type = 0</code>), the next bytes contain a 3-byte start
+code (<code>0x9D 0x01 0x2A</code>) which validates the frame
+structure.</li>
+</ul>
+<h3 id="vp9-bitstream-keyframe-flags">VP9 Bitstream Keyframe Flags</h3>
+<p>In VP9, frame types are determined by reading the uncompressed header
+bits sequentially:</p>
+<ol type="1">
+<li><strong>Frame Marker:</strong> The first 2 bits must be
+<code>10</code> (binary) to validate a VP9 frame.</li>
+<li><strong>Profile:</strong> Read 1–3 bits (depending on whether
+profile bit 2 is set).</li>
+<li><strong>Show Existing Frame Flag:</strong> 1 bit. If <code>1</code>,
+it is not a new keyframe.</li>
+<li><strong>Frame Type:</strong> 1 bit directly following the previous
+fields.
+<ul>
+<li><code>0</code>: <strong>KEY_FRAME</strong></li>
+<li><code>1</code>: <strong>NON_KEY_FRAME</strong> (Inter-frame)</li>
+</ul></li>
+</ol>
+<h3 id="av1-bitstream-flags">AV1 Bitstream Flags</h3>
+<p>For WebM streams carrying AV1 video, frames are encapsulated in Open
+Bitstream Units (OBUs):</p>
+<ol type="1">
+<li><strong>OBU Header:</strong> Read the <code>obu_type</code> (Bits
+3–6 of the first byte). Look for <code>OBU_FRAME</code> (type 6) or
+<code>OBU_FRAME_HEADER</code> (type 3).</li>
+<li><strong>Uncompressed Header:</strong> Inside the frame header, parse
+the <code>frame_type</code> (2-bit enum):
+<ul>
+<li><code>0</code>: <strong>KEY_FRAME</strong></li>
+<li><code>1</code>: <strong>INTER_FRAME</strong></li>
+<li><code>2</code>: <strong>INTRA_ONLY_FRAME</strong></li>
+<li><code>3</code>: <strong>SWITCH_FRAME</strong></li>
+</ul></li>
+</ol>
+<h3 id="summary-for-real-time-pipelines">Summary for Real-Time
+Pipelines</h3>
+<p>For optimal performance in low-latency WebM demuxing, check
+<strong>Bit 7 (0x80) of the SimpleBlock flags</strong>. If the stream
+arrives as raw RTP or depacketized video payloads, evaluate the
+<strong>least significant bit of byte 0 in VP8</strong>, the
+<strong>frame type bit following the profile in VP9</strong>, or the
+<strong>2-bit <code>frame_type</code> field in AV1</strong>.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

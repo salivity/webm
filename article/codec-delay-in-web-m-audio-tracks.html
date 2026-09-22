@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodecDelay in WebM Audio Tracks - webm</title>
+    <meta name="description" content="The CodecDelay element in a WebM container defines the time duration that a media player must discard from the beginning of an audio stream after decoding. Certain modern audio codecs, most notably Opus, require a small amount of "priming" or warm-up sam">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/codec-delay-in-web-m-audio-tracks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CodecDelay in WebM Audio Tracks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/codec-delay-in-web-m-audio-tracks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The CodecDelay element in a WebM container defines the time duration that a media player must discard from the beginning of an audio stream after decoding. Certain modern audio codecs, most notably Opus, require a small amount of "priming" or warm-up sam" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="codecdelay-in-webm-audio-tracks">CodecDelay in WebM Audio
+Tracks</h1>
+<p>The <code>CodecDelay</code> element in a WebM container defines the
+time duration that a media player must discard from the beginning of an
+audio stream after decoding. Certain modern audio codecs, most notably
+Opus, require a small amount of "priming" or warm-up samples to
+initialize their internal filters and lookahead buffers before
+outputting valid audio. This article explains the technical purpose of
+<code>CodecDelay</code>, how container parsers use it, and why it is
+critical for sample-accurate audio-video synchronization and gapless
+playback.</p>
+<h2 id="the-problem-encoder-priming-and-delay">The Problem: Encoder
+Priming and Delay</h2>
+<p>When lossy audio codecs like Opus compress audio, the encoder
+introduces an inherent delay. The encoder processes a set number of
+priming samples (often called encoder delay or pre-skip) to spin up its
+analysis algorithms, windowing functions, and filter states.</p>
+<p>Upon decoding, the decoder emits these initial priming samples before
+reaching the actual start of the source audio. Without explicit
+container-level signaling, a media player will play these silence or
+warm-up samples, resulting in two major issues:</p>
+<ul>
+<li><strong>Audio-Video Desynchronization:</strong> Audio tracks will
+start slightly later than their corresponding video frames.</li>
+<li><strong>Broken Gapless Playback:</strong> Looping audio or
+sequentially chained tracks will experience audible gaps or clicks at
+the boundaries.</li>
+</ul>
+<h2 id="the-purpose-of-codecdelay">The Purpose of CodecDelay</h2>
+<p>The <code>CodecDelay</code> element solves this issue by specifying
+the exact duration of the encoder delay within the WebM container
+metadata (EBML level under the <code>Track</code> element).</p>
+<p>Expressed as a timestamp in nanoseconds, <code>CodecDelay</code>
+tells the demuxer and decoder:</p>
+<ol type="1">
+<li>The stream contains an initial block of audio samples intended
+solely to warm up the decoder.</li>
+<li>The decoder should process these initial packets to stabilize its
+internal state.</li>
+<li>The player must discard the decoded audio data spanning the
+<code>CodecDelay</code> duration and only output audio starting
+immediately after this delay.</li>
+</ol>
+<h2 id="codecdelay-and-the-opus-codec">CodecDelay and the Opus
+Codec</h2>
+<p>While WebM supports multiple codecs, <code>CodecDelay</code> is
+mandatory for Opus audio tracks in WebM/Matroska containers.</p>
+<p>Opus standardizes a default pre-skip of 80 milliseconds (3,840
+samples at 48 kHz), which translates to a <code>CodecDelay</code> value
+of <code>80000000</code> nanoseconds. By embedding this value into the
+container's track header, WebM ensures that every standards-compliant
+demuxer can pass the pre-skip value to the Opus decoder, ensuring
+sample-accurate decoding regardless of the player implementation.</p>
+<h2 id="how-players-process-codecdelay">How Players Process
+CodecDelay</h2>
+<p>During playback initialization, a WebM media pipeline performs the
+following sequence:</p>
+<ol type="1">
+<li><strong>Header Parsing:</strong> The demuxer reads the track header
+and extracts the <code>CodecDelay</code> value.</li>
+<li><strong>Decoding Initialization:</strong> The audio decoder
+initializes its internal state using the first audio packet(s).</li>
+<li><strong>Trimming:</strong> The player measures the decoded PCM
+output against the <code>CodecDelay</code> duration and discards the
+corresponding samples from the audio buffer.</li>
+<li><strong>Synchronized Playback:</strong> The player begins presenting
+audio at presentation timestamp (PTS) <code>0</code>, perfectly aligned
+with the start of the video.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vorbis Header Mapping in WebM Explained - webm</title>
+    <meta name="description" content="This article explains how Vorbis initialization headers—identification, comment, and setup—are structured, serialized, and mapped within the WebM container format. Vorbis decoders require these three critical header packets prior to decoding any audi">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vorbis-header-mapping-in-web-m-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Vorbis Header Mapping in WebM Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vorbis-header-mapping-in-web-m-explained" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how Vorbis initialization headers—identification, comment, and setup—are structured, serialized, and mapped within the WebM container format. Vorbis decoders require these three critical header packets prior to decoding any audi" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vorbis-header-mapping-in-webm-explained">Vorbis Header Mapping
+in WebM Explained</h1>
+<p>This article explains how Vorbis initialization
+headers—identification, comment, and setup—are structured, serialized,
+and mapped within the WebM container format. Vorbis decoders require
+these three critical header packets prior to decoding any audio frames.
+In WebM, these headers are packaged together inside the track's
+initialization metadata using standard Xiph lacing.</p>
+<h3 id="the-role-of-vorbis-headers">The Role of Vorbis Headers</h3>
+<p>A standard Vorbis bitstream requires three initialization packets in
+strict sequential order to configure the decoder:</p>
+<ol type="1">
+<li><strong>Identification Header:</strong> Contains stream parameters,
+including the audio sample rate, number of channels, bitrate bounds, and
+framing configuration.</li>
+<li><strong>Comment Header:</strong> Stores metadata fields such as
+track title, artist names, encoding tool details, and vendor
+strings.</li>
+<li><strong>Setup Header:</strong> Contains decoding parameters,
+including codebook definitions, time-domain to frequency-domain
+transformations, floor parameters, residue mappings, and channel
+modes.</li>
+</ol>
+<p>In raw Ogg containers, these three headers appear as individual
+sequential packets at the start of the logical stream.</p>
+<h3 id="encapsulation-in-webm-codecprivate">Encapsulation in WebM
+(<code>CodecPrivate</code>)</h3>
+<p>WebM is a subset of the Matroska (EBML) container format. In WebM, a
+Vorbis audio track is assigned the <code>CodecID</code> string of
+<code>A_VORBIS</code>.</p>
+<p>Because Matroska and WebM do not deliver stream initialization
+packets as loose data packets in the timeline, the three Vorbis headers
+are combined and embedded directly into the track's
+<code>CodecPrivate</code> element located within the
+<code>TrackEntry</code> master element.</p>
+<h3 id="serialization-via-xiph-lacing">Serialization via Xiph
+Lacing</h3>
+<p>The three headers are packed into the <code>CodecPrivate</code>
+binary field using Xiph-style lacing, structured as follows:</p>
+<ol type="1">
+<li><strong>Header Count Byte:</strong> The first byte defines the
+number of packets minus one. For standard Vorbis initialization
+containing three headers, this value is always <code>0x02</code>.</li>
+<li><strong>Lacing Sizes:</strong> The sizes of the first two headers
+(Identification and Comment) are written sequentially using Xiph lacing
+encoding:
+<ul>
+<li>For every 255 bytes in a packet's length, a byte containing
+<code>0xFF</code> (255) is added.</li>
+<li>The final remainder of the length is appended as a byte with a value
+between <code>0x00</code> and <code>0xFE</code>.</li>
+<li><em>Example:</em> A packet size of 512 bytes is encoded as
+<code>0xFF</code>, <code>0xFF</code>, <code>0x02</code> (<span
+class="math inline">\(255 + 255 + 2 = 512\)</span>).</li>
+</ul></li>
+<li><strong>Implicit Third Header Size:</strong> The size of the third
+header (Setup) is not explicitly stored. Demuxers calculate it by
+subtracting the offset and lengths of the first two packets from the
+total byte length of the <code>CodecPrivate</code> payload.</li>
+<li><strong>Header Data Concatenation:</strong> Immediately following
+the size bytes, the raw payload of all three Vorbis header packets is
+appended in continuous sequence:
+<ul>
+<li>Identification packet payload</li>
+<li>Comment packet payload</li>
+<li>Setup packet payload</li>
+</ul></li>
+</ol>
+<h3 id="demuxing-and-initialization-process">Demuxing and Initialization
+Process</h3>
+<p>When a WebM demuxer processes a Vorbis audio stream, it executes the
+following initialization sequence:</p>
+<ol type="1">
+<li>Reads the <code>CodecPrivate</code> byte array from the audio
+<code>TrackEntry</code>.</li>
+<li>Verifies the header count indicator (<code>0x02</code>).</li>
+<li>Decodes the sizes of the Identification and Comment headers from the
+lace table.</li>
+<li>Derives the Setup header size using the remaining buffer
+length.</li>
+<li>Slices the binary data into three distinct packets.</li>
+<li>Feeds the three packets sequentially into the Vorbis decoder backend
+(<code>vorbis_synthesis_headerin</code>).</li>
+<li>Completes decoder configuration, enabling the pipeline to process
+subsequent audio samples embedded in WebM <code>SimpleBlock</code> and
+<code>Block</code> elements.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

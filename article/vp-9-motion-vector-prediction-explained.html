@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP9 Motion Vector Prediction Explained - webm</title>
+    <meta name="description" content="This article explores the mathematical and algorithmic principles governing motion vector (MV) prediction across adjacent blocks in the WebM VP9 video codec. It examines spatial and temporal candidate derivation, vector coordinate clamping, sub-pixel rep">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-9-motion-vector-prediction-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP9 Motion Vector Prediction Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-9-motion-vector-prediction-explained" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores the mathematical and algorithmic principles governing motion vector (MV) prediction across adjacent blocks in the WebM VP9 video codec. It examines spatial and temporal candidate derivation, vector coordinate clamping, sub-pixel rep" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp9-motion-vector-prediction-explained">VP9 Motion Vector
+Prediction Explained</h1>
+<p>This article explores the mathematical and algorithmic principles
+governing motion vector (MV) prediction across adjacent blocks in the
+WebM VP9 video codec. It examines spatial and temporal candidate
+derivation, vector coordinate clamping, sub-pixel representation, and
+the differential vector calculations used to optimize coding
+efficiency.</p>
+<h3 id="spatial-neighborhood-modeling-and-coordinate-geometry">Spatial
+Neighborhood Modeling and Coordinate Geometry</h3>
+<p>VP9 determines motion vector predictors using a causal spatial
+neighborhood around the current coding block. When a block is located at
+coordinate <span class="math inline">\((x, y)\)</span> with width <span
+class="math inline">\(W\)</span> and height <span
+class="math inline">\(H\)</span>, its available neighbors are
+structurally defined as:</p>
+<ul>
+<li><strong>Left (<span class="math inline">\(A\)</span>):</strong>
+Located at <span class="math inline">\((x - 1, y)\)</span></li>
+<li><strong>Above (<span class="math inline">\(B\)</span>):</strong>
+Located at <span class="math inline">\((x, y - 1)\)</span></li>
+<li><strong>Above-Right (<span
+class="math inline">\(C\)</span>):</strong> Located at <span
+class="math inline">\((x + W, y - 1)\)</span></li>
+<li><strong>Above-Left (<span
+class="math inline">\(D\)</span>):</strong> Located at <span
+class="math inline">\((x - 1, y - 1)\)</span></li>
+</ul>
+<p>Unlike older video formats that rely primarily on computing a spatial
+component-wise median <span class="math inline">\(\text{median}(MV_A,
+MV_B, MV_C)\)</span>, VP9 establishes an ordered search across these
+neighboring coordinates to build a primary candidate set. The algorithm
+categorizes predictors into two ordered reference candidates:
+<code>NEARESTMV</code> and <code>NEARMV</code>.</p>
+<h3 id="candidate-selection-and-reference-frame-matching">Candidate
+Selection and Reference Frame Matching</h3>
+<p>The selection of a predictor depends on matching reference frames.
+Each neighbor <span class="math inline">\(N \in \{A, B, C, D\}\)</span>
+possesses a reference frame assignment <span
+class="math inline">\(R_N\)</span> and a motion vector <span
+class="math inline">\(\vec{v}_N = (v_{x,N}, v_{y,N})\)</span>.</p>
+<p>The mathematical condition for selecting a candidate vector <span
+class="math inline">\(\vec{v}\)</span> to predict a target block using
+reference frame <span class="math inline">\(R_{target}\)</span> is
+modeled as a conditional filter:</p>
+<p><span class="math display">\[\text{Candidate}(\vec{v}_N) =
+\begin{cases} \vec{v}_N &amp; \text{if } R_N = R_{target} \\ \emptyset
+&amp; \text{otherwise} \end{cases}\]</span></p>
+<p>If identical matches are found, duplicate elimination occurs:</p>
+<p><span class="math display">\[\vec{v}_{candidate} \neq
+\vec{v}_{selected}\]</span></p>
+<p>If fewer than two candidates match <span
+class="math inline">\(R_{target}\)</span>, the engine scans adjacent
+blocks that reference different reference frames and projects their
+vectors mathematically based on whether the frames are past or future
+references. If no valid candidates emerge, the default null vector is
+assigned:</p>
+<p><span class="math display">\[\vec{v}_{zero} = (0, 0)\]</span></p>
+<h3 id="temporal-motion-vector-projection">Temporal Motion Vector
+Projection</h3>
+<p>VP9 utilizes temporal motion vector prediction derived from the
+co-located block of a previously decoded frame. Let <span
+class="math inline">\((x, y)\)</span> represent the current block
+coordinates in frame <span class="math inline">\(t\)</span>. The
+co-located motion vector in the reference frame <span
+class="math inline">\(t-1\)</span> is <span
+class="math inline">\(\vec{v}_{col} = (v_{x,col},
+v_{y,col})\)</span>.</p>
+<p>When temporal prediction is active, the projected vector is evaluated
+against reference distances. The temporal candidate is incorporated into
+the prediction list if spatial candidates are exhausted or fail to match
+the target reference frame.</p>
+<h3 id="differential-motion-vector-calculation">Differential Motion
+Vector Calculation</h3>
+<p>To minimize the bitstream overhead, VP9 does not signal the absolute
+motion vector <span class="math inline">\(\vec{v} = (v_x, v_y)\)</span>.
+Instead, it codes a motion vector difference (MVD), denoted as <span
+class="math inline">\(\Delta\vec{v}\)</span>:</p>
+<p><span class="math display">\[\Delta\vec{v} = \vec{v} -
+\vec{v}_{pred}\]</span></p>
+<p><span class="math display">\[\Delta v_x = v_x - v_{pred,x}, \quad
+\Delta v_y = v_y - v_{pred,y}\]</span></p>
+<p>Here, <span class="math inline">\(\vec{v}_{pred}\)</span> represents
+either <code>NEARESTMV</code>, <code>NEARMV</code>, or <span
+class="math inline">\(\vec{v}_{zero}\)</span>. The probability
+distribution of <span class="math inline">\(\Delta\vec{v}\)</span>
+resembles a zero-mean Laplacian distribution:</p>
+<p><span class="math display">\[P(\Delta v) = \frac{1}{2b}
+\exp\left(-\frac{|\Delta v|}{b}\right)\]</span></p>
+<p>VP9 leverages context-adaptive Boolean entropy coding trees mapped
+directly to this distribution, minimizing coding cost when <span
+class="math inline">\(\|\Delta\vec{v}\|_1 \to 0\)</span>.</p>
+<h3 id="vector-clamping-and-boundary-arithmetic">Vector Clamping and
+Boundary Arithmetic</h3>
+<p>Motion vectors must not reference pixels that extend excessively
+beyond the padded boundary of the reference frame. Let the frame
+boundaries be defined by <span class="math inline">\([0, W_{frame} -
+1]\)</span> and <span class="math inline">\([0, H_{frame} - 1]\)</span>.
+For a block positioned at <span class="math inline">\((x, y)\)</span>
+with dimensions <span class="math inline">\(W \times H\)</span>, the
+permissible motion vector range is constrained by an interval clamping
+function:</p>
+<p><span class="math display">\[\text{clamp}(a, \min, \max) = \max(\min,
+\min(a, \max))\]</span></p>
+<p>The valid displacement components <span
+class="math inline">\(v_x\)</span> and <span
+class="math inline">\(v_y\)</span> are strictly bounded by:</p>
+<p><span class="math display">\[v_{x,\min} = -(x +
+\text{BORDER\_OFFSET})\]</span> <span class="math display">\[v_{x,\max}
+= (W_{frame} - x - W) + \text{BORDER\_OFFSET}\]</span> <span
+class="math display">\[v_{y,\min} = -(y +
+\text{BORDER\_OFFSET})\]</span> <span class="math display">\[v_{y,\max}
+= (H_{frame} - y - H) + \text{BORDER\_OFFSET}\]</span></p>
+<p>The final clamped prediction vector components are:</p>
+<p><span class="math display">\[v_x&#39; = \text{clamp}(v_x, v_{x,\min},
+v_{x,\max})\]</span> <span class="math display">\[v_y&#39; =
+\text{clamp}(v_y, v_{y,\min}, v_{y,\max})\]</span></p>
+<h3 id="sub-pixel-representation-and-interpolation">Sub-Pixel
+Representation and Interpolation</h3>
+<p>VP9 motion vectors are represented mathematically with 1/8-pel
+precision. The stored coordinate is an integer scalar <span
+class="math inline">\(k \in \mathbb{Z}\)</span> scaled such that:</p>
+<p><span class="math display">\[\text{Displacement} = \frac{k}{8} \text{
+pixels}\]</span></p>
+<p>Any motion vector <span class="math inline">\(\vec{v}\)</span>
+decomposes into an integer component and a fractional component:</p>
+<p><span class="math display">\[\vec{v}_{int} = \left( \lfloor v_x / 8
+\rfloor, \lfloor v_y / 8 \rfloor \right)\]</span> <span
+class="math display">\[\vec{v}_{frac} = (v_x \bmod 8, v_y \bmod
+8)\]</span></p>
+<p>The fractional phase index <span class="math inline">\(\phi =
+\vec{v}_{frac}\)</span> selects one of eight sub-pixel 8-tap filter
+kernels <span class="math inline">\(H_\phi = [h_{-3}, h_{-2}, h_{-1},
+h_0, h_1, h_2, h_3, h_4]\)</span> to perform convolution:</p>
+<p><span class="math display">\[S(x, y) = \sum_{i=-3}^{4} H_\phi(i)
+\cdot P(x + i, y)\]</span></p>
+<p>where <span class="math inline">\(P\)</span> is the reference pel and
+<span class="math inline">\(S\)</span> is the interpolated prediction
+value. This fractional structure guarantees high spatial correlation
+between adjacent motion fields while constraining high-frequency
+interpolation artifacts.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

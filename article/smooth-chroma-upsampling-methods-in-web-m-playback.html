@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smooth Chroma Upsampling Methods in WebM Playback - webm</title>
+    <meta name="description" content="WebM video playback relies heavily on chroma upsampling because codecs such as VP8, VP9, and AV1 typically store video in YUV 4:2:0 format, where color data is recorded at half the horizontal and vertical resolution of luminance. To display these frames">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/smooth-chroma-upsampling-methods-in-web-m-playback">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Smooth Chroma Upsampling Methods in WebM Playback - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/smooth-chroma-upsampling-methods-in-web-m-playback" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM video playback relies heavily on chroma upsampling because codecs such as VP8, VP9, and AV1 typically store video in YUV 4:2:0 format, where color data is recorded at half the horizontal and vertical resolution of luminance. To display these frames" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="smooth-chroma-upsampling-methods-in-webm-playback">Smooth Chroma
+Upsampling Methods in WebM Playback</h1>
+<p>WebM video playback relies heavily on chroma upsampling because
+codecs such as VP8, VP9, and AV1 typically store video in YUV 4:2:0
+format, where color data is recorded at half the horizontal and vertical
+resolution of luminance. To display these frames on standard RGB screens
+without color blockiness or color-bleeding artifacts, video renderers
+employ mathematical interpolation algorithms. These methods calculate
+the missing chrominance values (<span class="math inline">\(U\)</span>
+and <span class="math inline">\(V\)</span>) relative to the
+full-resolution luminance (<span class="math inline">\(Y\)</span>) grid,
+determining the smoothness, sharpness, and computational overhead of the
+resulting image.</p>
+<h3 id="bilinear-interpolation">Bilinear Interpolation</h3>
+<p>Bilinear interpolation is the most common baseline method used in
+standard hardware-accelerated video playback pipelines. It calculates
+unknown chrominance values by computing a weighted average of the four
+nearest known chroma samples in a <span class="math inline">\(2 \times
+2\)</span> grid.</p>
+<p>Mathematically, the intermediate value <span
+class="math inline">\(f(x, y)\)</span> is calculated as:</p>
+<p><span class="math display">\[f(x, y) \approx (1 - x)(1 - y)f(0,0) +
+x(1 - y)f(1,0) + (1 - x)yf(0,1) + xyf(1,1)\]</span></p>
+<p>Because bilinear filtering produces continuous functions, it
+eliminates the harsh stair-stepping typical of nearest-neighbor scaling.
+However, its first-order derivative is discontinuous, which often
+introduces noticeable blurring across high-contrast color boundaries,
+such as red text on a black background.</p>
+<h3 id="bicubic-interpolation">Bicubic Interpolation</h3>
+<p>Bicubic interpolation samples a <span class="math inline">\(4 \times
+4\)</span> neighborhood (16 pixels) using third-order polynomials. This
+approach accounts for both the distance to the target pixel and the rate
+of change across neighboring points, generating continuous first
+derivatives.</p>
+<p>Common cubic functions include the Mitchell-Netravali and Catmull-Rom
+splines, which use parameters <span class="math inline">\(B\)</span> and
+<span class="math inline">\(C\)</span> to balance sharpness against
+visual ringing:</p>
+<p><span class="math display">\[k(x) = \frac{1}{6} \begin{cases} (12 -
+9B - 6C)|x|^3 + (-18 + 12B + 6C)|x|^2 + (6 - 2B) &amp; \text{if } |x|
+&lt; 1 \\ (-B - 6C)|x|^3 + (6B + 30C)|x|^2 + (-12B - 48C)|x| + (8B +
+24C) &amp; \text{if } 1 \le |x| &lt; 2 \\ 0 &amp; \text{otherwise}
+\end{cases}\]</span></p>
+<p>Catmull-Rom (<span class="math inline">\(B=0, C=0.5\)</span>) is
+widely favored for WebM chroma reconstruction because it preserves sharp
+edge transitions without the excessive softening seen in bilinear
+algorithms.</p>
+<h3 id="lanczos-resampling">Lanczos Resampling</h3>
+<p>Lanczos interpolation models the theoretically ideal low-pass filter
+(the sinc function) by windowing it to avoid infinite sample
+requirements. For chroma upsampling, Lanczos-2 or Lanczos-3 kernels are
+standard, processing sample radii of two or three neighboring taps:</p>
+<p><span class="math display">\[L(x) = \begin{cases} \text{sinc}(x)
+\cdot \text{sinc}(x / a) &amp; \text{if } -a &lt; x &lt; a \\ 0 &amp;
+\text{otherwise} \end{cases}\]</span></p>
+<p>Where <span class="math inline">\(a\)</span> represents the filter
+size (typically 2 or 3) and <span class="math inline">\(\text{sinc}(x) =
+\frac{\sin(\pi x)}{\pi x}\)</span>. Lanczos upsampling maintains high
+spatial-frequency color fidelity, rendering fine colored lines with high
+precision. However, on abrupt contrast edges, Lanczos can create minor
+halo artifacts, known as Gibbs phenomenon or ringing.</p>
+<h3 id="spline-interpolation">Spline Interpolation</h3>
+<p>Spline algorithms, such as Spline16, Spline36, and Spline64, use
+piecewise cubic polynomials engineered to maintain continuous
+second-order derivatives across sample boundaries. By matching the
+polynomial curves at the knots, spline filtering produces extremely
+smooth gradients without the severe phase distortion or pronounced
+ringing associated with wide-radius sinc filters. Spline36 provides a
+balanced reconstruction profile, making it a popular choice in high-end
+video renderers like libplacebo when decoding high-bitrate WebM
+streams.</p>
+<h3 id="hardware-implementation-and-chroma-siting">Hardware
+Implementation and Chroma Siting</h3>
+<p>In real-world WebM playback within web browsers and media players,
+these mathematical models are computed directly on the GPU via fragment
+shaders. An essential variable in this computation is chroma siting—the
+physical alignment of chroma samples relative to luma samples. In VP9
+and AV1, chroma samples are typically placed collocated with luma or
+centered between luma samples. Mathematical interpolators must
+incorporate this positional offset into their weighting matrices to
+prevent sub-pixel color shifts during rendering.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

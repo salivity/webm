@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Demuxer Timestamp Jitter Smoothing Algorithms - webm</title>
+    <meta name="description" content="This article explores the core algorithms and mechanisms WebM demuxers employ to smooth presentation timestamp (PTS) jitter during media playback. Because the WebM container format relies on Matroska-based millisecond-precision timecodes, rounding errors">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-demuxer-timestamp-jitter-smoothing-algorithms">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Demuxer Timestamp Jitter Smoothing Algorithms - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-demuxer-timestamp-jitter-smoothing-algorithms" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explores the core algorithms and mechanisms WebM demuxers employ to smooth presentation timestamp (PTS) jitter during media playback. Because the WebM container format relies on Matroska-based millisecond-precision timecodes, rounding errors" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-demuxer-timestamp-jitter-smoothing-algorithms">WebM Demuxer
+Timestamp Jitter Smoothing Algorithms</h1>
+<p>This article explores the core algorithms and mechanisms WebM
+demuxers employ to smooth presentation timestamp (PTS) jitter during
+media playback. Because the WebM container format relies on
+Matroska-based millisecond-precision timecodes, rounding errors, network
+variations, and encoder inconsistencies frequently introduce timestamp
+irregularities. Demuxers resolve these issues using techniques such as
+linear regression cadence estimation, moving average filters,
+Phase-Locked Loops (PLL), dynamic jitter buffering, and monotonic
+clamping to ensure smooth audio-video synchronization and frame
+rendering.</p>
+<h3 id="the-cause-of-pts-jitter-in-webm">The Cause of PTS Jitter in
+WebM</h3>
+<p>WebM stores presentation timestamps as integer multiples of a
+<code>TimestampScale</code> element (typically defaulted to 1,000,000
+nanoseconds, or 1 millisecond). When video content has frame rates that
+do not divide evenly into milliseconds—such as standard 23.976, 29.97,
+or 59.94 fps—the integer rounding produces alternating timestamp
+intervals (e.g., 33ms and 34ms for 29.97 fps). Demuxers must
+differentiate between intentional variable frame rate (VFR) pacing,
+millisecond quantization noise, and transmission jitter.</p>
+<h3 id="linear-regression-and-cadence-detection">Linear Regression and
+Cadence Detection</h3>
+<p>For fixed frame rate (CFR) streams packaged inside WebM, demuxers
+often apply linear regression (ordinary least squares) across a sliding
+window of recent frame presentation timestamps:</p>
+<ol type="1">
+<li><strong>Windowed Sampling:</strong> The demuxer collects a sequence
+of <span class="math inline">\((i, PTS_i)\)</span> pairs, where <span
+class="math inline">\(i\)</span> is the frame index and <span
+class="math inline">\(PTS_i\)</span> is the parsed timestamp.</li>
+<li><strong>Slope and Intercept Calculation:</strong> The slope (<span
+class="math inline">\(m\)</span>) represents the true average frame
+duration, while the intercept (<span class="math inline">\(b\)</span>)
+determines the timeline baseline: <span class="math display">\[m =
+\frac{\sum (i - \bar{i})(PTS_i - \bar{PTS})}{\sum (i -
+\bar{i})^2}\]</span></li>
+<li><strong>Cadence Snapping:</strong> If the calculated slope <span
+class="math inline">\(m\)</span> falls within a narrow tolerance
+threshold of standard broadcast intervals (e.g., 1001/30000 or
+1001/60000 seconds), the demuxer synthesizes smooth, unquantized
+presentation timestamps: <span class="math display">\[PTS_{smoothed} = b
++ (i \times m)\]</span></li>
+</ol>
+<h3 id="exponential-moving-average-ema-and-low-pass-filters">Exponential
+Moving Average (EMA) and Low-Pass Filters</h3>
+<p>When playback involves variable frame rates where linear regression
+cannot assume a single constant interval, demuxers use low-pass
+filtering to dampen high-frequency jitter without causing
+synchronization lag:</p>
+<ul>
+<li><strong>Exponential Smoothing:</strong> The expected inter-frame
+delta (<span class="math inline">\(\Delta PTS\)</span>) is updated
+recursively: <span class="math display">\[\Delta PTS_{filtered} = \alpha
+\cdot \Delta PTS_{measured} + (1 - \alpha) \cdot \Delta
+PTS_{previous}\]</span> The smoothing factor <span
+class="math inline">\(\alpha\)</span> (<span class="math inline">\(0
+&lt; \alpha \le 1\)</span>) determines how aggressively the filter
+dampens sudden spikes while allowing genuine frame rate transitions to
+pass through.</li>
+<li><strong>Kalman Filtering:</strong> Advanced demuxer architectures
+implement 1D Kalman filters to estimate the true timestamp trajectory by
+modeling both the process noise (actual frame timing variance) and
+measurement noise (WebM 1ms quantisation).</li>
+</ul>
+<h3 id="phase-locked-loops-pll-for-clock-synchronization">Phase-Locked
+Loops (PLL) for Clock Synchronization</h3>
+<p>To maintain long-term alignment between the system reference clock
+and the media stream timeline, demuxers utilize software-based
+Phase-Locked Loops:</p>
+<ul>
+<li><strong>Phase Detector:</strong> Calculates the phase error between
+the demuxed PTS and the reference rendering clock.</li>
+<li><strong>Loop Filter:</strong> Smooths out short-term fluctuations
+and suppresses high-frequency jitter.</li>
+<li><strong>Voltage-Controlled Oscillator (Software Clock):</strong>
+Slightly accelerates or decelerates the output timestamp progression,
+preventing buffer underflows or frame drops while avoiding perceptible
+pitch or speed shifts.</li>
+</ul>
+<h3 id="dynamic-jitter-buffering">Dynamic Jitter Buffering</h3>
+<p>Network-delivered WebM streams (such as over WebRTC or DASH/HLS
+chunks) encounter packet arrival jitter in addition to container
+timestamp jitter. Demuxers implement adaptive jitter buffers that:</p>
+<ol type="1">
+<li><strong>Estimate Packet Delay Variation (PDV):</strong> Continuously
+calculate the difference between packet arrival spacing and PTS
+spacing.</li>
+<li><strong>Dynamic Queue Resizing:</strong> Expand the queue depth when
+network delay variance increases and shrink it during stable
+conditions.</li>
+<li><strong>Pacing Dispatch:</strong> Release frames to the decoder
+strictly according to smoothed PTS intervals rather than raw packet
+reception times.</li>
+</ol>
+<h3 id="monotonicity-enforcement-and-heuristic-clamping">Monotonicity
+Enforcement and Heuristic Clamping</h3>
+<p>At the lowest level, WebM demuxers enforce strict sanity rules on the
+decoded timeline:</p>
+<ul>
+<li><strong>Non-Decreasing Monotonicity:</strong> If an incoming
+non-reference frame has a PTS lower than or equal to the previous frame
+due to timestamp wrap-around or bad muxing, the demuxer clamps the
+timestamp to <span class="math inline">\(PTS_{current} = PTS_{previous}
++ \epsilon\)</span>.</li>
+<li><strong>Outlier Rejection:</strong> Timestamp deltas that exceed
+predefined statistical bounds (such as a 3<span
+class="math inline">\(\sigma\)</span> deviation from the median frame
+interval) are treated as anomalies, replaced by the estimated nominal
+frame duration, and logged to prevent downstream renderers from
+stalling.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

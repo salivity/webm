@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Encodes 10-Bit and 12-Bit VP9 Video - webm</title>
+    <meta name="description" content="WebM supports high dynamic range (HDR) and wide color gamuts by utilizing the VP9 video codec's advanced profiles designed for 10-bit and 12-bit color depths. This article explains how VP9 allocates bit depth through specific profile architectures, manag">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-encodes-10-bit-and-12-bit-vp-9-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Encodes 10-Bit and 12-Bit VP9 Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-encodes-10-bit-and-12-bit-vp-9-video" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="WebM supports high dynamic range (HDR) and wide color gamuts by utilizing the VP9 video codec's advanced profiles designed for 10-bit and 12-bit color depths. This article explains how VP9 allocates bit depth through specific profile architectures, manag" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-encodes-10-bit-and-12-bit-vp9-video">How WebM Encodes
+10-Bit and 12-Bit VP9 Video</h1>
+<p>WebM supports high dynamic range (HDR) and wide color gamuts by
+utilizing the VP9 video codec's advanced profiles designed for 10-bit
+and 12-bit color depths. This article explains how VP9 allocates bit
+depth through specific profile architectures, manages increased
+mathematical precision during quantization and transformation, and
+stores color metadata within the WebM container to accurately render
+deep color content.</p>
+<h3 id="vp9-deep-color-profiles">VP9 Deep Color Profiles</h3>
+<p>VP9 manages different bit depths and chroma subsampling formats using
+designated profiles. While Profiles 0 and 1 are restricted to standard
+8-bit video, Profiles 2 and 3 are dedicated to deep color:</p>
+<ul>
+<li><strong>Profile 2:</strong> Supports 10-bit and 12-bit color depth
+using 4:2:0 chroma subsampling. This is the standard profile used for
+consumer HDR video distribution, such as 4K HDR streaming.</li>
+<li><strong>Profile 3:</strong> Supports 10-bit and 12-bit color depth
+with advanced chroma formats, including 4:2:2, 4:4:0, and 4:4:4 (full
+chroma resolution), as well as non-subsampled RGB color
+representation.</li>
+</ul>
+<h3 id="frame-header-signaling">Frame Header Signaling</h3>
+<p>When encoding 10-bit or 12-bit video, VP9 specifies the color depth
+in the uncompressed header of each keyframe and intra-only frame. The
+encoder writes specific bit markers to declare the profile (Profile 2 or
+3) and sets the <code>bit_depth</code> syntax element:</p>
+<ul>
+<li>A dedicated flag signals whether the stream uses standard 8-bit or
+higher precision.</li>
+<li>If deep color is active, an additional bit distinguishes between
+10-bit and 12-bit precision.</li>
+<li>The header also signals the color space, transfer characteristics
+(such as SMPTE ST 2084 / PQ or HLG), and color primaries (such as
+BT.2020).</li>
+</ul>
+<h3 id="internal-transform-and-quantization-scaling">Internal Transform
+and Quantization Scaling</h3>
+<p>Deep color encoding changes how the VP9 compression pipeline handles
+pixel arithmetic. Moving from 8-bit (256 color levels per channel) to
+10-bit (1,024 levels) or 12-bit (4,096 levels) expands the dynamic range
+and reduces color banding artifacts.</p>
+<ol type="1">
+<li><strong>Dynamic Range of Transforms:</strong> VP9 applies discrete
+cosine transforms (DCT) and asymmetric discrete sine transforms (ADST)
+with higher-precision integer arithmetic to avoid rounding errors when
+compressing 10-bit or 12-bit sample values.</li>
+<li><strong>Quantization Tables:</strong> Quantization parameters (<span
+class="math inline">\(Q\)</span>-indices) are scaled to match the
+expanded dynamic range. The encoder uses wider bit-width registers to
+hold quantized transform coefficients, ensuring subtle gradients in dark
+and bright regions are preserved.</li>
+<li><strong>Loop Filtering:</strong> In-loop deblocking filters and
+sub-pixel interpolation algorithms adapt their threshold parameters
+based on the 10-bit or 12-bit range to prevent smoothing out genuine
+micro-details while eliminating compression artifacts.</li>
+</ol>
+<h3 id="container-level-metadata-in-webm">Container-Level Metadata in
+WebM</h3>
+<p>The WebM container, based on a subset of the Matroska (EBML)
+specification, carries essential deep color and HDR metadata in the
+track header elements alongside the VP9 bitstream:</p>
+<ul>
+<li><strong>BitsPerChannel:</strong> Explicitly set to <code>10</code>
+or <code>12</code> in the track video configuration.</li>
+<li><strong>Colour Element:</strong> Encapsulates the specific color
+parameters required by display hardware:
+<ul>
+<li><code>MatrixCoefficients</code> (e.g., ITU-R BT.2020 non-constant
+luminance).</li>
+<li><code>TransferCharacteristics</code> (e.g., Perceptual Quantizer or
+Hybrid Log-Gamma).</li>
+<li><code>Primaries</code> (e.g., BT.2020 or DCI-P3).</li>
+<li><code>MasteringMetadata</code>: Contains the chromaticity
+coordinates for the red, green, and blue mastering primaries, white
+point, and minimum/maximum luminance values.</li>
+</ul></li>
+</ul>
+<p>During playback, the decoding pipeline reads the WebM container
+elements to configure the video output pipeline and GPU color
+management, while the VP9 decoder processes the high bit-depth frames
+according to the signaled profile.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

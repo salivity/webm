@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebM Mastering Display Color Volume for HDR Video - webm</title>
+    <meta name="description" content="This article explains how the WebM container format stores and signals mastering display color volume metadata for High Dynamic Range (HDR) video. Inheriting specifications from the Matroska (MKV) container, WebM incorporates dedicated Extensible Binary">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/web-m-mastering-display-color-volume-for-hdr-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WebM Mastering Display Color Volume for HDR Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/web-m-mastering-display-color-volume-for-hdr-video" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how the WebM container format stores and signals mastering display color volume metadata for High Dynamic Range (HDR) video. Inheriting specifications from the Matroska (MKV) container, WebM incorporates dedicated Extensible Binary" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="webm-mastering-display-color-volume-for-hdr-video">WebM
+Mastering Display Color Volume for HDR Video</h1>
+<p>This article explains how the WebM container format stores and
+signals mastering display color volume metadata for High Dynamic Range
+(HDR) video. Inheriting specifications from the Matroska (MKV)
+container, WebM incorporates dedicated Extensible Binary Meta Language
+(EBML) elements that describe the color gamut, white point, and
+luminance capabilities of the display used to master the content. This
+metadata enables downstream renderers and consumer displays to perform
+accurate tone mapping.</p>
+<h3 id="structural-placement-in-the-webm-container">Structural Placement
+in the WebM Container</h3>
+<p>WebM organizes metadata hierarchically using EBML. Mastering display
+parameters are embedded at the track level within the video settings.
+The hierarchical structure is defined as follows:</p>
+<ul>
+<li><strong>Segment</strong>
+<ul>
+<li><strong>Tracks</strong>
+<ul>
+<li><strong>TrackEntry</strong>
+<ul>
+<li><strong>Video</strong>
+<ul>
+<li><strong>Colour</strong>
+<ul>
+<li><strong>MasteringMetadata</strong></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>The <code>Colour</code> element defines the baseline color properties
+of the video track, while the nested <code>MasteringMetadata</code>
+element specifically encapsulates the physical characteristics of the
+mastering display according to the SMPTE ST 2086 standard.</p>
+<h3 id="mastering-display-metadata-elements">Mastering Display Metadata
+Elements</h3>
+<p>The <code>MasteringMetadata</code> container includes distinct float
+elements representing the mastering display’s chromaticity coordinates
+(CIE 1931 color space) and luminance boundaries:</p>
+<h4 id="1-color-primaries-and-white-point">1. Color Primaries and White
+Point</h4>
+<p>These values define the exact color boundaries and reference white of
+the mastering monitor:</p>
+<ul>
+<li><strong>PrimaryRChromaticityX</strong> and
+<strong>PrimaryRChromaticityY</strong>: Red primary chromaticity
+coordinates (values from 0.0 to 1.0).</li>
+<li><strong>PrimaryGChromaticityX</strong> and
+<strong>PrimaryGChromaticityY</strong>: Green primary chromaticity
+coordinates (values from 0.0 to 1.0).</li>
+<li><strong>PrimaryBChromaticityX</strong> and
+<strong>PrimaryBChromaticityY</strong>: Blue primary chromaticity
+coordinates (values from 0.0 to 1.0).</li>
+<li><strong>WhitePointChromaticityX</strong> and
+<strong>WhitePointChromaticityY</strong>: Reference white point
+coordinates (typically D65 for standard HDR workflows).</li>
+</ul>
+<h4 id="2-display-luminance-boundaries">2. Display Luminance
+Boundaries</h4>
+<p>These values specify the dynamic range capability of the mastering
+monitor:</p>
+<ul>
+<li><strong>LuminanceMax</strong>: The maximum luminance of the
+mastering display, expressed in candelas per square meter (<span
+class="math inline">\(\text{cd/m}^2\)</span> or nits), stored as a
+floating-point number (e.g., 1000.0 or 4000.0).</li>
+<li><strong>LuminanceMin</strong>: The minimum luminance (black level)
+of the mastering display, expressed in <span
+class="math inline">\(\text{cd/m}^2\)</span> (e.g., 0.005 or
+0.0001).</li>
+</ul>
+<h3 id="complementary-hdr-elements-in-webm">Complementary HDR Elements
+in WebM</h3>
+<p>For full HDR signal interpretation, WebM pairs the
+<code>MasteringMetadata</code> block with content light level metadata
+(CTA-861.3) and foundational color characteristics stored directly under
+the parent <code>Colour</code> element:</p>
+<ul>
+<li><strong>MaxCLL (Maximum Content Light Level)</strong>: An unsigned
+integer indicating the maximum pixel brightness in the entire video
+stream (<span class="math inline">\(\text{cd/m}^2\)</span>).</li>
+<li><strong>MaxFALL (Maximum Frame-Average Light Level)</strong>: An
+unsigned integer indicating the highest average picture level among all
+individual frames (<span
+class="math inline">\(\text{cd/m}^2\)</span>).</li>
+<li><strong>TransferCharacteristics</strong>: Identifies the
+Electro-Optical Transfer Function (EOTF), such as value <code>16</code>
+for SMPTE ST 2084 (PQ / Perceptual Quantizer) or value <code>18</code>
+for Hybrid Log-Gamma (HLG).</li>
+<li><strong>Primaries</strong>: Identifies the color gamut container
+(e.g., value <code>9</code> for ITU-R BT.2020).</li>
+<li><strong>MatrixCoefficients</strong>: Defines the color space matrix
+used to derive luma and chroma from RGB (e.g., ITU-R BT.2020
+non-constant luminance).</li>
+</ul>
+<h3 id="playback-and-tone-mapping-workflow">Playback and Tone Mapping
+Workflow</h3>
+<p>When a WebM HDR video (commonly encoded using VP9 Profile 2 or AV1)
+is played, the media demuxer reads the <code>MasteringMetadata</code>
+and light level elements prior to decoding video frames. The rendering
+pipeline passes this static metadata to the operating system or display
+controller via APIs such as DirectX, Vulkan, or HDMI dynamic
+communication channels. The target display compares the mastering
+monitor's limits against its own hardware capabilities, calculating
+appropriate tone-mapping curves to preserve highlight details and shadow
+gradients without clipping.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Monitor Battery Use in Mobile WebM Playback - webm</title>
+    <meta name="description" content="This article outlines the methodologies, tools, and best practices developers use to track and analyze battery consumption during extended WebM video playback on mobile devices. It covers software profilers, hardware measurement tools, platform-specific">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-monitor-battery-use-in-mobile-web-m-playback">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Monitor Battery Use in Mobile WebM Playback - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-monitor-battery-use-in-mobile-web-m-playback" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article outlines the methodologies, tools, and best practices developers use to track and analyze battery consumption during extended WebM video playback on mobile devices. It covers software profilers, hardware measurement tools, platform-specific" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-to-monitor-battery-use-in-mobile-webm-playback">How to
+Monitor Battery Use in Mobile WebM Playback</h1>
+<p>This article outlines the methodologies, tools, and best practices
+developers use to track and analyze battery consumption during extended
+WebM video playback on mobile devices. It covers software profilers,
+hardware measurement tools, platform-specific APIs, and strategies to
+isolate power draw caused by video decoding, display pipelines, and
+network usage.</p>
+<h2 id="hardware-vs-software-decoding-profiles">Hardware vs. Software
+Decoding Profiles</h2>
+<p>Monitoring battery consumption begins with determining whether the
+device decodes the WebM container's codec (typically VP8, VP9, or AV1)
+via dedicated hardware or CPU-driven software fallback.</p>
+<ul>
+<li><strong>Hardware Decoding:</strong> Offloads processing to the
+device's System on Chip (SoC) video processing unit (VPU), resulting in
+minimal battery drain.</li>
+<li><strong>Software Decoding:</strong> Forces the CPU and GPU to
+process video frames continuously, leading to high thermal output and
+rapid battery depletion during extended sessions.</li>
+</ul>
+<p>Developers use the <strong>Media Capabilities API</strong>
+(<code>navigator.mediaCapabilities.decodingInfo()</code>) in web
+environments to query whether a specific WebM configuration is handled
+smoothly and power-efficiently before playback starts.</p>
+<h2 id="platform-specific-profiling-tools">Platform-Specific Profiling
+Tools</h2>
+<h3 id="android-monitoring">Android Monitoring</h3>
+<ol type="1">
+<li><p><strong>Android Studio Energy Profiler:</strong><br />
+Provides real-time tracking of CPU, network, and system event energy
+consumption. It visualizes energy usage as "Light," "Medium," or "Heavy"
+and helps detect background spikes during video playback.</p></li>
+<li><p><strong>Batterystats and Battery Historian:</strong><br />
+Developers collect system-wide battery data using the Android Debug
+Bridge (ADB):</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">adb</span> shell dumpsys batterystats <span class="at">--reset</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Run extended WebM playback test</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">adb</span> bugreport bugreport.zip</span></code></pre></div>
+<p>The resulting report is uploaded to <strong>Battery
+Historian</strong>, visualizing power drain per component (VPU, CPU,
+screen, Wi-Fi radio) over hours of playback.</p></li>
+<li><p><strong>Qualcomm Snapdragon Profiler:</strong><br />
+For devices powered by Snapdragon chipsets, this tool measures low-level
+GPU, CPU, and SoC power rail metrics in real time to evaluate exact
+power draw variations across different video resolutions and frame
+rates.</p></li>
+</ol>
+<h3 id="ios-and-webkit-monitoring">iOS and WebKit Monitoring</h3>
+<p>While iOS natively prioritizes MP4/H.264/HEVC, WebM playback
+supported via WebKit or third-party players can be measured using
+Apple's development suite:</p>
+<ol type="1">
+<li><strong>Xcode Instruments (Energy Log):</strong><br />
+Tracks energy impact ratings, thermal state changes, and CPU wakeups
+over extended test runs.</li>
+<li><strong>Safari Web Inspector:</strong><br />
+The <strong>Timelines</strong> tab monitors the energy impact of web
+apps running WebM video, highlighting rendering overhead and JavaScript
+execution costs.</li>
+</ol>
+<h2 id="physical-power-monitors-for-empirical-testing">Physical Power
+Monitors for Empirical Testing</h2>
+<p>Software-based battery metrics rely on estimation algorithms. For
+laboratory-grade accuracy during prolonged playback, developers use
+dedicated hardware monitors:</p>
+<ul>
+<li><strong>Monsoon Power Monitor:</strong> Connects directly to the
+mobile device's battery terminals, bypassing internal battery gauge
+estimation. It records actual current (mA) and voltage (V) at high
+sampling rates to compute milliwatt-hour (mWh) consumption over hours of
+continuous WebM playback.</li>
+<li><strong>Automated Test Harnesses:</strong> Automated scripts (using
+Appium or UI Automator) loop WebM streams while hardware monitors log
+power draw, allowing developers to compare metrics across different
+codecs, bitrates, and player configurations.</li>
+</ul>
+<h2 id="test-environment-isolation">Test Environment Isolation</h2>
+<p>To ensure accurate, reproducible battery metrics during extended WebM
+playback tests, developers isolate environmental variables by:</p>
+<ul>
+<li><strong>Locking Display Brightness:</strong> Setting the screen to a
+fixed percentage (e.g., 50% or 200 nits) to prevent ambient light
+sensors from altering baseline power draw.</li>
+<li><strong>Standardizing Network Conditions:</strong> Comparing local
+playback against Wi-Fi or cellular streaming using network throttling
+tools to isolate codec power draw from radio power draw.</li>
+<li><strong>Disabling Background Activity:</strong> Terminating
+background sync, location services, and notifications during test runs
+to eliminate noise in the collected power profiles.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

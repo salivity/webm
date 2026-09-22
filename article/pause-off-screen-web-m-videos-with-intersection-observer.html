@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pause Off-Screen WebM Videos with Intersection Observer - webm</title>
+    <meta name="description" content="Modern web developers use the Intersection Observer API to monitor the visibility of media elements on a webpage asynchronously. By observing when a WebM video enters or exits the viewport, developers can automatically trigger play and pause actions. Thi">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/pause-off-screen-web-m-videos-with-intersection-observer">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pause Off-Screen WebM Videos with Intersection Observer - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/pause-off-screen-web-m-videos-with-intersection-observer" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern web developers use the Intersection Observer API to monitor the visibility of media elements on a webpage asynchronously. By observing when a WebM video enters or exits the viewport, developers can automatically trigger play and pause actions. Thi" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="pause-off-screen-webm-videos-with-intersection-observer">Pause
+Off-Screen WebM Videos with Intersection Observer</h1>
+<p>Modern web developers use the Intersection Observer API to monitor
+the visibility of media elements on a webpage asynchronously. By
+observing when a WebM video enters or exits the viewport, developers can
+automatically trigger play and pause actions. This article explains how
+the API works, why it is critical for performance optimization, and how
+to implement a clean JavaScript solution to pause off-screen WebM
+videos.</p>
+<h3 id="why-pause-off-screen-videos">Why Pause Off-Screen Videos?</h3>
+<p>Autoplaying multiple WebM background videos or media feeds
+simultaneously can degrade browser performance, spike CPU and GPU usage,
+and drain mobile battery life. Decoding video frames consumes
+significant processing power. Pausing media when it is not visible frees
+up hardware resources and preserves bandwidth without disrupting the
+user experience.</p>
+<h3 id="the-mechanism-behind-intersection-observer">The Mechanism Behind
+Intersection Observer</h3>
+<p>The Intersection Observer API replaces inefficient scroll event
+listeners and manual bounding-box calculations
+(<code>Element.getBoundingClientRect()</code>). It allows code to
+register a callback function that executes whenever an observed target
+element intersects with an ancestor element or the top-level document's
+viewport.</p>
+<p>The observer operates asynchronously on the browser's main thread
+idle time, eliminating the jank and performance bottlenecks associated
+with continuous scroll-event polling.</p>
+<h3 id="implementation-steps">Implementation Steps</h3>
+<p>Implementing automatic pause and play functionality requires three
+main steps: targeting the WebM video elements, configuring the observer,
+and handling media playback promises.</p>
+<h4 id="1-define-the-html-video-element">1. Define the HTML Video
+Element</h4>
+<p>Ensure your video element is configured with the standard attributes
+required for smooth autoplay handling across modern browsers:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">video</span><span class="ot"> class</span><span class="op">=</span><span class="st">&quot;observe-video&quot;</span><span class="ot"> muted playsinline loop</span><span class="dt">&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">source</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;animation.webm&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&quot;video/webm&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  Your browser does not support the video tag.</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">video</span><span class="dt">&gt;</span></span></code></pre></div>
+<h4 id="2-create-the-observer-in-javascript">2. Create the Observer in
+JavaScript</h4>
+<p>Initialize an <code>IntersectionObserver</code> instance that checks
+the <code>isIntersecting</code> property of each observed entry:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Define the observer options</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> observerOptions <span class="op">=</span> {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">root</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span> <span class="co">// Uses the browser viewport as the container</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">rootMargin</span><span class="op">:</span> <span class="st">&#39;0px&#39;</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">threshold</span><span class="op">:</span> <span class="fl">0.25</span> <span class="co">// Triggers when 25% of the video is visible</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">// Create the observer callback</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> handleIntersection <span class="op">=</span> (entries<span class="op">,</span> observer) <span class="kw">=&gt;</span> {</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  entries<span class="op">.</span><span class="fu">forEach</span>(entry <span class="kw">=&gt;</span> {</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> video <span class="op">=</span> entry<span class="op">.</span><span class="at">target</span><span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (entry<span class="op">.</span><span class="at">isIntersecting</span>) {</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>      <span class="co">// Play video when entering the viewport</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> playPromise <span class="op">=</span> video<span class="op">.</span><span class="fu">play</span>()<span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (playPromise <span class="op">!==</span> <span class="kw">undefined</span>) {</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        playPromise<span class="op">.</span><span class="fu">catch</span>(error <span class="kw">=&gt;</span> {</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>          <span class="co">// Autoplay policy prevented playback</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>          <span class="bu">console</span><span class="op">.</span><span class="fu">warn</span>(<span class="st">&#39;Playback prevented:&#39;</span><span class="op">,</span> error)<span class="op">;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>      <span class="co">// Pause video immediately when leaving the viewport</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>      video<span class="op">.</span><span class="fu">pause</span>()<span class="op">;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">// Instantiate the observer</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> videoObserver <span class="op">=</span> <span class="kw">new</span> <span class="fu">IntersectionObserver</span>(handleIntersection<span class="op">,</span> observerOptions)<span class="op">;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">// Target all relevant WebM videos and observe them</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="bu">document</span><span class="op">.</span><span class="fu">querySelectorAll</span>(<span class="st">&#39;.observe-video&#39;</span>)<span class="op">.</span><span class="fu">forEach</span>(video <span class="kw">=&gt;</span> {</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  videoObserver<span class="op">.</span><span class="fu">observe</span>(video)<span class="op">;</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>})<span class="op">;</span></span></code></pre></div>
+<h3 id="key-considerations-for-production">Key Considerations for
+Production</h3>
+<ul>
+<li><strong>Promise Handling:</strong>
+<code>HTMLMediaElement.play()</code> returns a Promise. Always catch
+potential rejection errors to handle browser autoplay policies or rapid
+viewport scrolling where a pause command interrupts a play request.</li>
+<li><strong>Muted Playback:</strong> Browsers typically restrict unmuted
+autoplay. Ensure off-screen WebM videos set the <code>muted</code>
+attribute so they resume seamlessly when scrolled back into view.</li>
+<li><strong>Threshold Selection:</strong> A threshold of <code>0</code>
+triggers immediately when a single pixel enters or exits, while higher
+values (e.g., <code>0.5</code>) require half the video to be visible
+before playback starts.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

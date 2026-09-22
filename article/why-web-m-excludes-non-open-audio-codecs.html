@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why WebM Excludes Non-Open Audio Codecs - webm</title>
+    <meta name="description" content="The decision to exclude proprietary audio codecs from the WebM specification was driven by the project's foundational mission: to create a completely open, royalty-free media format for the web. Spearheaded by Google and supported by organizations like M">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/why-web-m-excludes-non-open-audio-codecs">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Why WebM Excludes Non-Open Audio Codecs - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/why-web-m-excludes-non-open-audio-codecs" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The decision to exclude proprietary audio codecs from the WebM specification was driven by the project's foundational mission: to create a completely open, royalty-free media format for the web. Spearheaded by Google and supported by organizations like M" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="why-webm-excludes-non-open-audio-codecs">Why WebM Excludes
+Non-Open Audio Codecs</h1>
+<p>The decision to exclude proprietary audio codecs from the WebM
+specification was driven by the project's foundational mission: to
+create a completely open, royalty-free media format for the web.
+Spearheaded by Google and supported by organizations like Mozilla and
+Opera, WebM was designed to deliver high-quality video and audio without
+the legal, financial, and technical constraints associated with
+proprietary formats like AAC and MP3. Key factors influencing this
+restriction included the avoidance of patent licensing fees, the
+elimination of legal liabilities for open-source developers, the pursuit
+of platform interoperability, and the presence of high-performing open
+alternatives like Vorbis and Opus.</p>
+<h3 id="patent-licensing-and-financial-burdens">Patent Licensing and
+Financial Burdens</h3>
+<p>The primary catalyst for restricting WebM to open audio formats was
+the complex patent landscape surrounding digital media. Proprietary
+codecs, such as AAC (Advanced Audio Coding), are governed by patent
+pools like Via Licensing, which require commercial entities and software
+distributors to pay significant royalties.</p>
+<p>For free and open-source software (FOSS) projects—such as the
+Chromium browser, Mozilla Firefox, and Linux distributions—distributing
+patented codecs creates severe logistical and financial hurdles. These
+projects cannot legally bundle proprietary decoders without incurring
+massive licensing costs or compromising their open distribution
+licenses. By mandating open codecs, WebM ensured that developers could
+build, distribute, and modify playback software without negotiating
+patent licenses or paying per-unit fees.</p>
+<h3 id="promoting-open-web-standards">Promoting Open Web Standards</h3>
+<p>The introduction of the HTML5 <code>&lt;video&gt;</code> and
+<code>&lt;audio&gt;</code> elements was intended to make media playback
+a native browser capability, eliminating the need for third-party
+plugins like Adobe Flash. However, the early HTML5 landscape fractured
+because commercial browser vendors favored proprietary standards
+(H.264/AAC), while open-source advocates favored unencumbered
+formats.</p>
+<p>Integrating non-open audio codecs into WebM would have defeated its
+purpose as an alternative standard. Allowing proprietary audio inside an
+open container would reintroduce the dependency on closed-source
+technologies, undermining the principle that the open web should be
+built on publicly documented, unencumbered protocols accessible to all
+participants equally.</p>
+<h3 id="legal-protection-for-content-creators-and-distributors">Legal
+Protection for Content Creators and Distributors</h3>
+<p>Proprietary codecs often carry ambiguous licensing terms that can
+extend beyond software vendors to content distributors. Streaming
+platforms, independent webmasters, and content creators risked potential
+patent litigation or future royalty demands simply for hosting audio
+encoded with proprietary algorithms.</p>
+<p>By strictly limiting the specification to codecs verified to be open
+and royalty-free, the WebM project created a legally safe pipeline.
+Creators could encode, host, and distribute media without fear of
+retroactive licensing claims from patent holders.</p>
+<h3 id="technical-viability-of-open-alternatives">Technical Viability of
+Open Alternatives</h3>
+<p>A practical factor in excluding non-open codecs was that
+high-quality, open-source alternatives already existed. WebM initially
+launched with support for Vorbis, a mature, patent-free audio codec that
+offered fidelity comparable to MP3 and AAC at similar bitrates.</p>
+<p>Later, the specification expanded to include Opus, developed by the
+Xiph.Org Foundation, Mozilla, and Skype (IETF RFC 6716). Opus surpassed
+both Vorbis and proprietary alternatives like AAC-LC in performance,
+latency, and versatility. Because an open audio codec existed that
+technically matched or exceeded proprietary standards, there was no
+engineering justification to compromise the format's open
+philosophy.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

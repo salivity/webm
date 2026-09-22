@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ogg Opus vs WebM Opus: Key Mapping Differences - webm</title>
+    <meta name="description" content="While the Opus audio codec delivers identical audio compression quality across all implementations, the way its bitstream is encapsulated differs significantly between the native Ogg container and the WebM (Matroska-based) container. This article breaks">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/ogg-opus-vs-web-m-opus-key-mapping-differences">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Ogg Opus vs WebM Opus: Key Mapping Differences - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/ogg-opus-vs-web-m-opus-key-mapping-differences" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="While the Opus audio codec delivers identical audio compression quality across all implementations, the way its bitstream is encapsulated differs significantly between the native Ogg container and the WebM (Matroska-based) container. This article breaks" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="ogg-opus-vs-webm-opus-key-mapping-differences">Ogg Opus vs WebM
+Opus: Key Mapping Differences</h1>
+<p>While the Opus audio codec delivers identical audio compression
+quality across all implementations, the way its bitstream is
+encapsulated differs significantly between the native Ogg container and
+the WebM (Matroska-based) container. This article breaks down the
+technical differences between native Ogg Opus mapping and WebM Opus
+mapping, focusing on container architecture, header structures, timing
+mechanisms, pre-skip handling, and metadata storage.</p>
+<h3 id="container-architecture-and-framing">Container Architecture and
+Framing</h3>
+<ul>
+<li><strong>Ogg Opus:</strong> Utilizes the native Ogg framing format.
+Audio data is organized into pages with variable-length packets. The
+stream is identified as Opus by specific magic signatures embedded
+directly within the initial header packets (<code>OpusHead</code> and
+<code>OpusTags</code>).</li>
+<li><strong>WebM Opus:</strong> Utilizes the Extensible Binary Meta
+Language (EBML) structure inherited from Matroska. The stream is defined
+inside a <code>TrackEntry</code> element where the <code>CodecID</code>
+string is set strictly to <code>A_OPUS</code>. Audio packets are stored
+as EBML <code>SimpleBlock</code> or <code>Block</code> elements.</li>
+</ul>
+<h3 id="header-specification-and-initialization">Header Specification
+and Initialization</h3>
+<ul>
+<li><strong>Ogg Opus:</strong> Requires two dedicated header packets to
+initialize decoding. The first packet is <code>OpusHead</code>, which
+defines the Opus version, channel count, pre-skip sample amount, input
+sample rate, output gain, and channel mapping families. The second
+mandatory packet is <code>OpusTags</code>, which stores metadata.</li>
+<li><strong>WebM Opus:</strong> Stores stream initialization data inside
+the EBML <code>CodecPrivate</code> element of the audio track. The
+<code>CodecPrivate</code> binary blob mirrors the binary layout of the
+<code>OpusHead</code> structure (excluding the 8-byte "OpusHead" magic
+string in some parser contexts, though standard WebM mapping includes
+the entire standard <code>OpusHead</code> data). Matroska elements like
+<code>Channels</code> and <code>SamplingFrequency</code> in the
+<code>TrackEntry</code> must match the internal
+<code>CodecPrivate</code> parameters.</li>
+</ul>
+<h3 id="timing-and-timestamp-mechanisms">Timing and Timestamp
+Mechanisms</h3>
+<ul>
+<li><strong>Ogg Opus:</strong> Relies on <em>Granule Positions</em>
+(granulepos) stored in the Ogg page headers. For Opus, the granule
+position represents an absolute sample count at a fixed rate of 48 kHz.
+Packet timestamps and playback durations must be derived by calculating
+the difference between successive granule positions.</li>
+<li><strong>WebM Opus:</strong> Uses absolute timecodes defined by the
+EBML <code>Timestamp</code> (or <code>Timecode</code>) scale. WebM
+blocks store millisecond- or nanosecond-level timestamps, eliminating
+the need to decode packet headers purely to establish basic playback
+timing.</li>
+</ul>
+<h3 id="pre-skip-discard-padding-and-trimming">Pre-Skip, Discard
+Padding, and Trimming</h3>
+<ul>
+<li><strong>Ogg Opus:</strong> The <code>OpusHead</code> header contains
+a 16-bit integer designating the number of samples to discard from the
+beginning of playback (pre-skip/encoder delay). End-trimming is handled
+implicitly by comparing the final page's granule position against the
+total decoded sample count.</li>
+<li><strong>WebM Opus:</strong> Pre-skip is defined via the
+<code>CodecDelay</code> element in the <code>TrackEntry</code> (in
+nanoseconds), representing the startup delay. For trimming trailing
+silence added by encoder padding, WebM uses the
+<code>DiscardPadding</code> element attached directly to the final
+<code>BlockGroup</code>, specifying the exact duration of samples to
+discard from the end of a block.</li>
+</ul>
+<h3 id="seeking-and-preroll">Seeking and Preroll</h3>
+<ul>
+<li><strong>Ogg Opus:</strong> Seeking requires locating an Ogg page via
+bisection or an external index, followed by decoding a minimum preroll
+period (recommended at 80 milliseconds or 3,840 samples) prior to the
+target playback position to prime the decoder's synthesis filters.</li>
+<li><strong>WebM Opus:</strong> Seeking is facilitated by EBML
+<code>Cue</code> elements (seek index). WebM specifies the preroll
+requirement directly in the track header using the
+<code>SeekPreRoll</code> element, set to standard 80,000,000 nanoseconds
+(80 ms), explicitly instructing the demuxer on how far back to begin
+feeding packets to the decoder.</li>
+</ul>
+<h3 id="metadata-storage">Metadata Storage</h3>
+<ul>
+<li><strong>Ogg Opus:</strong> Metadata is encapsulated using the
+VorbisComment format embedded inside the mandatory secondary
+<code>OpusTags</code> packet.</li>
+<li><strong>WebM Opus:</strong> Metadata is stored using native Matroska
+<code>Tag</code> and <code>SimpleTag</code> EBML elements, completely
+replacing the VorbisComment packet structure.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

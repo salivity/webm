@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Transparent WebM Showing White Background - webm</title>
+    <meta name="description" content="When a transparent WebM video displays with an opaque white or black background, the issue is typically driven by browser-specific codec limitations, hardware acceleration bugs, or improper video encoding. While WebM natively supports alpha transparency">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/fix-transparent-web-m-showing-white-background">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Fix Transparent WebM Showing White Background - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/fix-transparent-web-m-showing-white-background" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When a transparent WebM video displays with an opaque white or black background, the issue is typically driven by browser-specific codec limitations, hardware acceleration bugs, or improper video encoding. While WebM natively supports alpha transparency" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="fix-transparent-webm-showing-white-background">Fix Transparent
+WebM Showing White Background</h1>
+<p>When a transparent WebM video displays with an opaque white or black
+background, the issue is typically driven by browser-specific codec
+limitations, hardware acceleration bugs, or improper video encoding.
+While WebM natively supports alpha transparency through VP8 and VP9
+codecs, not all browsers and hardware configurations decode transparent
+video streams consistently. This guide explains the primary technical
+reasons behind this rendering failure and how to resolve it across all
+modern web browsers.</p>
+<h3 id="1-incompatible-browser-support-safari-and-webkit">1.
+Incompatible Browser Support (Safari and WebKit)</h3>
+<p>The most common reason for a transparent WebM displaying an opaque
+background is browser engine incompatibility, specifically in Apple
+Safari and iOS browsers.</p>
+<ul>
+<li><strong>The Problem:</strong> Safari does not support alpha
+transparency in WebM (VP8/VP9) containers. When Safari encounters a WebM
+file with an alpha channel, it either ignores the alpha data entirely or
+fails to decode the transparency layer, defaulting the background to
+solid white or black.</li>
+<li><strong>The Solution:</strong> Use cross-browser fallbacks with the
+HTML <code>&lt;video&gt;</code> element. Provide an Apple-compatible
+format (HEVC / H.265 with alpha in an MP4 or QuickTime container)
+alongside the WebM file.</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">video</span><span class="ot"> autoplay loop muted playsinline</span><span class="dt">&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">source</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;animation.mp4&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&#39;video/mp4; codecs=&quot;hevc&quot;&#39;</span><span class="dt">&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">source</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;animation.webm&quot;</span><span class="ot"> type</span><span class="op">=</span><span class="st">&quot;video/webm&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">video</span><span class="dt">&gt;</span></span></code></pre></div>
+<h3 id="2-hardware-acceleration-and-gpu-decoding">2. Hardware
+Acceleration and GPU Decoding</h3>
+<p>Certain graphics processing units (GPUs) and operating system display
+servers do not support hardware-accelerated decoding for video streams
+containing an alpha channel.</p>
+<ul>
+<li><strong>The Problem:</strong> When hardware acceleration is enabled,
+the browser offloads video decoding to the GPU. If the GPU's hardware
+decoder only supports standard YUV color spaces without an alpha layer
+(such as standard YUV420p), the alpha data is discarded during the
+decoding pipeline, resulting in a solid background.</li>
+<li><strong>The Solution:</strong> While end users can disable hardware
+acceleration in their browser settings, web developers cannot rely on
+this. Ensuring proper fallback formats or using lighter animated
+alternatives like Lottie or Canvas rendering for critical transparent UI
+elements avoids hardware decoding dropouts.</li>
+</ul>
+<h3 id="3-missing-or-misconfigured-alpha-channel-during-encoding">3.
+Missing or Misconfigured Alpha Channel During Encoding</h3>
+<p>A WebM file must be explicitly encoded with pixel formats that
+support transparency. If the source file was exported without an active
+alpha channel, the transparent areas will automatically be flattened to
+a solid color (often white).</p>
+<ul>
+<li><strong>The Problem:</strong> Using standard video encoding presets
+without specifying an alpha pixel format creates a standard
+three-channel video.</li>
+<li><strong>The Solution:</strong> When using FFmpeg or similar encoding
+tools, explicitly specify the <code>yuva420p</code> pixel format using
+either VP8 or VP9:</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Encoding with VP9 and Alpha</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mov <span class="at">-c:v</span> libvpx-vp9 <span class="at">-pix_fmt</span> yuva420p output.webm</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Encoding with VP8 and Alpha</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.mov <span class="at">-c:v</span> libvpx <span class="at">-pix_fmt</span> yuva420p <span class="at">-auto-alt-ref</span> 0 output.webm</span></code></pre></div>
+<h3 id="4-css-and-html-render-layer-conflicts">4. CSS and HTML Render
+Layer Conflicts</h3>
+<p>In some cases, the video decodes transparency correctly, but the
+browser's rendering engine misinterprets the compositing layer due to
+CSS styles applied to the <code>&lt;video&gt;</code> element or its
+parent container.</p>
+<ul>
+<li><strong>The Problem:</strong> Default browser styling, conflicting
+CSS properties (such as <code>mix-blend-mode</code>,
+<code>filter</code>, or non-transparent <code>background-color</code> on
+video tags), or missing inline playback attributes on mobile browsers
+can disrupt transparency compositing.</li>
+<li><strong>The Solution:</strong> Ensure the <code>&lt;video&gt;</code>
+element explicitly specifies transparent background rules and includes
+the necessary attributes for inline rendering:</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode css"><code class="sourceCode css"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>video {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">background</span><span class="ch">:</span> <span class="dv">transparent</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">background-color</span><span class="ch">:</span> <span class="fu">rgba(</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="fu">)</span><span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Make sure attributes like <code>playsinline</code> and
+<code>muted</code> are present on the <code>&lt;video&gt;</code> tag, as
+mobile engines often restrict transparent rendering if autoplay policies
+force standard fullscreen or opaque playback controls.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How WebM Stores Aspect Ratio in TrackVideo - webm</title>
+    <meta name="description" content="The WebM container format stores aspect ratio and geometry metadata inside the TrackVideo element using a combination of pixel resolution and display dimension tags. Instead of writing a single static aspect ratio value, WebM relies on separate fields fo">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-web-m-stores-aspect-ratio-in-track-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How WebM Stores Aspect Ratio in TrackVideo - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-web-m-stores-aspect-ratio-in-track-video" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="The WebM container format stores aspect ratio and geometry metadata inside the TrackVideo element using a combination of pixel resolution and display dimension tags. Instead of writing a single static aspect ratio value, WebM relies on separate fields fo" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-webm-stores-aspect-ratio-in-trackvideo">How WebM Stores
+Aspect Ratio in TrackVideo</h1>
+<p>The WebM container format stores aspect ratio and geometry metadata
+inside the <code>TrackVideo</code> element using a combination of pixel
+resolution and display dimension tags. Instead of writing a single
+static aspect ratio value, WebM relies on separate fields for coded
+storage dimensions (<code>PixelWidth</code> and
+<code>PixelHeight</code>) and rendered output dimensions
+(<code>DisplayWidth</code> and <code>DisplayHeight</code>). This
+structure allows media decoders and players to correctly handle both
+standard square-pixel video and anamorphic content requiring non-square
+Pixel Aspect Ratios (PAR).</p>
+<h2 id="the-trackvideo-ebml-structure">The TrackVideo EBML
+Structure</h2>
+<p>WebM is based on the Extensible Binary Meta Language (EBML), a binary
+equivalent of XML derived from the Matroska specification. Track
+configurations are organized in the following hierarchy:</p>
+<ul>
+<li><code>Segment</code>
+<ul>
+<li><code>Tracks</code>
+<ul>
+<li><code>TrackEntry</code>
+<ul>
+<li><code>Video</code> (also referred to as
+<code>TrackVideo</code>)</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>All video scaling, resolution, and aspect ratio metadata is contained
+within this <code>Video</code> sub-element.</p>
+<h2 id="key-elements-defining-aspect-ratio">Key Elements Defining Aspect
+Ratio</h2>
+<p>Inside the <code>TrackVideo</code> element, three pairs of parameters
+determine the final rendered aspect ratio:</p>
+<h3 id="1-storage-dimensions-pixel-geometry">1. Storage Dimensions
+(Pixel Geometry)</h3>
+<ul>
+<li><strong><code>PixelWidth</code> (ID <code>0xB0</code>):</strong>
+Defines the coded width of the video in physical pixels (e.g.,
+<code>1920</code>).</li>
+<li><strong><code>PixelHeight</code> (ID <code>0xBA</code>):</strong>
+Defines the coded height of the video in physical pixels (e.g.,
+<code>1080</code>).</li>
+</ul>
+<p>These fields represent the raw buffer size output by the video
+decoder before scaling.</p>
+<h3 id="2-display-dimensions-target-output">2. Display Dimensions
+(Target Output)</h3>
+<ul>
+<li><strong><code>DisplayWidth</code> (ID <code>0x54B0</code>):</strong>
+The intended width of the video image upon playback.</li>
+<li><strong><code>DisplayHeight</code> (ID
+<code>0x54BA</code>):</strong> The intended height of the video image
+upon playback.</li>
+</ul>
+<p>If <code>DisplayWidth</code> or <code>DisplayHeight</code> are
+omitted, their values automatically default to the corresponding
+<code>PixelWidth</code> and <code>PixelHeight</code> values.</p>
+<h3 id="3-display-unit-definition">3. Display Unit Definition</h3>
+<ul>
+<li><strong><code>DisplayUnit</code> (ID <code>0x54B2</code>):</strong>
+Specifies the measurement unit used for <code>DisplayWidth</code> and
+<code>DisplayHeight</code>. The standard values include:
+<ul>
+<li><code>0</code>: Pixels (Default)</li>
+<li><code>1</code>: Centimeters</li>
+<li><code>2</code>: Inches</li>
+<li><code>3</code>: Display Aspect Ratio (DAR)</li>
+</ul></li>
+</ul>
+<p>When <code>DisplayUnit</code> is set to <code>0</code> (pixels), the
+values are treated as a target resolution for playback scaling. When set
+to <code>3</code>, <code>DisplayWidth</code> and
+<code>DisplayHeight</code> act purely as a ratio (e.g., <code>16</code>
+and <code>9</code>).</p>
+<h2 id="how-players-compute-the-aspect-ratio">How Players Compute the
+Aspect Ratio</h2>
+<p>A WebM-compliant player evaluates these elements to calculate the
+Display Aspect Ratio (DAR) and Pixel Aspect Ratio (PAR):</p>
+<ol type="1">
+<li><strong>Display Aspect Ratio (DAR):</strong> Calculated directly as:
+<span class="math display">\[\text{DAR} =
+\frac{\text{DisplayWidth}}{\text{DisplayHeight}}\]</span></li>
+<li><strong>Pixel Aspect Ratio (PAR):</strong> Calculated by comparing
+the display ratio to the storage pixel ratio: <span
+class="math display">\[\text{PAR} = \frac{\text{DisplayWidth} \times
+\text{PixelHeight}}{\text{DisplayHeight} \times
+\text{PixelWidth}}\]</span></li>
+</ol>
+<h3 id="example-anamorphic-video">Example: Anamorphic Video</h3>
+<p>For an anamorphic DVD stream encoded into WebM:</p>
+<ul>
+<li><code>PixelWidth</code>: <code>720</code></li>
+<li><code>PixelHeight</code>: <code>480</code></li>
+<li><code>DisplayWidth</code>: <code>16</code> (or <code>854</code> if
+using pixel units)</li>
+<li><code>DisplayHeight</code>: <code>9</code> (or <code>480</code> if
+using pixel units)</li>
+<li><code>DisplayUnit</code>: <code>3</code> (Aspect Ratio)</li>
+</ul>
+<p>The player decodes the <code>720x480</code> frame buffer but
+stretches the rendering canvas to match the 16:9 ratio indicated by the
+<code>DisplayWidth</code> and <code>DisplayHeight</code> values.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

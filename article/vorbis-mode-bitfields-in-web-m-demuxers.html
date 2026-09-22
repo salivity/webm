@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vorbis Mode Bitfields in WebM Demuxers - webm</title>
+    <meta name="description" content="This article provides an overview of the specific Vorbis bitstream mode fields parsed by WebM audio demuxers. While WebM encapsulates Vorbis audio data without the traditional Ogg container framing, demuxers must still inspect raw packet headers to calcu">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vorbis-mode-bitfields-in-web-m-demuxers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Vorbis Mode Bitfields in WebM Demuxers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vorbis-mode-bitfields-in-web-m-demuxers" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of the specific Vorbis bitstream mode fields parsed by WebM audio demuxers. While WebM encapsulates Vorbis audio data without the traditional Ogg container framing, demuxers must still inspect raw packet headers to calcu" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vorbis-mode-bitfields-in-webm-demuxers">Vorbis Mode Bitfields in
+WebM Demuxers</h1>
+<p>This article provides an overview of the specific Vorbis bitstream
+mode fields parsed by WebM audio demuxers. While WebM encapsulates
+Vorbis audio data without the traditional Ogg container framing,
+demuxers must still inspect raw packet headers to calculate sample
+counts, frame durations, and seek offsets. Below are the precise
+bitfields extracted during the demuxing process and their technical
+significance.</p>
+<h3 id="packet-type-flag-1-bit">Packet Type Flag (1 Bit)</h3>
+<p>The very first bit parsed by a WebM demuxer from a Vorbis payload is
+the packet type flag.</p>
+<ul>
+<li><strong>Length:</strong> 1 bit</li>
+<li><strong>Value:</strong> <code>0</code> for audio data packets;
+<code>1</code> for header/metadata packets.</li>
+<li><strong>Purpose:</strong> WebM places initialization headers
+(Identification, Comments, Setup) in the <code>CodecPrivate</code>
+element of the Matroska/WebM container. Consequently, all runtime stream
+packets must be audio packets. Demuxers verify that this initial bit is
+<code>0</code> to confirm that the incoming payload is decodable audio
+data rather than an out-of-band control packet.</li>
+</ul>
+<h3 id="mode-number-bitfield-lceil-log_2textmode_count-rceil-bits">Mode
+Number Bitfield (<span class="math inline">\(\lceil
+\log_2(\text{mode\_count}) \rceil\)</span> Bits)</h3>
+<p>Immediately following the packet type flag, the demuxer parses the
+mode index field.</p>
+<ul>
+<li><strong>Length:</strong> Variable, determined by the formula <span
+class="math inline">\(k = \lceil \log_2(\text{mode\_count})
+\rceil\)</span>, where <span
+class="math inline">\(\text{mode\_count}\)</span> is the total number of
+configured modes (up to 64) extracted from the Vorbis Setup header in
+<code>CodecPrivate</code>. If only one mode exists, this field occupies
+0 bits.</li>
+<li><strong>Purpose:</strong> This bitfield indicates which specific
+mode configuration applies to the current frame. The demuxer uses this
+index to reference the mode table, determining whether the packet
+utilizes a short window (<code>blocksize_0</code>) or a long window
+(<code>blocksize_1</code>). This distinction is critical for calculating
+the exact number of audio samples in the packet to maintain accurate
+audio-video synchronization and timestamp generation.</li>
+</ul>
+<h3 id="window-transition-flags-2-bits-conditional">Window Transition
+Flags (2 Bits, Conditional)</h3>
+<p>If the active mode resolved by the mode index utilizes a long block
+size (<code>blockflag == 1</code>), the demuxer parses two subsequent
+single-bit flags.</p>
+<ul>
+<li><strong>Previous Window Flag (1 bit):</strong> Indicates the window
+type of the preceding frame (short vs. long) to ensure proper
+overlap-add calculations.</li>
+<li><strong>Next Window Flag (1 bit):</strong> Indicates the anticipated
+window type of the following frame.</li>
+<li><strong>Purpose:</strong> While primarily used by the Vorbis
+transform decoder for windowing overlap synthesis, specialized demuxers
+and indexers parse these bits during sample-accurate seeking and stream
+preroll calculations to handle overlap-discard requirements at
+boundaries.</li>
+</ul>
+<h3 id="demuxer-workflow-summary">Demuxer Workflow Summary</h3>
+<ol type="1">
+<li><strong>Read 1 bit:</strong> Confirm packet type is <code>0</code>
+(Audio).</li>
+<li><strong>Read <span class="math inline">\(\lceil
+\log_2(\text{mode\_count}) \rceil\)</span> bits:</strong> Retrieve the
+<code>mode_number</code>.</li>
+<li><strong>Lookup <code>blockflag</code>:</strong> Determine if the
+block size is short (<code>0</code>) or long (<code>1</code>).</li>
+<li><strong>Conditional Read (if <code>blockflag == 1</code>):</strong>
+Read <code>previous_window_flag</code> (1 bit) and
+<code>next_window_flag</code> (1 bit).</li>
+<li><strong>Compute Duration:</strong> Calculate the packet's sample
+duration based on block sizes and overlap transitions to update the
+container's timeline accurately.</li>
+</ol></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

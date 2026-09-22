@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spatial Scaling Algorithms in WebM Video Decoding - webm</title>
+    <meta name="description" content="Spatial scaling in WebM video decoding allows video streams encoded in formats like VP8, VP9, and AV1 to adapt smoothly across varying display resolutions and dynamic bitrate conditions. This article examines the core mathematical algorithms responsible">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/spatial-scaling-algorithms-in-web-m-video-decoding">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Spatial Scaling Algorithms in WebM Video Decoding - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/spatial-scaling-algorithms-in-web-m-video-decoding" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Spatial scaling in WebM video decoding allows video streams encoded in formats like VP8, VP9, and AV1 to adapt smoothly across varying display resolutions and dynamic bitrate conditions. This article examines the core mathematical algorithms responsible" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="spatial-scaling-algorithms-in-webm-video-decoding">Spatial
+Scaling Algorithms in WebM Video Decoding</h1>
+<p>Spatial scaling in WebM video decoding allows video streams encoded
+in formats like VP8, VP9, and AV1 to adapt smoothly across varying
+display resolutions and dynamic bitrate conditions. This article
+examines the core mathematical algorithms responsible for both in-loop
+reference frame resizing and post-decode rendering. By utilizing
+polynomial interpolation, sinc-based windowed filtering, and multi-tap
+polyphase filter banks, WebM decoders ensure smooth edge transitions,
+minimized aliasing, and continuous playback during real-time resolution
+switching.</p>
+<h3 id="bilinear-and-bicubic-polynomial-interpolation">Bilinear and
+Bicubic Polynomial Interpolation</h3>
+<p>At the most fundamental level, spatial scaling relies on polynomial
+interpolation to approximate unknown pixel intensities based on
+surrounding grid values.</p>
+<ul>
+<li><strong>Bilinear Interpolation:</strong> Evaluates a 2x2 grid of
+four known pixels. It applies linear equations sequentially along the
+horizontal and vertical axes: <span class="math display">\[f(x, y)
+\approx a_0 + a_1 x + a_2 y + a_3 x y\]</span> While computationally
+efficient and ideal for low-power hardware decoders, bilinear filtering
+acts as a low-pass filter, which can cause noticeable blurring along
+high-frequency edges.</li>
+<li><strong>Bicubic Interpolation:</strong> Samples a 4x4 neighborhood
+(16 pixels) using cubic splines or Catmull-Rom equations: <span
+class="math display">\[W(x) = \begin{cases} (a+2)|x|^3 - (a+3)|x|^2 + 1
+&amp; \text{for } |x| \le 1 \\ a|x|^3 - 5a|x|^2 + 8a|x| - 4a &amp;
+\text{for } 1 &lt; |x| &lt; 2 \\ 0 &amp; \text{otherwise}
+\end{cases}\]</span> Bicubic scaling preserves sharper gradients and
+reduces block artifacts compared to linear methods, making it a common
+baseline for video output pipelines.</li>
+</ul>
+<h3 id="lanczos-resampling">Lanczos Resampling</h3>
+<p>For higher-fidelity spatial upscaling, WebM renderers frequently
+deploy Lanczos resampling. This technique approximates the ideal
+Whittaker–Shannon sinc interpolation formula by applying a windowing
+function that eliminates infinite tail calculations:</p>
+<p><span class="math display">\[L(x) = \begin{cases} \text{sinc}(x)
+\cdot \text{sinc}(x/a) &amp; \text{for } -a &lt; x &lt; a \\ 0 &amp;
+\text{otherwise} \end{cases}\]</span></p>
+<p>Where <span class="math inline">\(\text{sinc}(x) = \frac{\sin(\pi
+x)}{\pi x}\)</span>, and <span class="math inline">\(a\)</span>
+typically equals 2 or 3 (representing the kernel size). Lanczos-2 and
+Lanczos-3 kernels retain high-frequency image components and edge
+sharpness while significantly reducing ringing and moiré patterns during
+substantial video enlargement.</p>
+<h3 id="polyphase-filter-banks-in-vp9-and-av1">Polyphase Filter Banks in
+VP9 and AV1</h3>
+<p>Modern WebM video codecs handle spatial scaling directly inside the
+decoding pipeline to support Dynamic Resolution Switching (DRS). In VP9
+and AV1, inter-frame prediction often requires referencing a frame of a
+different resolution without inserting an intra-coded keyframe.</p>
+<p>To scale reference frames with sub-pixel precision:</p>
+<ul>
+<li><strong>8-Tap Polyphase Filters:</strong> Decoders split continuous
+sinc-like filter responses into discrete sub-pixel phases (typically
+1/8th or 1/16th fractional offsets). An 8-tap filter uses eight
+neighboring sample points per phase to calculate intermediate pixel
+values.</li>
+<li><strong>Adaptive Filter Kernels:</strong> Decoders dynamically
+switch between distinct filter parameterizations based on image content:
+<ul>
+<li><strong>Regular:</strong> Balances sharpness and aliasing for
+general texture.</li>
+<li><strong>Smooth:</strong> Emphasizes low-pass filtering to suppress
+blocking and ringing in noisy or flat regions.</li>
+<li><strong>Sharp:</strong> Accentuates edge boundaries for
+high-contrast, detailed segments.</li>
+</ul></li>
+</ul>
+<h3 id="separable-2d-filtering-and-hardware-acceleration">Separable 2D
+Filtering and Hardware Acceleration</h3>
+<p>To maintain real-time decoding performance at high frame rates,
+two-dimensional scaling operations are decomposed mathematically into
+two independent one-dimensional operations (horizontal pass followed by
+a vertical pass):</p>
+<p><span class="math display">\[I_{\text{scaled}}(x, y) =
+\sum_{j=-N}^{N} K_y(j) \left( \sum_{i=-N}^{N} K_x(i) \cdot I(x+i, y+j)
+\right)\]</span></p>
+<p>This separability reduces the computational complexity from <span
+class="math inline">\(\mathcal{O}(N^2)\)</span> to <span
+class="math inline">\(\mathcal{O}(2N)\)</span> operations per pixel.
+Modern hardware decoders and WebGL/Vulkan video renderers map these 1D
+filter kernels directly to SIMD (Single Instruction, Multiple Data)
+vector registers and GPU fragment shaders, enabling seamless scaling
+transitions with minimal CPU overhead.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

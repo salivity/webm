@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Raspberry Pi Scalers Handle Full HD WebM Video - webm</title>
+    <meta name="description" content="This article examines how the Raspberry Pi Hardware Video Scaler (HVS) handles Full HD (1080p) WebM video output. It details the pipeline separation between video decoding and display processing, how decoded VP8 and VP9 frames pass through memory via Dir">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-raspberry-pi-scalers-handle-full-hd-web-m-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Raspberry Pi Scalers Handle Full HD WebM Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-raspberry-pi-scalers-handle-full-hd-web-m-video" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article examines how the Raspberry Pi Hardware Video Scaler (HVS) handles Full HD (1080p) WebM video output. It details the pipeline separation between video decoding and display processing, how decoded VP8 and VP9 frames pass through memory via Dir" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-raspberry-pi-scalers-handle-full-hd-webm-video">How
+Raspberry Pi Scalers Handle Full HD WebM Video</h1>
+<p>This article examines how the Raspberry Pi Hardware Video Scaler
+(HVS) handles Full HD (1080p) WebM video output. It details the pipeline
+separation between video decoding and display processing, how decoded
+VP8 and VP9 frames pass through memory via Direct Rendering Manager
+(DRM) and Kernel Mode Setting (KMS), and how the dedicated HVS engine
+executes real-time multi-tap scaling and color-space conversion directly
+to the display scanout.</p>
+<h3 id="pipeline-separation-decoding-vs-display-scaling">Pipeline
+Separation: Decoding vs. Display Scaling</h3>
+<p>WebM files typically encapsulate video encoded in either the VP8 or
+VP9 codec. On modern Raspberry Pi boards (such as the Raspberry Pi 4 and
+Raspberry Pi 5), the decompression of the WebM stream and the scaling of
+the resulting frames are treated as distinct hardware tasks:</p>
+<ol type="1">
+<li><strong>Decoding:</strong> The compressed VP8 or VP9 stream is
+processed either by software threads on the ARM CPU or via dedicated
+multimedia hardware blocks. This stage outputs raw, uncompressed planar
+pixel data, typically formatted in YUV420 (such as NV12 or I420).</li>
+<li><strong>Display and Scaling:</strong> Once raw frames are available,
+the VideoCore Hardware Video Scaler (HVS) takes responsibility for
+formatting, scaling, and outputting the video frames to the screen. The
+HVS operates independently from the decoding pipeline, ensuring that
+display presentation does not consume CPU cycles.</li>
+</ol>
+<h3 id="zero-copy-transfer-via-drmkms-and-dma-buf">Zero-Copy Transfer
+via DRM/KMS and DMA-BUF</h3>
+<p>To deliver 1080p video at 60 frames per second without saturating
+system memory bandwidth, the Raspberry Pi utilizes Linux DRM/KMS
+alongside <code>dma-buf</code>. When a video player (such as Chromium,
+VLC, or MPV) decodes a WebM frame:</p>
+<ul>
+<li>The decoded YUV frame is written into shared system memory
+buffers.</li>
+<li>The video player exports a file descriptor referencing the buffer
+using <code>dma-buf</code>.</li>
+<li>The DRM driver assigns this buffer to a dedicated hardware overlay
+plane controlled by the HVS.</li>
+<li>The system avoids copying pixel data between user space and kernel
+space (zero-copy architecture), allowing the HVS to read pixel data
+directly from RAM.</li>
+</ul>
+<h3 id="real-time-polyphase-scaling-and-format-conversion">Real-Time
+Polyphase Scaling and Format Conversion</h3>
+<p>The HVS is a dedicated, real-time compositing and scaling processor
+built inside the VideoCore GPU architecture. When receiving Full HD WebM
+frames, it performs several tasks simultaneously during the active
+display scanout:</p>
+<ul>
+<li><strong>Polyphase Filtering:</strong> If the output display
+resolution differs from the native 1080p video stream (such as
+downscaling to 720p or upscaling to a 4K display), the HVS uses hardware
+multi-tap polyphase filters. These filters calculate pixel interpolation
+horizontally and vertically on the fly.</li>
+<li><strong>Color-Space Conversion (CSC):</strong> WebM video streams
+rely on YUV color spaces (typically ITU-R BT.709 or BT.601). Computer
+monitors and HDMI displays require RGB signals. The HVS features
+dedicated matrix multipliers that transform planar YUV pixels into
+packed RGB pixels in hardware.</li>
+<li><strong>On-the-Fly Scanout:</strong> The HVS does not write scaled
+or color-converted images back into system RAM. Instead, it processes
+pixel lines in real time and routes the converted digital signals
+directly to the HDMI pixel pipeline (or DSI/composite interfaces),
+conserving system memory bandwidth.</li>
+</ul>
+<h3 id="performance-and-bandwidth-considerations">Performance and
+Bandwidth Considerations</h3>
+<p>Handling Full HD WebM playback through the HVS ensures low display
+latency and prevents frame tearing. Because the HVS is a fixed-function
+hardware block, its scaling and color conversion overhead is virtually
+zero in terms of CPU utilization.</p>
+<p>The primary system limitation during Full HD WebM playback lies in
+decoding VP9 content. Since the Raspberry Pi relies largely on optimized
+multi-threaded CPU routines for VP9 decompression, the CPU must deliver
+decoded frames to memory fast enough to maintain the target frame rate.
+However, once those frames enter the display queue, the HVS guarantees
+that scaling, layer compositing, and HDMI timing remain
+hardware-accelerated, stable, and fluid.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

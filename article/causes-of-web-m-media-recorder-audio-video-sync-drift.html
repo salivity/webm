@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Causes of WebM MediaRecorder Audio Video Sync Drift - webm</title>
+    <meta name="description" content="When recording long sessions in web applications using the WebM MediaRecorder API, users frequently encounter audio-video synchronization drift where sound and picture gradually fall out of alignment. This cumulative desynchronization is primarily caused">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/causes-of-web-m-media-recorder-audio-video-sync-drift">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Causes of WebM MediaRecorder Audio Video Sync Drift - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/causes-of-web-m-media-recorder-audio-video-sync-drift" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="When recording long sessions in web applications using the WebM MediaRecorder API, users frequently encounter audio-video synchronization drift where sound and picture gradually fall out of alignment. This cumulative desynchronization is primarily caused" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="causes-of-webm-mediarecorder-audio-video-sync-drift">Causes of
+WebM MediaRecorder Audio Video Sync Drift</h1>
+<p>When recording long sessions in web applications using the WebM
+<code>MediaRecorder</code> API, users frequently encounter audio-video
+synchronization drift where sound and picture gradually fall out of
+alignment. This cumulative desynchronization is primarily caused by
+independent hardware clocks, variable frame rates, background tab
+throttling, asynchronous encoding pipelines, and timestamp generation
+flaws within the browser's muxing engine. Understanding these underlying
+mechanisms is essential for identifying bottlenecks and ensuring
+reliable long-form media capture in browser-based tools.</p>
+<h3 id="independent-hardware-clocks-and-clock-drift">Independent
+Hardware Clocks and Clock Drift</h3>
+<p>Audio and video hardware typically operate on separate physical
+crystal oscillators. The audio interface captures samples at a fixed
+clock rate (such as 44.1 kHz or 48 kHz), while video webcams capture
+image frames at their own internal frequency. Over short recordings, the
+fractional microsecond differences between these hardware clocks are
+imperceptible. Over extended periods, however, this clock skew
+accumulates, causing one track to produce slightly more or less duration
+than the other, resulting in audible and visible drift.</p>
+<h3 id="variable-frame-rates-vfr-and-dropped-frames">Variable Frame
+Rates (VFR) and Dropped Frames</h3>
+<p><code>MediaRecorder</code> captures video dynamically, often
+producing Variable Frame Rate (VFR) WebM files rather than Constant
+Frame Rate (CFR) files. When system resources fluctuate or CPU
+utilization spikes:</p>
+<ul>
+<li>The browser drops video frames to preserve performance.</li>
+<li>The audio pipeline, which operates on low-latency dedicated threads,
+continues recording continuously without interruption.</li>
+<li>If the WebM container does not explicitly map the missing video
+timecodes accurately against the continuous audio track, the video
+stream will appear to lag behind or speed up relative to the audio
+during playback.</li>
+</ul>
+<h3 id="asynchronous-encoding-and-buffering">Asynchronous Encoding and
+Buffering</h3>
+<p>In browser implementations (such as Chromium and Firefox), audio and
+video data are processed and encoded on separate asynchronous threads.
+Video compression (e.g., VP8 or VP9) is significantly more
+computationally expensive than audio compression (e.g., Opus). Under
+sustained recording loads:</p>
+<ul>
+<li>Video frames can accumulate in internal encoder buffers before being
+passed to the WebM muxer.</li>
+<li>If the muxer fails to synchronize the presentation timestamps (PTS)
+correctly across these separate worker threads, a progressive offset is
+introduced into the container metadata.</li>
+</ul>
+<h3 id="browser-throttling-and-background-inactivity">Browser Throttling
+and Background Inactivity</h3>
+<p>Browsers implement aggressive power-saving and resource-management
+optimizations for background tabs. When a user switches tabs or
+minimizes the window during an active recording:</p>
+<ul>
+<li>JavaScript execution timers and visual rendering pipelines
+(<code>requestAnimationFrame</code>) are severely throttled or paused
+entirely.</li>
+<li>Video frame capture may stall or drop to near-zero frames per
+second.</li>
+<li>Audio capture typically remains prioritized by the operating
+system.</li>
+<li>Once the tab is reactivated, the sudden gap in video capture often
+corrupts the time alignment between the two tracks.</li>
+</ul>
+<h3 id="timestamp-calculation-and-webm-muxing-deficiencies">Timestamp
+Calculation and WebM Muxing Deficiencies</h3>
+<p>The <code>MediaStream</code> tracks fed into
+<code>MediaRecorder</code> generate relative timestamps for each raw
+packet. The browser’s native WebM muxer must calculate precise
+container-level timecodes for the output <code>Blob</code> chunks. In
+long recordings, floating-point rounding errors in timestamp
+calculations, improper handling of track start offsets, or faulty chunk
+fragmentation can create an unrecoverable cumulative time discrepancy
+between the Opus audio track and the VP8/VP9 video track.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securing Untrusted EBML Parsing in WebM Files - webm</title>
+    <meta name="description" content="Parsing untrusted Extensible Binary Meta Language (EBML) data in WebM containers introduces significant security challenges that can lead to remote code execution, memory corruption, and denial-of-service (DoS) conditions. Because EBML functions as a bin">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/securing-untrusted-ebml-parsing-in-web-m-files">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Securing Untrusted EBML Parsing in WebM Files - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/securing-untrusted-ebml-parsing-in-web-m-files" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Parsing untrusted Extensible Binary Meta Language (EBML) data in WebM containers introduces significant security challenges that can lead to remote code execution, memory corruption, and denial-of-service (DoS) conditions. Because EBML functions as a bin" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="securing-untrusted-ebml-parsing-in-webm-files">Securing
+Untrusted EBML Parsing in WebM Files</h1>
+<p>Parsing untrusted Extensible Binary Meta Language (EBML) data in WebM
+containers introduces significant security challenges that can lead to
+remote code execution, memory corruption, and denial-of-service (DoS)
+conditions. Because EBML functions as a binary, hierarchical format
+similar to XML, parsers must decode variable-length integers, dynamic
+data types, and deeply nested structures. Defending against malicious
+WebM payloads requires identifying key parsing vulnerabilities—such as
+integer overflows, memory exhaustion, and out-of-bounds reads—and
+implementing rigorous defensive validation throughout the demuxing
+pipeline.</p>
+<h3 id="variable-length-integer-vint-vulnerabilities">Variable-Length
+Integer (VINT) Vulnerabilities</h3>
+<p>EBML uses variable-length integers (VINTs) to encode both Element IDs
+and Element Data Sizes. Improper handling of VINTs is a primary attack
+vector:</p>
+<ul>
+<li><strong>Integer Overflows and Truncation:</strong> A VINT can
+represent 64-bit unsigned integers. When calculating offsets or
+allocating memory, adding element sizes to current stream positions can
+trigger integer overflows if arithmetic is not checked. Truncating an
+8-byte VINT into a 32-bit integer variable can also cause severe memory
+miscalculations.</li>
+<li><strong>Overlong VINT Encodings:</strong> An attacker can encode a
+small integer using an unnecessarily wide byte representation (e.g.,
+using 8 bytes to represent the value <code>1</code>). Parsers must
+enforce canonical representation or explicitly normalize and validate
+all sizes against remaining buffer lengths.</li>
+<li><strong>Reserved/Unknown Size Markers:</strong> A VINT consisting
+entirely of <code>1</code> bits (e.g., <code>0xFF</code> for a 1-byte
+VINT) represents an "unknown" size. Parsers that do not explicitly
+handle unknown sizes in non-streaming contexts may read beyond the
+intended buffer or loop infinitely.</li>
+</ul>
+<h3 id="memory-allocation-and-out-of-bounds-access">Memory Allocation
+and Out-of-Bounds Access</h3>
+<p>Attackers frequently manipulate element size fields to exploit
+dynamic memory management:</p>
+<ul>
+<li><strong>Unbounded Allocation (OOM Attacks):</strong> If an element
+declares a size of several gigabytes, a parser that blindly calls
+<code>malloc()</code> or pre-allocates buffers before reading data can
+trigger out-of-memory crashes. Element data should either be streamed
+directly or subject to hard allocation caps.</li>
+<li><strong>Buffer Over-read and Under-read:</strong> Declared element
+sizes may exceed the actual size of the parent container or file.
+Parsers must ensure that every read operation verifies that
+<code>offset + element_size &lt;= parent_boundary</code>.</li>
+<li><strong>String and Binary Parsing:</strong> EBML string elements
+(both UTF-8 and ASCII) are not guaranteed to be null-terminated in the
+byte stream. Reading these fields as native C-strings without explicit
+bounds checking leads to out-of-bounds memory reads.</li>
+</ul>
+<h3 id="recursion-depth-and-tree-structure-attacks">Recursion Depth and
+Tree Structure Attacks</h3>
+<p>EBML containers (Master Elements) can be nested within other Master
+Elements:</p>
+<ul>
+<li><strong>Stack Exhaustion via Deep Nesting:</strong> Malicious files
+can nest Master Elements thousands of levels deep. Recursive parsing
+functions can quickly exhaust the call stack, resulting in a stack
+overflow crash. Parsers should enforce a strict maximum nesting depth
+(e.g., 16 or 32 levels) or use an iterative, state-machine-based parsing
+model.</li>
+<li><strong>Malformed Hierarchy and Context Violations:</strong>
+Elements placed outside their standard WebM specifications (such as a
+<code>SimpleBlock</code> placed outside of a <code>Cluster</code>) can
+confuse the demuxer state machine, leading to uninitialized pointer
+dereferences or logic flaws.</li>
+</ul>
+<h3 id="unknown-elements-and-fuzzing-resistance">Unknown Elements and
+Fuzzing Resistance</h3>
+<p>WebM specifications allow parsers to skip unrecognized elements to
+maintain forward compatibility. However, the skip logic itself must be
+hardened:</p>
+<ul>
+<li><strong>Skipping Beyond Boundaries:</strong> When skipping an
+unknown element, parsers must validate the element size against the
+parent boundary. An invalid, oversized element could skip past the end
+of the container or cause an integer wrap-around.</li>
+<li><strong>Floating-Point Parsing:</strong> Floating-point fields (such
+as audio sampling rates or track durations) must be validated against
+NaN (Not-a-Number) and infinity values, which can disrupt downstream
+decoders and render pipelines.</li>
+</ul>
+<h3 id="recommended-mitigation-strategies">Recommended Mitigation
+Strategies</h3>
+<ul>
+<li><strong>Use Safe Integer Arithmetic:</strong> Use saturating
+arithmetic or explicit overflow-checking primitives (e.g., compiler
+built-ins or safe math libraries) when calculating buffer offsets and
+slice sizes.</li>
+<li><strong>Impose Hard Resource Limits:</strong> Enforce maximum limits
+on element sizes, string lengths, nesting depths, and memory
+allocations.</li>
+<li><strong>Implement Strict Streaming Boundaries:</strong> Never trust
+child element sizes to remain within parent bounds without explicit
+comparison against the parent element's end offset.</li>
+<li><strong>Continuous Fuzz Testing:</strong> Subject the EBML parser to
+continuous fuzz testing using tools such as AFL++ and libFuzzer, paired
+with AddressSanitizer (ASan) and UndefinedBehaviorSanitizer (UBSan),
+using diverse corpuses of malformed WebM files.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

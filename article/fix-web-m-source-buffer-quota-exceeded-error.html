@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix WebM SourceBuffer QuotaExceededError - webm</title>
+    <meta name="description" content="Long-running WebM media sessions using the Media Source Extensions (MSE) API frequently encounter browser memory constraints, resulting in a QuotaExceededError. This occurs when video data continuously accumulates in the browser's memory without being cl">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/fix-web-m-source-buffer-quota-exceeded-error">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Fix WebM SourceBuffer QuotaExceededError - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/fix-web-m-source-buffer-quota-exceeded-error" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Long-running WebM media sessions using the Media Source Extensions (MSE) API frequently encounter browser memory constraints, resulting in a QuotaExceededError. This occurs when video data continuously accumulates in the browser's memory without being cl" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="fix-webm-sourcebuffer-quotaexceedederror">Fix WebM SourceBuffer
+QuotaExceededError</h1>
+<p>Long-running WebM media sessions using the Media Source Extensions
+(MSE) API frequently encounter browser memory constraints, resulting in
+a <code>QuotaExceededError</code>. This occurs when video data
+continuously accumulates in the browser's memory without being cleared.
+Resolving this issue requires proactive buffer management, including
+implementing a sliding playback window, evicting played media segments
+using <code>SourceBuffer.remove()</code>, handling asynchronous buffer
+updates properly, and catching quota exceptions dynamically.</p>
+<h3 id="understanding-the-error">Understanding the Error</h3>
+<p>When streaming WebM content via MSE, the browser stores decoded and
+raw media segments inside a <code>SourceBuffer</code>. Browsers allocate
+a finite memory limit for these buffers (often between 15 MB and 100 MB
+depending on the platform, device memory, and browser engine). In
+continuous playback or live-streaming scenarios, calling
+<code>SourceBuffer.appendBuffer()</code> repeatedly without removing
+past data eventually fills this allocation, causing the browser to throw
+a <code>DOMException: QuotaExceededError</code>.</p>
+<h3 id="1-implement-proactive-buffer-eviction">1. Implement Proactive
+Buffer Eviction</h3>
+<p>The primary method to prevent buffer overflow is maintaining a
+sliding window of media data. You should routinely remove segments that
+have already been played.</p>
+<ul>
+<li><strong>Determine Safe Thresholds:</strong> Keep a small window of
+past video (for example, 10 to 30 seconds behind the playhead) to
+tolerate small seeks or jitter, and remove everything older.</li>
+<li><strong>Call <code>remove()</code>:</strong> Use
+<code>sourceBuffer.remove(start, end)</code> to clear buffered ranges
+that fall outside your safe threshold.</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">clearOldBuffers</span>(mediaElement<span class="op">,</span> sourceBuffer<span class="op">,</span> safeBackBufferSeconds <span class="op">=</span> <span class="dv">20</span>) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (sourceBuffer<span class="op">.</span><span class="at">updating</span>) <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> currentTime <span class="op">=</span> mediaElement<span class="op">.</span><span class="at">currentTime</span><span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> buffered <span class="op">=</span> sourceBuffer<span class="op">.</span><span class="at">buffered</span><span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (buffered<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> start <span class="op">=</span> buffered<span class="op">.</span><span class="fu">start</span>(<span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> removeEnd <span class="op">=</span> currentTime <span class="op">-</span> safeBackBufferSeconds<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (removeEnd <span class="op">&gt;</span> start) {</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>      sourceBuffer<span class="op">.</span><span class="fu">remove</span>(start<span class="op">,</span> removeEnd)<span class="op">;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="2-handle-asynchronous-operations-with-updateend">2. Handle
+Asynchronous Operations with <code>updateend</code></h3>
+<p>The <code>SourceBuffer</code> interface cannot perform simultaneous
+operations. Calling <code>appendBuffer()</code> while a
+<code>remove()</code> operation is pending—or vice versa—will throw an
+<code>InvalidStateError</code>.</p>
+<p>Always queue append and remove tasks, or listen for the
+<code>updateend</code> event before attempting the next operation:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">appendSegmentSafely</span>(sourceBuffer<span class="op">,</span> segmentData<span class="op">,</span> onComplete) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (sourceBuffer<span class="op">.</span><span class="at">updating</span>) {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    sourceBuffer<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;updateend&#39;</span><span class="op">,</span> <span class="kw">function</span> <span class="fu">handleUpdate</span>() {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      sourceBuffer<span class="op">.</span><span class="fu">removeEventListener</span>(<span class="st">&#39;updateend&#39;</span><span class="op">,</span> handleUpdate)<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">appendSegmentSafely</span>(sourceBuffer<span class="op">,</span> segmentData<span class="op">,</span> onComplete)<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  sourceBuffer<span class="op">.</span><span class="fu">appendBuffer</span>(segmentData)<span class="op">;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (onComplete) {</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    sourceBuffer<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">&#39;updateend&#39;</span><span class="op">,</span> <span class="kw">function</span> <span class="fu">handleComplete</span>() {</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>      sourceBuffer<span class="op">.</span><span class="fu">removeEventListener</span>(<span class="st">&#39;updateend&#39;</span><span class="op">,</span> handleComplete)<span class="op">;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">onComplete</span>()<span class="op">;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="3-graceful-error-recovery-reactive-cleanup">3. Graceful Error
+Recovery (Reactive Cleanup)</h3>
+<p>Even with proactive eviction, dynamic memory adjustments by the
+browser can trigger an unexpected <code>QuotaExceededError</code>. Wrap
+your append calls in exception handlers to recover gracefully without
+crashing the session.</p>
+<ol type="1">
+<li><strong>Catch the error:</strong> Intercept the
+<code>QuotaExceededError</code> inside your append logic.</li>
+<li><strong>Aggressively prune the buffer:</strong> Remove everything
+behind the playhead except for 1–2 seconds, or clear future buffers that
+are far ahead of the current playback position.</li>
+<li><strong>Retry the append:</strong> Wait for the
+<code>updateend</code> event after the aggressive purge, then re-attempt
+appending the chunk that previously failed.</li>
+</ol>
+<h3 id="4-webm-cluster-and-keyframe-alignment">4. WebM Cluster and
+Keyframe Alignment</h3>
+<p>WebM files are organized into Clusters that begin with a Keyframe
+(SimpleBlock/BlockGroup). When removing data using
+<code>sourceBuffer.remove(start, end)</code>:</p>
+<ul>
+<li>Ensure that eviction ranges do not split the active GOP (Group of
+Pictures) currently being decoded by the video pipeline.</li>
+<li>Maintain reasonable Cluster sizes at the encoder level (typically 1
+to 2 seconds). Large Cluster intervals force the browser to retain
+larger blocks of data to keep playback smooth, limiting the
+effectiveness of granular buffer eviction.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

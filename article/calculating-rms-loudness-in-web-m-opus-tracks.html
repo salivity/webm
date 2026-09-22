@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculating RMS Loudness in WebM Opus Tracks - webm</title>
+    <meta name="description" content="This article outlines the mathematical process used to calculate Root-Mean-Square (RMS) loudness levels from audio stored within WebM Opus files. Because Opus is a lossy, transform-based audio format, calculating RMS loudness requires demuxing the WebM c">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/calculating-rms-loudness-in-web-m-opus-tracks">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Calculating RMS Loudness in WebM Opus Tracks - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/calculating-rms-loudness-in-web-m-opus-tracks" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article outlines the mathematical process used to calculate Root-Mean-Square (RMS) loudness levels from audio stored within WebM Opus files. Because Opus is a lossy, transform-based audio format, calculating RMS loudness requires demuxing the WebM c" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="calculating-rms-loudness-in-webm-opus-tracks">Calculating RMS
+Loudness in WebM Opus Tracks</h1>
+<p>This article outlines the mathematical process used to calculate
+Root-Mean-Square (RMS) loudness levels from audio stored within WebM
+Opus files. Because Opus is a lossy, transform-based audio format,
+calculating RMS loudness requires demuxing the WebM container, decoding
+Opus frames into linear Pulse Code Modulation (PCM) samples, and
+executing standard statistical power equations over a selected time
+window. The resulting values are then converted from a linear scale into
+decibels relative to full scale (dBFS) to reflect perceptual signal
+power.</p>
+<h3 id="1-decoding-to-linear-pcm">1. Decoding to Linear PCM</h3>
+<p>Opus compresses audio using modified discrete cosine transforms
+(MDCT) and Linear Predictive Coding (SILK). Because RMS cannot be
+calculated directly from compressed frequency-domain data, the audio
+packets must first be extracted from the WebM container (a subset of
+Matroska) and decoded into uncompressed, discrete-time PCM samples.</p>
+<p>Each decoded audio sample at discrete time index <span
+class="math inline">\(n\)</span> is represented as a normalized
+floating-point amplitude value:</p>
+<p><span class="math display">\[x[n] \in [-1.0, 1.0]\]</span></p>
+<h3 id="2-defining-the-analysis-window">2. Defining the Analysis
+Window</h3>
+<p>RMS loudness is measured across a finite time window containing <span
+class="math inline">\(N\)</span> samples. If the sampling rate is <span
+class="math inline">\(f_s\)</span> (Opus typically decodes internally at
+48,000 Hz) and the target measurement duration is <span
+class="math inline">\(T\)</span> seconds, the window size <span
+class="math inline">\(N\)</span> is calculated as:</p>
+<p><span class="math display">\[N = f_s \times T\]</span></p>
+<p>For an instantaneous or momentary window of 400 milliseconds at 48
+kHz:</p>
+<p><span class="math display">\[N = 48000 \times 0.4 = 19200 \text{
+samples}\]</span></p>
+<h3 id="3-squaring-the-samples-instantaneous-energy">3. Squaring the
+Samples (Instantaneous Energy)</h3>
+<p>To eliminate negative values and calculate signal energy, each
+individual sample <span class="math inline">\(x[n]\)</span> within the
+window is squared:</p>
+<p><span class="math display">\[P[n] = (x[n])^2\]</span></p>
+<p>This operation shifts all amplitude values to positive numbers
+representing instantaneous power, where a full-scale peak of <span
+class="math inline">\(\pm 1.0\)</span> yields an energy value of <span
+class="math inline">\(1.0\)</span>.</p>
+<h3 id="4-calculating-the-mean-average-power">4. Calculating the Mean
+(Average Power)</h3>
+<p>The sum of all squared samples within the block of length <span
+class="math inline">\(N\)</span> is computed and divided by <span
+class="math inline">\(N\)</span> to find the mean square value:</p>
+<p><span class="math display">\[\text{MS} = \frac{1}{N} \sum_{n=0}^{N-1}
+(x[n])^2\]</span></p>
+<p>The mean square value (<span
+class="math inline">\(\text{MS}\)</span>) represents the average
+electrical power of the audio segment over the duration <span
+class="math inline">\(T\)</span>.</p>
+<h3 id="5-calculating-the-root-rms">5. Calculating the Root (RMS)</h3>
+<p>The square root of the mean square value is calculated to return the
+scale back to the original amplitude dimension:</p>
+<p><span class="math display">\[x_{\text{RMS}} = \sqrt{\text{MS}} =
+\sqrt{\frac{1}{N} \sum_{n=0}^{N-1} (x[n])^2}\]</span></p>
+<p>The resulting <span class="math inline">\(x_{\text{RMS}}\)</span> is
+a linear value lying in the range <span class="math inline">\([0.0,
+1.0]\)</span> for signals that do not exceed 0 dBFS. A constant
+direct-current (DC) signal at maximum amplitude (<span
+class="math inline">\(1.0\)</span>) yields an RMS of <span
+class="math inline">\(1.0\)</span>, whereas a full-scale sine wave
+yields:</p>
+<p><span class="math display">\[x_{\text{RMS, full-scale sine}} =
+\frac{1}{\sqrt{2}} \approx 0.7071\]</span></p>
+<h3 id="6-logarithmic-conversion-to-dbfs">6. Logarithmic Conversion to
+dBFS</h3>
+<p>Human hearing perceives loudness logarithmically. To express the
+linear RMS value in decibels relative to full scale (dBFS), apply the
+base-10 logarithm scaled by a factor of 20:</p>
+<p><span class="math display">\[L_{\text{RMS}} = 20
+\log_{10}(x_{\text{RMS}})\]</span></p>
+<p>Alternatively, this can be derived directly from the mean square
+power using a factor of 10:</p>
+<p><span class="math display">\[L_{\text{RMS}} = 10
+\log_{10}\left(\frac{1}{N} \sum_{n=0}^{N-1} (x[n])^2\right)\]</span></p>
+<p>In this scale, <span class="math inline">\(0 \text{ dBFS}\)</span> is
+the maximum possible RMS level for a square wave at full scale, while a
+full-scale sine wave measures approximately <span
+class="math inline">\(-3.01 \text{ dBFS}\)</span> under the AES17
+definition without standard sine-wave calibration offsets.</p>
+<h3 id="7-multichannel-considerations">7. Multichannel
+Considerations</h3>
+<p>For stereo or surround Opus streams, loudness can be calculated per
+channel or averaged across all channels. To calculate total unweighted
+RMS across <span class="math inline">\(M\)</span> channels:</p>
+<p><span class="math display">\[x_{\text{RMS, total}} = \sqrt{\frac{1}{M
+\cdot N} \sum_{m=1}^{M} \sum_{n=0}^{N-1} (x_m[n])^2}\]</span></p>
+<p>This calculation treats each channel with equal weight, deriving an
+aggregate signal power before converting to decibels.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

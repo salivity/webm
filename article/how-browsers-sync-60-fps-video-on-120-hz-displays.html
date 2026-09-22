@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Browsers Sync 60fps Video on 120Hz Displays - webm</title>
+    <meta name="description" content="Modern web browsers achieve seamless 120Hz display synchronization when playing 60fps WebM video assets by utilizing integer frame cadence, hardware-accelerated decoding pipelines, and synchronized compositor scheduling. Because 120Hz is an exact multipl">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-browsers-sync-60-fps-video-on-120-hz-displays">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How Browsers Sync 60fps Video on 120Hz Displays - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-browsers-sync-60-fps-video-on-120-hz-displays" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Modern web browsers achieve seamless 120Hz display synchronization when playing 60fps WebM video assets by utilizing integer frame cadence, hardware-accelerated decoding pipelines, and synchronized compositor scheduling. Because 120Hz is an exact multipl" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-browsers-sync-60fps-video-on-120hz-displays">How Browsers
+Sync 60fps Video on 120Hz Displays</h1>
+<p>Modern web browsers achieve seamless 120Hz display synchronization
+when playing 60fps WebM video assets by utilizing integer frame cadence,
+hardware-accelerated decoding pipelines, and synchronized compositor
+scheduling. Because 120Hz is an exact multiple of 60fps, browsers employ
+a 2:2 pulldown cadence, displaying every decoded frame for precisely two
+refresh cycles. This eliminates frame judder while leveraging
+platform-level display APIs to prevent visual tearing and minimize
+presentation latency.</p>
+<h3 id="the-integer-ratio-22-cadence">The Integer Ratio: 2:2
+Cadence</h3>
+<p>The primary advantage of displaying 60fps content on a 120Hz monitor
+is mathematical simplicity. Unlike displaying 24fps film content on a
+60Hz display—which requires an asymmetrical 3:2 pulldown that introduces
+perceptible judder—a 120Hz display updates twice as fast as a 60fps
+video stream.</p>
+<p>Browsers map each 16.67ms video frame directly to two 8.33ms display
+refresh intervals. As long as frames are delivered on schedule, the
+browser simply doubles each frame across two consecutive vertical
+synchronization (V-Sync) intervals, resulting in fluid, judder-free
+playback.</p>
+<h3 id="video-decoding-and-presentation-timestamps">Video Decoding and
+Presentation Timestamps</h3>
+<p>When playing a WebM asset—typically containing VP8, VP9, or AV1 video
+streams—the browser executes the following sequence:</p>
+<ol type="1">
+<li><strong>Demuxing:</strong> The browser extracts video packets and
+their corresponding Presentation Timestamps (PTS) from the WebM
+container.</li>
+<li><strong>Hardware Decoding:</strong> The compressed bitstream is fed
+into dedicated GPU hardware decoders (such as NVDEC, Intel Quick Sync,
+or Apple VideoToolbox) via the operating system's media framework.</li>
+<li><strong>Frame Queuing:</strong> Decoded raw surfaces (typically
+YUV420) are placed into a video frame queue alongside their target PTS
+metadata.</li>
+</ol>
+<h3 id="compositor-decoupling-and-frame-scheduling">Compositor
+Decoupling and Frame Scheduling</h3>
+<p>Modern browsers (such as Chromium-based engines, Gecko, and WebKit)
+decouple media decoding from rendering using dedicated threads.</p>
+<p>Chromium, for example, utilizes the <code>VideoFrameSubmitter</code>
+and the <code>cc</code> (Chrome Compositor) system. The compositor
+receives hardware V-Sync pulses generated by the operating system at
+120Hz. For every tick:</p>
+<ul>
+<li>The video frame scheduler examines the presentation timestamps of
+frames in the decoded queue against the target display time.</li>
+<li>If a frame's ideal presentation window spans two 120Hz intervals,
+the compositor retains the current texture in the GPU swap chain for
+both display intervals.</li>
+<li>The compositor avoids performing unnecessary pixel re-renders when a
+video frame is duplicated, merely instructing the GPU to present the
+existing surface again during the second V-Sync phase.</li>
+</ul>
+<h3 id="direct-scanout-and-os-level-swap-chains">Direct Scanout and
+OS-Level Swap Chains</h3>
+<p>To minimize power consumption and latency, browsers rely on zero-copy
+video presentation architectures:</p>
+<ul>
+<li><strong>Windows:</strong> Browsers use DirectComposition and DXGI
+Swap Chains (<code>DXGI_SWAP_EFFECT_FLIP_DISCARD</code>). The video
+frame is promoted to an independent hardware overlay plane, allowing the
+Desktop Window Manager (DWM) to scan it directly to the display without
+recompiling the entire webpage DOM.</li>
+<li><strong>macOS:</strong> Browsers pass decoded frames into
+<code>CALayer</code> hierarchies managed by CoreAnimation, which
+dynamically adjusts layer presentation to match ProMotion (120Hz)
+displays.</li>
+<li><strong>Linux:</strong> Browsers leverage Wayland presentation-time
+protocols or DRM/KMS interfaces via EGL to schedule buffer flips aligned
+directly to display refresh boundaries.</li>
+</ul>
+<h3 id="clock-drift-and-droprepeat-handling">Clock Drift and Drop/Repeat
+Handling</h3>
+<p>Audio clocks serve as the ultimate master clock for web media
+playback. Because the system audio clock and the display panel’s refresh
+clock can drift apart slightly over time, browsers employ
+frame-scheduling algorithms to compensate:</p>
+<ul>
+<li><strong>Minor Timing Drift:</strong> The browser shifts frame
+presentation thresholds fractionally, absorbing phase differences within
+the double-refresh window.</li>
+<li><strong>Decoder Lag:</strong> If the decoder falls behind, the
+browser skips a stale frame and presents the newer frame to restore
+synchronization with the audio clock.</li>
+<li><strong>Buffer Underflow:</strong> If a frame is missing entirely,
+the compositor holds the previous frame for an extra V-Sync cycle (3:2
+exception) until the pipeline catches up, returning immediately to the
+stable 2:2 cadence.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

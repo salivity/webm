@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strip Unused WebM Audio Tracks with Edge Workers - webm</title>
+    <meta name="description" content="This article explains how edge workers dynamically strip unneeded audio tracks from WebM video files to reduce egress bandwidth and lower latency. By intercepting client requests at the network edge, edge computing runtimes inspect the WebM container's b">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/strip-unused-web-m-audio-tracks-with-edge-workers">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Strip Unused WebM Audio Tracks with Edge Workers - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/strip-unused-web-m-audio-tracks-with-edge-workers" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article explains how edge workers dynamically strip unneeded audio tracks from WebM video files to reduce egress bandwidth and lower latency. By intercepting client requests at the network edge, edge computing runtimes inspect the WebM container's b" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="strip-unused-webm-audio-tracks-with-edge-workers">Strip Unused
+WebM Audio Tracks with Edge Workers</h1>
+<p>This article explains how edge workers dynamically strip unneeded
+audio tracks from WebM video files to reduce egress bandwidth and lower
+latency. By intercepting client requests at the network edge, edge
+computing runtimes inspect the WebM container's binary structure,
+discard non-requested audio streams—such as secondary language tracks or
+multi-channel surround sound—and stream only the requested content
+directly to the user.</p>
+<h3 id="the-bandwidth-problem-of-multi-track-webm">The Bandwidth Problem
+of Multi-Track WebM</h3>
+<p>Modern web video often packages multiple localized audio tracks (such
+as English, Spanish, or commentary tracks) into a single container
+format. In standard delivery architectures, a browser fetching a WebM
+file downloads every embedded track within the file's data clusters,
+even though it only plays one at a time. This results in significant
+bandwidth waste, slower start times, and unnecessary egress costs for
+content providers.</p>
+<h3 id="understanding-the-webm-container-structure">Understanding the
+WebM Container Structure</h3>
+<p>WebM is built on EBML (Extensible Binary Meta Language), a
+hierarchical binary format similar to XML. A WebM file contains distinct
+elements:</p>
+<ol type="1">
+<li><strong>EBML Header:</strong> Identifies the file type and parser
+specifications.</li>
+<li><strong>Segment:</strong> The root container holding all media
+data.</li>
+<li><strong>Tracks Element:</strong> Metadata defining each video,
+audio, and subtitle track, including its unique Track Number, Codec ID,
+and Language tag.</li>
+<li><strong>Cluster Elements:</strong> Time-synced blocks of media data
+containing <code>SimpleBlock</code> or <code>BlockGroup</code>
+structures tagged with their corresponding Track Number.</li>
+</ol>
+<h3 id="interception-and-track-selection-at-the-edge">Interception and
+Track Selection at the Edge</h3>
+<p>When a client requests a video, an edge worker (running on runtimes
+such as Cloudflare Workers, Fastly Compute, or AWS CloudFront Functions)
+intercepts the HTTP request.</p>
+<p>The worker determines the desired audio track using:</p>
+<ul>
+<li>Request query parameters (e.g., <code>?audio=en</code>)</li>
+<li>The client's <code>Accept-Language</code> header</li>
+<li>Custom player headers or client hints</li>
+</ul>
+<p>If the requested configuration matches an optimized profile, the
+worker fetches the source file from the origin or edge cache and routes
+the incoming byte stream through a transformation pipeline.</p>
+<h3 id="dynamic-stream-parsing-and-demuxing">Dynamic Stream Parsing and
+Demuxing</h3>
+<p>Edge workers have strict memory and execution time limits, meaning
+they cannot buffer entire video files in memory. Instead, they use
+lightweight streaming parsers—typically written in Rust and compiled to
+WebAssembly (Wasm) for high-performance binary manipulation.</p>
+<p>The parsing process follows these steps:</p>
+<ol type="1">
+<li><strong>Header Rewriting:</strong> The worker reads the
+<code>Tracks</code> master element in the WebM header. It removes the
+<code>TrackEntry</code> definitions for the unwanted audio tracks,
+updates the total track count, and recalculates the element size before
+passing the bytes to the response stream.</li>
+<li><strong>Cluster Filtering:</strong> As the media payload streams
+through subsequent <code>Cluster</code> elements, the worker inspects
+each <code>SimpleBlock</code> or <code>BlockGroup</code>. Each block
+begins with a variable-length integer indicating its Track Number.</li>
+<li><strong>Byte Discarding:</strong> If the block belongs to an
+excluded audio track, the worker drops those bytes from the output
+stream entirely. If it belongs to the video or the chosen audio track,
+the bytes are passed through unchanged.</li>
+<li><strong>Cluster Size Adjustment:</strong> If the WebM clusters use
+explicit size headers rather than unknown-length descriptors, the worker
+dynamically adjusts the cluster size bytes to reflect the discarded
+audio payloads.</li>
+</ol>
+<h3 id="edge-streaming-and-caching-strategies">Edge Streaming and
+Caching Strategies</h3>
+<p>By utilizing edge streams (such as the Web standard
+<code>TransformStream</code>), the worker begins sending data to the
+client immediately after parsing the initial header, maintaining an
+optimal Time to First Byte (TTFB).</p>
+<p>To prevent repetitive processing of popular assets, edge
+architectures store the transformed responses in the edge cache. By
+modifying the cache key to include the selected language or audio layout
+(e.g., <code>video-12345.webm?audio=es</code>), subsequent requests for
+the same track configuration are served directly from the edge cache
+without re-invoking the Wasm parser.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

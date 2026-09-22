@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sub-Pixel Interpolation Filters in WebM Video - webm</title>
+    <meta name="description" content="Sub-pixel motion estimation in WebM codecs, primarily VP8 and VP9, allows video encoders to achieve high compression efficiency by tracking motion at fractional pixel offsets rather than whole-integer grid points. Because real-world motion rarely aligns">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/sub-pixel-interpolation-filters-in-web-m-video">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Sub-Pixel Interpolation Filters in WebM Video - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/sub-pixel-interpolation-filters-in-web-m-video" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Sub-pixel motion estimation in WebM codecs, primarily VP8 and VP9, allows video encoders to achieve high compression efficiency by tracking motion at fractional pixel offsets rather than whole-integer grid points. Because real-world motion rarely aligns" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="sub-pixel-interpolation-filters-in-webm-video">Sub-Pixel
+Interpolation Filters in WebM Video</h1>
+<p>Sub-pixel motion estimation in WebM codecs, primarily VP8 and VP9,
+allows video encoders to achieve high compression efficiency by tracking
+motion at fractional pixel offsets rather than whole-integer grid
+points. Because real-world motion rarely aligns cleanly with the
+camera's discrete pixel grid, the encoder must reconstruct nonexistent
+pixel values at fractional locations—such as half-pixel, quarter-pixel,
+or eighth-pixel coordinates. This reconstruction is executed using
+finite impulse response (FIR) interpolation filters applied across
+neighboring full-pixel samples to generate smooth, artifact-free
+reference blocks for inter-frame prediction.</p>
+<h3 id="the-role-of-fractional-shifts">The Role of Fractional
+Shifts</h3>
+<p>In standard integer-pixel motion estimation, motion vectors point
+directly to actual sample points captured in reference frames.
+Fractional pixel shifts refine these vectors by addressing displacements
+between full pixels. When a motion vector contains a fractional
+component, the codec cannot simply copy a block from the reference
+frame. Instead, it must dynamically generate the reference block through
+interpolation, significantly reducing prediction error (residuals) and
+saving bits during entropy coding.</p>
+<h3 id="separable-1d-filtering-process">Separable 1D Filtering
+Process</h3>
+<p>WebM codecs compute 2D sub-pixel surfaces using separable 1D
+filtering to maintain computational efficiency. Instead of evaluating
+complex two-dimensional matrices simultaneously:</p>
+<ol type="1">
+<li><strong>Horizontal Pass:</strong> A 1D horizontal interpolation
+filter is applied across the integer pixels of the reference frame to
+produce intermediate values at the required horizontal fractional
+phase.</li>
+<li><strong>Vertical Pass:</strong> A 1D vertical interpolation filter
+is then applied to the intermediate values generated by the horizontal
+pass to establish the final vertical fractional phase.</li>
+</ol>
+<p>Intermediate calculations maintain elevated bit depths (typically 14
+to 16 bits of precision) to prevent rounding errors and drift before the
+values are scaled, rounded, and clamped back to the native video bit
+depth.</p>
+<h3 id="vp8-sub-pixel-implementation">VP8 Sub-Pixel Implementation</h3>
+<p>In the legacy VP8 standard used within early WebM containers, motion
+vectors achieve quarter-pixel (1/4-pel) precision. The interpolation
+process operates in two distinct stages:</p>
+<ul>
+<li><strong>Half-Pixel (1/2-pel) Positions:</strong> VP8 applies a
+symmetric 6-tap filter with coefficients
+<code>[2, -11, 108, 108, -11, 2] / 128</code> (or similar normalized
+variants depending on the exact fractional offset). This long filter
+uses six adjacent integer samples to capture high-frequency details
+while attenuating high-frequency noise.</li>
+<li><strong>Quarter-Pixel (1/4-pel) Positions:</strong> Once half-pixel
+values are derived, quarter-pixel values are calculated using simple
+bilinear interpolation (a 2-tap average) between the nearest full-pixel
+and half-pixel neighbors.</li>
+</ul>
+<h3 id="vp9-advanced-switchable-filtering">VP9 Advanced Switchable
+Filtering</h3>
+<p>VP9 expands sub-pixel precision down to eighth-pixel (1/8-pel) shifts
+and replaces the fixed VP8 approach with switchable 8-tap interpolation
+filters. Because different image regions possess different spatial
+frequency characteristics, VP9 allows the encoder to select among three
+distinct filter types at the frame or block level:</p>
+<ul>
+<li><strong>Regular (8-tap):</strong> A balanced filter based on a
+windowed sinc function. It serves as the general-purpose default,
+preserving sharpness while avoiding aliasing artifacts.</li>
+<li><strong>Smooth (8-tap):</strong> Applies heavier smoothing by
+attenuating higher frequencies. This filter is optimal for flat
+textures, low-contrast gradients, and noisy scenes where sharp
+interpolation could produce false high-frequency ringing.</li>
+<li><strong>Sharp (8-tap):</strong> Emphasizes high-frequency retention
+with a sharper cut-off. It is best applied to distinct structural edges,
+fine textures, and high-contrast boundaries to prevent motion blur
+during translation.</li>
+</ul>
+<p>Each of these three filters includes precomputed coefficient sets for
+each of the possible fractional phases between integer samples (1/8,
+2/8, 3/8, 4/8, 5/8, 6/8, and 7/8).</p>
+<h3 id="boundary-clamping-and-precision-control">Boundary Clamping and
+Precision Control</h3>
+<p>When sub-pixel interpolation occurs near frame borders, the multi-tap
+filter inevitably references coordinates lying outside the reconstructed
+frame. WebM decoders resolve this by extending edge pixels outward via
+clamping (edge replication). The mathematical sums generated by the FIR
+filters are subsequently normalized by division (implemented via
+right-bit shifts) with an added rounding factor to ensure bit-exact
+cross-platform decoding between software and hardware
+implementations.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

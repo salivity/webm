@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spherical Video Projection Metadata in WebM - webm</title>
+    <meta name="description" content="This article provides an overview of the metadata structures within the WebM container used to signal and configure spherical (360-degree) video projections. Because WebM is a subset of the Matroska (MKV) format built on Extensible Binary Meta Language (">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/spherical-video-projection-metadata-in-web-m">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Spherical Video Projection Metadata in WebM - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/spherical-video-projection-metadata-in-web-m" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="This article provides an overview of the metadata structures within the WebM container used to signal and configure spherical (360-degree) video projections. Because WebM is a subset of the Matroska (MKV) format built on Extensible Binary Meta Language (" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="spherical-video-projection-metadata-in-webm">Spherical Video
+Projection Metadata in WebM</h1>
+<p>This article provides an overview of the metadata structures within
+the WebM container used to signal and configure spherical (360-degree)
+video projections. Because WebM is a subset of the Matroska (MKV) format
+built on Extensible Binary Meta Language (EBML), it utilizes specific
+EBML elements within the video track definition to inform media players
+and decoders how to map flat video frames onto a 3D sphere or mesh.</p>
+<h3 id="the-ebml-hierarchy">The EBML Hierarchy</h3>
+<p>Spherical video signaling in WebM is nested inside the standard track
+definition structure. The hierarchy appears as follows:</p>
+<pre><code>Segment (0x18538067)
+└── Tracks (0x1654AE6B)
+    └── TrackEntry (0xAE)
+        └── Video (0xE0)
+            └── Projection (0x7670)</code></pre>
+<p>The presence of the <code>Projection</code> element directly signals
+that the video track contains projection geometry metadata, enabling
+spatial rendering in compliant players.</p>
+<h3 id="the-projection-master-element">The <code>Projection</code>
+Master Element</h3>
+<p>The <code>Projection</code> master element (EBML ID:
+<code>0x7670</code>) contains several child elements that define the
+type of projection, coordinate orientation, and any custom mapping
+data:</p>
+<ul>
+<li><p><strong><code>ProjectionType</code> (EBML ID:
+<code>0x7671</code>):</strong> An unsigned integer defining the
+mathematical projection method used to encode the video. The
+standardized values are:</p>
+<ul>
+<li><code>0</code>: Rectangular (standard flat video, default)</li>
+<li><code>1</code>: Equirectangular (standard 360-degree
+latitude/longitude projection)</li>
+<li><code>2</code>: Cubemap (surfaces of a cube mapped into the
+frame)</li>
+<li><code>3</code>: Mesh (custom 3D geometry defined by vertex
+data)</li>
+</ul></li>
+<li><p><strong><code>ProjectionData</code> (EBML ID:
+<code>0x7672</code>):</strong> A binary payload containing
+projection-specific configuration. For example, when
+<code>ProjectionType</code> is set to <code>Mesh</code> (3), this field
+holds the raw vertex, coordinate, and polygon data describing the
+projection shape. For cubemap projections, it may define layout and
+padding information.</p></li>
+<li><p><strong><code>ProjectionPoseYaw</code> (EBML ID:
+<code>0x7673</code>):</strong> A float value representing the yaw
+(rotation around the vertical axis) in degrees, ranging from -180.0 to
+180.0. It defines the default horizontal viewing offset.</p></li>
+<li><p><strong><code>ProjectionPosePitch</code> (EBML ID:
+<code>0x7674</code>):</strong> A float value representing the pitch
+(rotation around the lateral axis) in degrees, ranging from -90.0 to
+90.0. It defines the default vertical viewing offset.</p></li>
+<li><p><strong><code>ProjectionPoseRoll</code> (EBML ID:
+<code>0x7675</code>):</strong> A float value representing the roll
+(rotation around the longitudinal axis) in degrees, ranging from -180.0
+to 180.0. It corrects for camera tilt.</p></li>
+</ul>
+<h3 id="parser-and-player-behavior">Parser and Player Behavior</h3>
+<p>When a WebM parser processes a track, it scans the <code>Video</code>
+element for the <code>0x7670</code> identifier. If the
+<code>Projection</code> element is missing, players treat the video as
+standard 2D flat video. When present, the player uses
+<code>ProjectionType</code> to initialize a 3D rendering pipeline (such
+as WebGL or an internal spherical shader), aligns the initial camera
+orientation using the <code>ProjectionPose</code> values, and maps the
+decoded video stream continuously onto the designated geometry.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

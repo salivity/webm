@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VP8 Intra Prediction Modes in WebM Explained - webm</title>
+    <meta name="description" content="In VP8-encoded WebM video, intra-frame prediction exploits spatial redundancy by predicting the pixel values of a macroblock using previously decoded neighboring pixels from the same frame. For intra-coded macroblocks, VP8 provides distinct prediction mo">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/vp-8-intra-prediction-modes-in-web-m-explained">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VP8 Intra Prediction Modes in WebM Explained - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/vp-8-intra-prediction-modes-in-web-m-explained" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="In VP8-encoded WebM video, intra-frame prediction exploits spatial redundancy by predicting the pixel values of a macroblock using previously decoded neighboring pixels from the same frame. For intra-coded macroblocks, VP8 provides distinct prediction mo" />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="vp8-intra-prediction-modes-in-webm-explained">VP8 Intra
+Prediction Modes in WebM Explained</h1>
+<p>In VP8-encoded WebM video, intra-frame prediction exploits spatial
+redundancy by predicting the pixel values of a macroblock using
+previously decoded neighboring pixels from the same frame. For
+intra-coded macroblocks, VP8 provides distinct prediction modes
+categorized by block size and color plane: four modes for 16x16 luma
+blocks, ten directional modes for 4x4 luma sub-blocks, and four modes
+for 8x8 chroma blocks.</p>
+<h3 id="16x16-luma-intra-prediction-modes">16x16 Luma Intra-Prediction
+Modes</h3>
+<p>When a 16x16 luma macroblock is uniform or lacks high-frequency
+detail, VP8 predicts the entire 16x16 area using one of four modes:</p>
+<ul>
+<li><strong>DC Prediction (<code>DC_PRED</code>):</strong> Predicts all
+pixels in the 16x16 block using the single average value of the pixels
+in the row directly above and the column directly to the left.</li>
+<li><strong>Vertical Prediction (<code>V_PRED</code>):</strong>
+Replicates the row of pixels directly above the macroblock vertically
+down across all rows.</li>
+<li><strong>Horizontal Prediction (<code>H_PRED</code>):</strong>
+Replicates the column of pixels directly to the left of the macroblock
+horizontally across all columns.</li>
+<li><strong>TrueMotion Prediction (<code>TM_PRED</code>):</strong> A
+proprietary mode that predicts pixel values based on the left and above
+pixels, adjusted by the top-left neighbor pixel value using the formula
+<code>Predicted = Left + Above - TopLeft</code>.</li>
+</ul>
+<h3 id="4x4-luma-intra-prediction-modes">4x4 Luma Intra-Prediction
+Modes</h3>
+<p>For complex scenes with fine textures and edges, a 16x16 macroblock
+can be divided into sixteen 4x4 sub-blocks. Each 4x4 sub-block is
+predicted individually in raster scan order using one of ten available
+modes:</p>
+<ul>
+<li><strong><code>B_DC_PRED</code> (DC):</strong> Predicts all pixels
+from the average of the neighboring boundary pixels.</li>
+<li><strong><code>B_TM_PRED</code> (TrueMotion):</strong> Extrapolates
+gradients using the top, left, and top-left neighbor pixels.</li>
+<li><strong><code>B_VE_PRED</code> (Vertical):</strong> Extrapolates
+pixels vertically from the above row.</li>
+<li><strong><code>B_HE_PRED</code> (Horizontal):</strong> Extrapolates
+pixels horizontally from the left column.</li>
+<li><strong><code>B_LD_PRED</code> (Left-Down Diagonal):</strong>
+Interpolates pixels along a diagonal pointing down and to the left
+(approx. 45 degrees).</li>
+<li><strong><code>B_RD_PRED</code> (Right-Down Diagonal):</strong>
+Interpolates pixels along a diagonal pointing down and to the right
+(approx. 45 degrees).</li>
+<li><strong><code>B_VR_PRED</code> (Vertical-Right):</strong>
+Interpolates pixels along a directional vector tilted slightly to the
+right of the vertical axis (approx. 27 degrees from vertical).</li>
+<li><strong><code>B_VL_PRED</code> (Vertical-Left):</strong>
+Interpolates pixels along a directional vector tilted slightly to the
+left of the vertical axis (approx. 27 degrees from vertical).</li>
+<li><strong><code>B_HD_PRED</code> (Horizontal-Down):</strong>
+Interpolates pixels along a directional vector tilted slightly downward
+from the horizontal axis (approx. 27 degrees from horizontal).</li>
+<li><strong><code>B_HU_PRED</code> (Horizontal-Up):</strong>
+Interpolates pixels along a directional vector tilted slightly upward
+from the horizontal axis (approx. 27 degrees from horizontal).</li>
+</ul>
+<h3 id="8x8-chroma-intra-prediction-modes">8x8 Chroma Intra-Prediction
+Modes</h3>
+<p>The chroma components (U and V planes) are subsampled at 8x8 pixels
+per macroblock in standard 4:2:0 format. Chroma intra-prediction is
+applied independently to both U and V planes using the same four
+baseline modes found in 16x16 luma prediction:</p>
+<ul>
+<li><strong>DC Prediction (<code>DC_PRED</code>):</strong> Fills the 8x8
+chroma block with the average of adjacent top and left chroma
+pixels.</li>
+<li><strong>Vertical Prediction (<code>V_PRED</code>):</strong> Copies
+the 8 pixels directly above into every row below.</li>
+<li><strong>Horizontal Prediction (<code>H_PRED</code>):</strong> Copies
+the 8 pixels directly to the left across every column.</li>
+<li><strong>TrueMotion Prediction (<code>TM_PRED</code>):</strong>
+Applies the <code>Left + Above - TopLeft</code> gradient algorithm
+across the 8x8 block.</li>
+</ul></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>

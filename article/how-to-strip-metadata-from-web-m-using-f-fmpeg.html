@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Strip Metadata from WebM Using FFmpeg - webm</title>
+    <meta name="description" content="Stripping metadata from WebM files protects user privacy, eliminates unwanted tracking information, and reduces minor file overhead. This guide explains the exact FFmpeg command-line parameters required to completely remove global metadata, stream tags,">
+    <link rel="canonical" href="https://salivity.github.io/webm/article/how-to-strip-metadata-from-web-m-using-f-fmpeg">
+    <link rel="search" type="application/opensearchdescription+xml" title="webm" href="/webm/opensearch.xml">
+    <link rel="icon" href="/webm/favicon.ico">
+    <link rel="stylesheet" href="/webm/css/style.css">
+    <link media="print" rel="stylesheet" href="/webm/css/print.css">
+    <script src="/webm/js/fuse.min.js"></script>
+    <script src="/webm/js/script.js"></script>
+    <script id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-chtml.min.js" defer></script>
+    <script src="/monetize/monetize.js"></script>
+    <script src="/social/social.js"></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="How to Strip Metadata from WebM Using FFmpeg - webm" />
+    <meta property="og:url" content="https://salivity.github.io/webm/article/how-to-strip-metadata-from-web-m-using-f-fmpeg" />
+    <meta property="og:image" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:secure_url" content="https://salivity.github.io/webm/images/open-graph/default.webp" />
+    <meta property="og:image:width" content="1120" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:description" content="Stripping metadata from WebM files protects user privacy, eliminates unwanted tracking information, and reduces minor file overhead. This guide explains the exact FFmpeg command-line parameters required to completely remove global metadata, stream tags," />
+    <link rel="manifest" href="/webm/pwa/manifest.json" />
+</head>
+<body>
+    <header>
+        <a href="/webm/" aria-label="Go To Home Page" title="Go To Home Page" id="logo">
+            <span>salivity.github.io/</span><span>webm</span>
+        </a>
+        <nav>
+            <ul class="header-links">
+                <li><a href="/webm/search" title="Search" aria-label="Go To Search Page"><svg class="svg-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"></path></svg></a></li>
+                <li><a id="theme-toggle" title="Theme" href="javascript:void(0);" aria-label="Toggle Website Theme"></a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        
+    <div class="article-layout">
+        <aside id="profile-sidebar" class="profile-column" aria-label="Author Profile"></aside>
+        <div class="article-main-column">
+            <article><h1 id="how-to-strip-metadata-from-webm-using-ffmpeg">How to Strip
+Metadata from WebM Using FFmpeg</h1>
+<p>Stripping metadata from WebM files protects user privacy, eliminates
+unwanted tracking information, and reduces minor file overhead. This
+guide explains the exact FFmpeg command-line parameters required to
+completely remove global metadata, stream tags, chapter markers, and
+encoder signatures from a WebM container without re-encoding the
+underlying video and audio streams.</p>
+<h3 id="the-basic-command">The Basic Command</h3>
+<p>To strip standard global and chapter metadata while keeping the
+original audio and video streams intact, use the following command:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map_metadata</span> <span class="at">-1</span> <span class="at">-map_chapters</span> <span class="at">-1</span> <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<h3 id="explanation-of-parameters">Explanation of Parameters</h3>
+<ul>
+<li><strong><code>-i input.webm</code></strong>: Specifies the source
+WebM file.</li>
+<li><strong><code>-map_metadata -1</code></strong>: Clears all global
+metadata, such as titles, artist names, creation dates, and custom
+tags.</li>
+<li><strong><code>-map_chapters -1</code></strong>: Removes all chapter
+markers and chapter-specific metadata from the file.</li>
+<li><strong><code>-c copy</code></strong>: Copies the audio and video
+streams directly without re-encoding, ensuring the process is
+instantaneous and causes zero quality loss.</li>
+<li><strong><code>output.webm</code></strong>: The name of the cleaned
+output file.</li>
+</ul>
+<h3 id="advanced-removing-encoder-signatures-and-stream-tags">Advanced:
+Removing Encoder Signatures and Stream Tags</h3>
+<p>Container formats like WebM (Matroska) often automatically insert
+default writing application and muxing library tags (such as
+<code>Lavf</code> or <code>Lavc</code>). To strip stream-level metadata
+and prevent FFmpeg from writing its own identification headers, add
+bitexact flags:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input.webm <span class="at">-map_metadata</span> <span class="at">-1</span> <span class="at">-map_chapters</span> <span class="at">-1</span> <span class="at">-fflags</span> +bitexact <span class="at">-flags:v</span> +bitexact <span class="at">-flags:a</span> +bitexact <span class="at">-c</span> copy output.webm</span></code></pre></div>
+<ul>
+<li><strong><code>-fflags +bitexact</code></strong>: Forces the muxer to
+not write vendor-specific identification or timestamp metadata into the
+container header.</li>
+<li><strong><code>-flags:v +bitexact</code> and
+<code>-flags:a +bitexact</code></strong>: Ensures no stream-specific
+encoder markers are injected into the video and audio bitstreams.</li>
+</ul>
+<h3 id="verifying-metadata-removal">Verifying Metadata Removal</h3>
+<p>To confirm that all unnecessary metadata has been removed, inspect
+the new file using FFprobe:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> <span class="at">-hide_banner</span> output.webm</span></code></pre></div>
+<p>If successful, the output will list only the technical stream
+specifications (resolution, bitrate, codec) with no additional metadata
+tags.</p></article>
+        <div id="comments-container"></div>
+        <script>
+            const utterancesScript = document.createElement('script');
+            utterancesScript.setAttribute('src', 'https://utteranc.es/client.js');
+            utterancesScript.setAttribute('repo', 'salivity/webm'); 
+            utterancesScript.setAttribute('issue-term', 'pathname'); 
+            utterancesScript.setAttribute('theme', localStorage.getItem('theme') === 'dark' ? 'github-dark' : 'github-light'); 
+            utterancesScript.setAttribute('crossorigin', 'anonymous');
+            utterancesScript.async = true;
+            document.getElementById('comments-container').appendChild(utterancesScript);
+        </script>
+    
+        </div>
+    </div>
+    
+    </main>
+    <footer>
+        <nav>
+            <ul class="social-links">
+            </ul>
+        </nav>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/webm/privacy-policy">Privacy Policy</a></li>
+                <li><a href="/webm/terms-and-conditions">Terms and Conditions</a></li>
+            </ul>
+        </nav>
+        <div class="copyright">
+            Copyright &copy; <span id="current-year"></span>
+        </div>
+    </footer>
+</body>
+</html>
